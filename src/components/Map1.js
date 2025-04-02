@@ -935,7 +935,17 @@ export class GandomMap {
                     { 
                         icon: 'fas fa-envelope', 
                         title: 'کد پستی', 
-                        action: () => console.log('کد پستی') 
+                        action: () => {
+                            const markerDrawer = new L.Draw.Marker(map);
+                            markerDrawer.enable();
+                            this.clearMap(map);
+                            
+                            map.once(L.Draw.Event.CREATED, (e) => {
+                                const marker = e.layer;
+                                const latlng = marker.getLatLng();
+                                this.cod_post(latlng.lng, latlng.lat, map);
+                            });
+                        }
                     },
                     { 
                         icon: 'fas fa-home', 
@@ -1209,18 +1219,18 @@ export class GandomMap {
                     </div>
                 </div>`;
 
-            // اضافه کردن متد exportToPDF به window
-            window.exportToPDF = (reportData) => {
-                this.exportToPDF(decodeURIComponent(reportData));
-            };
+                // اضافه کردن متد exportToPDF به window
+                window.exportToPDF = (reportData) => {
+                    this.exportToPDF(decodeURIComponent(reportData));
+                };
 
-            layer.bindPopup(popupContent, {
-                className: 'custom-popup',
-                offset: L.point(0, -10),
-                closeButton: true,
-                closeOnClick: true,
-                autoClose: true
-            }).openPopup();
+                layer.bindPopup(popupContent, {
+                    className: 'custom-popup',
+                    offset: L.point(0, -10),
+                    closeButton: true,
+                    closeOnClick: true,
+                    autoClose: true
+                }).openPopup();
         }
     }
 
@@ -1348,6 +1358,80 @@ export class GandomMap {
 
                 // نمایش پاپ‌آپ به صورت خودکار
                 polygon.openPopup();
+            }
+        });
+    }
+
+    // تابع cod_post برای نمایش اطلاعات کد پستی
+    cod_post(l1, l2, map) {
+        let base_point = [];
+        base_point.push(parseFloat(l1), parseFloat(l2));
+
+        let codepo1 = [];
+        const Url_domainPost = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        let urlpost = `${Url_domainPost}IR26/MapServer/identify?geometryType=esriGeometryPoint&` + 'layers=ID:6' +
+            '&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=80,80,80&f=json&geometry=' + base_point;
+        console.log("prosti >>>>>>. ", urlpost);
+        $.getJSON(urlpost, (data) => {
+
+            if (data.results.length == 0) {
+                alert('خارج از محدوده');
+                return [1];
+            }
+
+            for (let i = 0; i < data.results.length; i++) {
+                let post2 = data.results[i].attributes.gasht_name;
+                let cname = data.results[i].attributes.cname;
+                let costan = data.results[i].attributes.cshrs;
+                let area1 = data.results[i].attributes.Shape_Area;
+                let c = (area1 / 10000).toFixed(2);
+                let costn = data.results[i].attributes.costn;
+                let ccode = data.results[i].attributes.ccode;
+
+                var sums123 = data.results[i].geometry.rings[0];
+                let ar2 = [];
+                for (let val of sums123) {
+                    var li1 = [val[1], val[0]];
+                    ar2.push(li1);
+                }
+
+                var bulletRedMarker = L.polygon(ar2, {
+                    fillColor: "#321ee4",
+                    fillOpacity: 0.2,
+                    opacity: 0.4,
+                    weight: 3,
+                    color: "#000"
+                }).addTo(map).bindPopup(`
+                    <div style="direction: rtl; text-align: right; font-family: Vazir;">
+                        <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات کد پستی</h6>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>کد پستی:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${post2}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>نام منطقه:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${cname}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>استان:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${costan}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>شهر:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${costn}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>کد شهر:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${ccode}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
+                                <td style="padding: 5px; border-bottom: 1px solid #eee;">${c} هکتار</td>
+                            </tr>
+                        </table>
+                    </div>
+                `);
             }
         });
     }
