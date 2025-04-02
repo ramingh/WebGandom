@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGandom - سیستم GIS فروشگاه‌های زنجیره‌ای گندم</title>
+    
+    <!-- Core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/gokertanrisever/leaflet-ruler@master/src/leaflet-ruler.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css"/>
+
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokertanrisever/leaflet-ruler@master/src/leaflet-ruler.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div id="loading" class="loading">
+            <p>لطفاً کمی صبر کنید...</p>
+            <div class="spinner">               
+            </div>
+        </div>        
+        <div id="content">
+            <div id="map">                
+            </div>
+            <div id="sidebar">
+                <button class="toggle-layers"> 
+                    <i class="fas fa-layer-group">                        
+                    </i> انتخاب لایه
+                </button>
+                <div class="layer-container hidden">
+                    <div class="layer-list">
+                        <label>
+                            <input type="checkbox" data-layer="shop"> فروشگاه
+                        </label>
+                        <label>
+                            <input type="checkbox" data-layer="hospital"> بیمارستان
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Base Map Toggle Button -->
+    <button class="basemap-toggle">
+        <i class="fas fa-layer-group"></i>
+        نقشه پایه
+    </button>
+
+    <!-- Base Map Menu -->
+    <div class="basemap-menu">
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="osm" checked>
+            <span>نقشه استاندارد</span>
+        </label>
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="satellite">
+            <span>تصویر ماهواره‌ای</span>
+        </label>
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="terrain">
+            <span>توپوگرافی</span>
+        </label>
+    </div>
+
+    <!-- Core JavaScript -->
+    <!-- <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gokertanrisever/leaflet-ruler@master/src/leaflet-ruler.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>-->
+    <script type="module" src="./assets/js/main.js"></script> 
+
+</body>
+</html> 
+

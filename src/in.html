@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGandom - سیستم GIS فروشگاه‌های زنجیره‌ای گندم</title>
+    <!-- Core CSS -->
+    <!-- <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"> -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="Leaflet/CSS/leaflet.css" rel="stylesheet">
+    <link href="Leaflet/CSS/leaflet-ruler.css" rel="stylesheet">
+    <link href="Leaflet/CSS/Control.Geocoder.css" rel="stylesheet">
+ <link rel="stylesheet" href="./assets/css/style.css">
+
+ 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+   
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css" /> -->
+    
+    <script src="Leaflet/JS/jquery-3.7.0.min.js"></script>  
+ 
+  <script src="Leaflet/JS/leaflet.js"></script> 
+  <script src="Leaflet/JS/bootstrap.bundle.min.js"></script> 
+  <script src="Leaflet/JS/leaflet-ruler.js"></script>
+  <script src="Leaflet/JS/leaflet.draw.js"></script>
+  <script src="Leaflet/JS/Control.Geocoder.js"></script>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> 
+  
+    <script src="https://cdn.jsdelivr.net/gh/gokertanrisever/leaflet-ruler@master/src/leaflet-ruler.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script type="module" src="./assets/js/main.js"></script>
+
+</head>
+
+<body>
+    <div id="app">
+        <div id="loading" class="loading">
+            <p> لطفاً کمی صبر کنید...</p>
+            <div class="spinner">
+            </div>
+        </div>
+        <div id="content">
+            <div id="map">
+            </div>
+            <div id="sidebar">
+
+            </div>
+        </div>
+
+
+    </div>
+    </div>
+    <!-- Base Map Toggle Button -->
+    <button class="basemap-toggle">
+        <i class="fas fa-layer-group"></i>نقشه پایه
+    </button>
+    <!-- Base Map Menu -->
+    <div class="basemap-menu">
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="osm" checked>
+            <span>نقشه استاندارد</span>
+        </label>
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="satellite">
+            <span>تصویر ماهواره‌ای</span>
+        </label>
+        <label class="basemap-option">
+            <input type="radio" name="basemap" value="terrain">
+            <span>توپوگرافی</span>
+        </label>
+    </div>
+    <div id="sidebar">
+
+    </div>
+    <button id="trash-button" class="trash-button">
+        <img src="/IMG/clear4.png" alt="حذف">
+    </button>
+    <script>
+        var url_path = '/IMG/';
+        const Gandomj_ = L.icon({
+            iconUrl: url_path + 'Gandomj.png',
+            iconSize: [20, 30], // size of the icon
+            popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
+        });
+        const Gandomd_ = L.icon({
+            iconUrl: url_path + 'Gandome.png',
+            iconSize: [20, 30], // size of the icon
+            popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
+        });
+        const Gandom_ = L.icon({
+            iconUrl: url_path + 'Gandom.png',
+            iconSize: [20, 30], // size of the icon
+            popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
+        });
+        const Gandomb_ = L.icon({
+            iconUrl: url_path + 'GandomClose.png',
+            iconSize: [20, 30], // size of the icon
+            popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
+        });
+        var gandompoint1 = new L.layerGroup();
+
+        $(document).ready(function () {
+            point_gandom();
+            async function point_gandom() {
+                const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+                try {
+                    const response = await fetch(url_rest, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json; charset=utf-8',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error fetching data: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    const features = data.features;
+                    await Promise.all(features.map((feature, index) => {
+                        const lat = parseFloat(feature.attributes.Latitude);
+                        const lng = parseFloat(feature.attributes.Longitude);
+                        const storeName = feature.attributes.StoreName;
+                        const storeStatus = feature.attributes.StoreStatus;
+                        const maketcode = feature.attributes.StoreCode;
+                        const mantageh1 = feature.attributes.GZone;
+
+                        const icong = getIcon(storeStatus);
+                        let color1 = 'black'; // رنگ پیش‌فرض  
+
+                        switch (storeStatus) {
+                            case "باز":
+                                color1 = 'green';
+                                break;
+                            case "بسته":
+                                color1 = 'red';
+                                break;
+                            case "در حال جمع آوری":
+                                color1 = 'blue';
+                                break;
+                            case "در حال راه اندازی":
+                                color1 = 'cyan';
+                                break;
+                            default:
+                                color1 = 'grey'; // رنگ پیش‌فرض برای موارد غیرمترقبه  
+                        }
+
+                        // ایجاد رشته txt1 با تغییر رنگ status  
+                        let txt1 = mantageh1 + '</br><b>' + storeName + '</br>کد فروشگاه: ' + maketcode +
+                            ' - <span style="color:' + color1 + ';">' + storeStatus + '</span>';
+
+                        L.marker([lat, lng], { icon: icong }).bindPopup(`  ${txt1}`).addTo(gandompoint1);
+                        // }
+                    }));
+                    // console.log(features, '--------********************', url_rest);
+                    return data;
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    return []; // Handle error by returning an empty array
+                }
+            };
+           function getIcon(stat) {
+                switch (stat) {
+                    case "باز":
+                        return Gandom_;
+                    case "بسته":
+                        return Gandomb_;
+                    case "در حال جمع آوری":
+                        return Gandomj_;
+                    case "در حال راه اندازی":
+                        return Gandomd_;
+                    default:
+                        return user1_;
+                }
+            };
+        })
+
+
+    </script>
+
+
+
+
+
+
+
+
+
+</body>
+
+
+</html>

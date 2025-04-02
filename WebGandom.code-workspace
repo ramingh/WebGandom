@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
+		"workbench.preferredDarkColorTheme": "GitHub Dark High Contrast",
+		"window.autoDetectColorScheme": true,
+		"window.closeWhenEmpty": true,
+		"liveServer.settings.port": 5501
+	}
+}
