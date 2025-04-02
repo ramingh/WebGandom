@@ -729,12 +729,15 @@ export class GandomMap {
                         icon: 'fas fa-square', 
                         title: 'فروشگاه‌ها',
                         action: () => {
+                           
+
                             const rectangleDrawer = new L.Draw.Rectangle(map, {
                                 shapeOptions: {
                                     color: '#99b5dccc',
                                     weight: 2
                                 }
                             });
+                             this.clearMap(map);
                             rectangleDrawer.enable();
                         }
                     },
@@ -744,12 +747,12 @@ export class GandomMap {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-
+  this.clearMap(map);
                             // اضافه کردن رویداد برای زمانی که نشانگر قرار می‌گیرد
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-
+                              
                                 // درخواست شعاع از کاربر
                                 let radius = prompt("              Km" + ": لطفا شعاع را وارد کنید" + "(0.5 تا 2)", "1");
 
@@ -950,7 +953,21 @@ export class GandomMap {
                     { 
                         icon: 'fas fa-home', 
                         title: 'آبادی  ', 
-                        action: () => console.log('آبادی  ') 
+                        action: () => {
+                            const markerDrawer = new L.Draw.Marker(map);
+                            markerDrawer.enable();
+                            this.clearMap(map);
+                            
+                            map.once(L.Draw.Event.CREATED, (e) => {
+                                const marker = e.layer;
+                                const latlng = marker.getLatLng();
+                            this.drawDistrict(latlng.lat, latlng.lng, map);
+
+                                 //    this.Draw_abdi('316', map);
+                       
+                                
+                            });
+                        }
                     }
                 ];
 
@@ -1234,30 +1251,75 @@ export class GandomMap {
         }
     }
 
-    // متد جدید برای تبدیل به PDF
+    // تابع خروجی PDF
     exportToPDF(reportContent) {
-        // استفاده از کتابخانه jsPDF
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        try {
+            // بررسی وجود کتابخانه jsPDF
+            if (typeof window.jspdf === 'undefined') {
+                console.error('کتابخانه jsPDF لود نشده است');
+                return;
+            }
 
-        // تنظیم فونت فارسی (نیاز به لود فونت مناسب دارد)
-        doc.setFont("Arial");
-        doc.setR2L(true);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-        // عنوان گزارش
-        const title = "گزارش فروشگاه‌های محدوده";
-        const date = new Date().toLocaleDateString('fa-IR');
+            try {
+                // اضافه کردن فونت فارسی
+                doc.addFont('Vazir.ttf', 'Vazir', 'normal');
+                doc.setFont('Vazir');
+            } catch (error) {
+                console.error('خطا در لود فونت Vazir:', error);
+                // استفاده از فونت پیش‌فرض
+                doc.setFont('helvetica');
+            }
 
-        // حذف تگ‌های HTML از محتوا
-        const cleanContent = reportContent.replace(/<br\/?>/g, '\n').replace(/<\/?[^>]+(>|$)/g, '');
+            // تنظیم اندازه فونت
+            doc.setFontSize(12);
 
-        // افزودن محتوا به PDF
-        doc.text(title, 150, 20, { align: 'right' });
-        doc.text(`تاریخ: ${date}`, 150, 30, { align: 'right' });
-        doc.text(cleanContent, 150, 50, { align: 'right' });
+            // عنوان گزارش
+            const title = "گزارش فروشگاه‌های محدوده";
+            const date = new Date().toLocaleDateString('fa-IR');
 
-        // ذخیره فایل
-        doc.save('store-report.pdf');
+            // حذف تگ‌های HTML از محتوا
+            const cleanContent = reportContent.replace(/<br\/?>/g, '\n').replace(/<\/?[^>]+(>|$)/g, '');
+
+            // محاسبه موقعیت متن
+            const marginRight = 10;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const xPosition = pageWidth - marginRight;
+
+            // افزودن محتوا به PDF
+            doc.text(title, xPosition, 10, { align: 'right' });
+            doc.text(`تاریخ: ${date}`, xPosition, 20, { align: 'right' });
+            
+            // تقسیم محتوا به خطوط
+            const lines = cleanContent.split('\n');
+            let y = 30;
+            
+            lines.forEach(line => {
+                if (y > 280) { // اگر به انتهای صفحه نزدیک شدیم
+                    doc.addPage();
+                    y = 10;
+                }
+                doc.text(line, xPosition, y, { align: 'right' });
+                y += 10;
+            });
+
+            // ذخیره فایل
+            doc.save('store-report.pdf');
+        } catch (error) {
+            console.error('خطا در ایجاد PDF:', error);
+        }
+    }
+
+    // تابع خروجی PDF برای استفاده در HTML
+    static initPDFExport() {
+        window.exportToPDF = (reportContent) => {
+            const mapInstance = document.querySelector('#map').__vue__;
+            if (mapInstance) {
+                mapInstance.exportToPDF(reportContent);
+            }
+        };
     }
 
     getPersianName(key) {
@@ -1645,4 +1707,192 @@ export class GandomMap {
         this.map.addControl(drawControl);
     }
 
+    // تابع ترسیم محدوده دهستان و دریافت اطلاعات آن
+    drawDistrict(latitude, longitude, map) {
+        const coordinates = `${longitude},${latitude}`;
+        const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/identify?geometry=${coordinates}&geometryType=esriGeometryPoint&sr=&layers=ID%3A1&tolerance=0&mapExtent=45%2C25%2C61%2C40&imageDisplay=800%2C600%2C96&returnGeometry=true&returnZ=false&returnM=false&f=pjson`;
+
+        $.getJSON(baseUrl, (data) => {
+            if (!data.results?.length) return;
+
+            data.results.forEach(result => {
+                const {
+                    F_AREA: area,
+                    ostan: provinceName,
+                    shahrestan: cityName,
+                    bakhsh: districtName,
+                    shrdeh: villageDistrictName,
+                    COUNT_: villageCount,
+                    FID: districtId,
+                    Household: householdCount = 0,
+                    Population: population = 0
+                } = result.attributes;
+
+                // فراخوانی تابع نمایش آبادی‌ها
+                this.drawVillages(districtId, map);
+
+                // تبدیل و فرمت‌بندی مساحت به هکتار
+                const areaInHectares = area / 10000;
+                const formattedArea = new Intl.NumberFormat('fa-IR').format(Math.round(areaInHectares));
+
+                // محاسبه و فرمت‌بندی تراکم جمعیت
+                const actualPopulation = (population === 'Null' || population === null) ? 0 : population;
+                const populationDensity = areaInHectares > 0 ? (actualPopulation / areaInHectares) : 0;
+                const formattedDensity = new Intl.NumberFormat('fa-IR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(populationDensity);
+
+                // متن پاپ‌آپ دهستان
+                const popupContent = `
+                    <div class="district-popup" dir="rtl">
+                        <div class="location-info">
+                            <strong>موقعیت:</strong> ${provinceName.trim()} / ${cityName}
+                        </div>
+                        <div class="district-info">
+                            <strong>دهستان:</strong> ${villageDistrictName}
+                        </div>
+                        <div class="stats-info">
+                            <div><strong>مساحت:</strong> ${formattedArea} هکتار</div>
+                            <div><strong>جمعیت:</strong> ${actualPopulation} نفر</div>
+                            <div><strong>خانوار:</strong> ${householdCount}</div>
+                            <div><strong>تعداد آبادی:</strong> ${villageCount}</div>
+                            <div><strong>تراکم جمعیت:</strong> ${formattedDensity} نفر در هکتار</div>
+                        </div>
+                    </div>
+                `;
+
+                // ترسیم محدوده دهستان
+                const polygonCoordinates = result.geometry.rings.map(ring =>
+                    ring.map(([x, y]) => [y, x])
+                );
+
+                polygonCoordinates.forEach(coords => {
+                    L.polygon(coords, {
+                        color: '#5050FF',
+                        weight: 1,
+                        opacity: 0.5,
+                        fillOpacity: 0.4
+                    })
+                    .bindPopup(popupContent)
+                    .addTo(map);
+                });
+            });
+        });
+    }
+
+    // تابع نمایش آبادی‌های دهستان
+    drawVillages(districtId, map) {
+        const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/find?searchText=${districtId}&contains=false&searchFields=NEAR_FID&layers=ID:2&returnGeometry=true&f=pjson`;
+
+        $.getJSON(baseUrl, (data) => {
+            if (!data.results?.length) return;
+
+            const url_path = '/IMG/';
+                
+            const icons = {
+                populated: L.icon({
+                    iconUrl: url_path + 'vilage1.png',
+                    iconSize: [15, 20],
+                    popupAnchor: [0, 0]
+                }),
+                empty: L.icon({
+                    iconUrl: url_path + 'vlag1.png',
+                    iconSize: [12, 16],
+                    popupAnchor: [0, 0]
+                })
+            };
+
+            data.results.forEach(result => {
+                const {
+                    "بقالي": groceryCount,
+                    "فروشگاه تعاوني": coopStoreCount,
+                    "نانوايي": bakeryCount,
+                    "گوشت فروشي": butcheryCount,
+                    "خانوار": householdCount = 0,
+                    "جمعيت": population = 0
+                } = result.attributes;
+
+                // انتخاب آیکون بر اساس جمعیت
+                const icon = (population === 'Null' || population === null) ? icons.empty : icons.populated;
+
+                // متن پاپ‌آپ آبادی
+                const popupContent = `
+                    <div class="village-popup" dir="rtl">
+                        <div class="facilities">
+                            <div><strong>فروشگاه تعاونی:</strong> ${coopStoreCount}</div>
+                            <div><strong>بقالی:</strong> ${groceryCount}</div>
+                            <div><strong>نانوایی:</strong> ${bakeryCount}</div>
+                            <div><strong>گوشت فروشی:</strong> ${butcheryCount}</div>
+                        </div>
+                        <div class="population-info">
+                            <div><strong>جمعیت:</strong> ${population === 'Null' ? 0 : population}</div>
+                            <div><strong>خانوار:</strong> ${householdCount === 'Null' ? 0 : householdCount}</div>
+                        </div>
+                    </div>
+                `;
+
+                // ایجاد مارکر آبادی
+                const { x, y } = result.geometry;
+                L.marker([y, x], { icon })
+                    .bindPopup(popupContent)
+                    .addTo(map);
+            });
+        });
+    }
+
+    async   Draw_abdi(idcode, map) {
+        const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/find?searchText=${idcode}&contains=false&searchFields=NEAR_FID&sr=&layers=ID%3A2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=pjson`;
+        console.log('---Abadi---', baseUrl);
+        let total_khan = 0, total_pop = 0;
+    
+        try {
+            let icons;
+            try {
+
+                const url_path = '/IMG/';
+                
+                icons = {
+                    populated: L.icon({
+                        iconUrl: url_path + 'vlag01.png',
+                        iconSize: [15, 20],
+                        popupAnchor: [0, 0]
+                    }),
+                    empty: L.icon({
+                        iconUrl: url_path + 'vlag1.png',
+                        iconSize: [12, 16],
+                        popupAnchor: [0, 0]
+                    })
+                };
+            } catch (error) {
+                console.error('خطا در ایجاد آیکون‌ها:', error);
+            }
+    
+            const response = await fetch(baseUrl);
+            if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
+    
+            const json = await response.json();
+            if (json.results?.length > 0) {
+                json.results.forEach(result => {
+                    var { "بقالي": bagali, "فروشگاه تعاوني": tavon, "نانوايي": nanva, "گوشت فروشي": gosht, "خانوار": Khanevar = 0, "جمعيت": Populat = 0 } = result.attributes;
+                    let icon = (Populat === 'Null' || Populat == null) ? icons.empty : icons.populated;
+                    if (Populat == 'Null') {
+                        Populat = 0;
+                        Khanevar = 0;
+                        icon = icons.empty;
+                    }
+                    const txt1 = `<span style="color: blue; font-size: 10px;">   فروشگاه تعاوني: ${tavon}  <br /> بقالي: ${bagali} <br /> نانوايي: ${nanva}  <br /> گوشت فروشي: ${gosht}</span> <br /> <span style="color: red; font-size: 12px;"> جمعیت :  ${Populat} </span> <br /> خانوار: ${Khanevar}`;
+    
+                    let po1 = result.geometry;
+                    const swapped = [po1.y, po1.x];
+                    L.marker(swapped, { icon }).addTo(map).bindPopup(txt1);
+    
+                });
+            }
+        } catch (error) {
+            console.error('خطای Fetch:', error);
+            return false;
+        }
+        // console.log(total_khan, '-------------------', total_pop);
+    }
 } 

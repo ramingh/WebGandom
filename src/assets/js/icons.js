@@ -10,6 +10,8 @@ function createIcon(iconName) {
 
 // تعریف آیکون‌های مورد نیاز
 export const icons = {
+    vlag01_: createIcon( 'vilage1.png'),
+    vilage1_: createIcon('vlag1.png'),
     Loc2_: createIcon('loc2.png'),
     user1_: createIcon('marker-icon.png'),
     antique_: createIcon('antique.png'),
