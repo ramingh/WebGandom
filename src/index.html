@@ -39,12 +39,7 @@
                 </button>
                 <div class="layer-container hidden">
                     <div class="layer-list">
-                        <label>
-                            <input type="checkbox" data-layer="shop"> فروشگاه
-                        </label>
-                        <label>
-                            <input type="checkbox" data-layer="hospital"> بیمارستان
-                        </label>
+           
                     </div>
                 </div>
             </div>
@@ -72,10 +67,91 @@
             <span>توپوگرافی</span>
         </label>
     </div>
-
+    <button id="trash-button" class="trash-button">
+        <img src="/IMG/clear3.png" alt="حذف">
+    </button>
     <!-- Core JavaScript -->
-    <!-- <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+   <script>
+        
+        var gandompoint1 = new L.layerGroup();
+
+$(document).ready(function () {
+    point_gandom();
+    async function point_gandom() {
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        try {
+            const response = await fetch(url_rest, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error fetching data: ${response.statusText}`);
+            }
+            const data = await response.json();
+            const features = data.features;
+            await Promise.all(features.map((feature, index) => {
+                const lat = parseFloat(feature.attributes.Latitude);
+                const lng = parseFloat(feature.attributes.Longitude);
+                const storeName = feature.attributes.StoreName;
+                const storeStatus = feature.attributes.StoreStatus;
+                const maketcode = feature.attributes.StoreCode;
+                const mantageh1 = feature.attributes.GZone;
+
+                const icong = getIcon(storeStatus);
+                let color1 = 'black'; // رنگ پیش‌فرض  
+
+                switch (storeStatus) {
+                    case "باز":
+                        color1 = 'green';
+                        break;
+                    case "بسته":
+                        color1 = 'red';
+                        break;
+                    case "در حال جمع آوری":
+                        color1 = 'blue';
+                        break;
+                    case "در حال راه اندازی":
+                        color1 = 'cyan';
+                        break;
+                    default:
+                        color1 = 'grey'; // رنگ پیش‌فرض برای موارد غیرمترقبه  
+                }
+
+                // ایجاد رشته txt1 با تغییر رنگ status  
+                let txt1 = mantageh1 + '</br><b>' + storeName + '</br>کد فروشگاه: ' + maketcode +
+                    ' - <span style="color:' + color1 + ';">' + storeStatus + '</span>';
+
+                L.marker([lat, lng], { icon: icong }).bindPopup(`  ${txt1}`).addTo(gandompoint1);
+                // }
+            }));
+            // console.log(features, '--------********************', url_rest);
+            return data;
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            return []; // Handle error by returning an empty array
+        }
+    };
+   function getIcon(stat) {
+        switch (stat) {
+            case "باز":
+                return Gandom_;
+            case "بسته":
+                return Gandomb_;
+            case "در حال جمع آوری":
+                return Gandomj_;
+            case "در حال راه اندازی":
+                return Gandomd_;
+            default:
+                return user1_;
+        }
+    };
+})
+
+   </script>
+    <!--  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gokertanrisever/leaflet-ruler@master/src/leaflet-ruler.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>-->
