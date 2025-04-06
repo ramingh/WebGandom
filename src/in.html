@@ -83,6 +83,21 @@
         <img src="/IMG/clear3.png" alt="حذف">
     </button>
     <script>
+//  checkStore (10534);
+function checkStore(storeCode) {
+    // http://10.131.3.85/check-store?storeCode=10534 
+    fetch(`http://10.131.3.85/check-store?storeCode=${storeCode}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('نتیجه دریافت‌شده:', data);
+            // می‌تونی اینجا اطلاعات رو در سایت خودت نمایش بدی
+        })
+        .catch(error => {
+            console.error('خطا در اتصال به API:', error);
+        });
+};
+
+
         var url_path = '/IMG/';
         const Gandomj_ = L.icon({
             iconUrl: url_path + 'Gandomj.png',

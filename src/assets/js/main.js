@@ -2,7 +2,7 @@
 
 // import { GandomMap } from '../../components/Map.js';
 // import { LayerManager } from '../../components/LayerManager.js';
-import { GandomMap } from '../../components/Map1.js';
+import { GandomMap } from '../../components/NewMap1.js';
 import { LayerManager } from '../../components/LayerManager1.js';
 
 // Initialize components
