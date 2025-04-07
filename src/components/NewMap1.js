@@ -1982,7 +1982,6 @@ export class GandomMap {
 
     // تابع نمایش گزارش کلی
     showSummaryReport(latitude, longitude, map) {
-        // اگر شمارنده‌ها وجود ندارند، خارج شو
         if (!window.locationCounts) return;
 
         let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir;">';
@@ -1990,17 +1989,44 @@ export class GandomMap {
         reportContent += '<table style="width: 100%; border-collapse: collapse;">';
 
         // تبدیل نام‌های انگلیسی به فارسی و مرتب‌سازی
-        const persianNames = {
-            'hospital': 'بیمارستان',
-            'attraction': 'جاذبه گردشگری',
-            'bakery': 'نانوایی',
-            'bank': 'بانک',
-            'bus_station': 'ایستگاه اتوبوس',
-            'school': 'مدرسه',
-            'mosque': 'مسجد',
-            'supermarket': 'سوپرمارکت',
-            // ... سایر ترجمه‌ها
-        };
+        const persianNames = {  
+            'attraction': 'جاذبه گردشگری',  
+            'bakery': 'نانوایی',  
+            'bank': 'بانک',  
+            'barracks': 'پادگان',  
+            'bus_line': 'خط اتوبوس',  
+            'bus_station': 'ایستگاه اتوبوس',  
+            'bus_stop': 'ایستگاه اتوبوس',  
+            'camp_site': 'اردوگاه',  
+            'caravan_site': 'کاروانسرا',  
+            'clinic': 'درمانگاه',  
+            'elementray_school': 'مدرسه ابتدایی',  
+            'fruit_vegetable_store': 'میوه فروشی',  
+            'fuel': 'پمپ بنزین',  
+            'high_school': 'دبیرستان',  
+            'hospice': 'آسایشگاه سالمندان',  
+            'hospital': 'بیمارستان',  
+            'hotel': 'هتل',  
+            'hyper_market': 'فروشگاه بزرگ',  
+            'kindergarten': 'مهد کودک',  
+            'laboratory': 'آزمایشگاه',  
+            'marketplace': 'بازار',  
+            'mosque': 'مسجد',  
+            'parking': 'پارکینگ',  
+            'parking_space': 'محل پارک',  
+            'police': 'پلیس',  
+            'public_transport_building': 'ساختمان حمل و نقل عمومی',  
+            'public_transportation': 'حمل و نقل عمومی',  
+            'school': 'مدرسه',  
+            'subway': 'مترو',  
+            'subway_line': 'خط مترو',  
+            'supermarket': 'سوپرمارکت',  
+            'theme_park': 'شهربازی',  
+            'tower': 'برج',  
+            'trade_store': 'فروشگاه تجاری',  
+            'train_station': 'ایستگاه قطار',  
+            'university': 'دانشگاه'  
+        };  
 
         Object.entries(window.locationCounts)
             .sort(([keyA], [keyB]) => (persianNames[keyA] || keyA).localeCompare(persianNames[keyB] || keyB))
