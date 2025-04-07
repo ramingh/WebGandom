@@ -26,6 +26,7 @@ export class GandomMap {
             })
         };
         this.addCustomStyles(); // اضافه کردن استایل‌های سفارشی
+      
     }
 
     init() {
@@ -51,6 +52,7 @@ export class GandomMap {
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
+     
         
     }
 
@@ -1984,8 +1986,8 @@ export class GandomMap {
     showSummaryReport(latitude, longitude, map) {
         if (!window.locationCounts) return;
 
-        let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir;">';
-        reportContent += '<h6 style="color: #2c3e50; margin-bottom: 10px;">zzz گزارش کلی کسب و کارها</h6>';
+        let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 10px;">';
+        reportContent += '<h6 style="color:rgb(179, 7, 7); margin-bottom: 7px; font-size: 12px;"> گزارش کلی کسب و کارها</h6>';
         reportContent += '<table style="width: 100%; border-collapse: collapse;">';
 
         // تبدیل نام‌های انگلیسی به فارسی و مرتب‌سازی
@@ -2034,8 +2036,8 @@ export class GandomMap {
                 const persianName = persianNames[category] || category;
                 reportContent += `
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;">${count} مورد</td>
+                        <td style="padding: 3px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
+                        <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
                     </tr>`;
             });
 
@@ -2043,28 +2045,29 @@ export class GandomMap {
         
         // اضافه کردن دکمه‌های خروجی
         reportContent += `
-            <div style="margin-top: 10px; text-align: center;">
-  
-                <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn">
+            <div style="margin-top: 7px; text-align: center;">
+                <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn" style="font-size: 11px;">
                     <i class="fas fa-file-pdf"></i> خروجی PDF
                 </button>
             </div>
         </div>`;
-            // اضافه کردن متد exportToPDF به window
-            window.exportToPDF = (reportData) => {
-                this.exportToPDF(decodeURIComponent(reportData));
-            };
-          // نمایش مارکر موقعیت انتخاب شده popup02
-          this.addLocationMarker(longitude, latitude, map,reportContent);
-            // popup01
+
+        // اضافه کردن متد exportToPDF به window
+        window.exportToPDF = (reportData) => {
+            this.exportToPDF(decodeURIComponent(reportData));
+        };
+
+        // نمایش مارکر موقعیت انتخاب شده popup02
+        this.addLocationMarker(longitude, latitude, map, reportContent);
+
         // ایجاد پاپ‌آپ گزارش
-        const reportPopup = L.popup({
-            className: 'custom-popup',
-            maxWidth: 300
-        })
-        .setLatLng([latitude, longitude])
-        .setContent(reportContent)
-        .openOn(map);
+        // const reportPopup = L.popup({
+        //     className: 'custom-popup',
+        //     maxWidth: 210
+        // })
+        // .setLatLng([latitude, longitude])
+        // .setContent(reportContent)
+        // .openOn(map);
 
         // تعریف تابع خروجی DBF
         window.exportToDBF = (lat, lng) => {
@@ -2096,6 +2099,7 @@ export class GandomMap {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         };
+       
     }
 
     // اضافه کردن استایل‌های جدید
@@ -2368,7 +2372,7 @@ export class GandomMap {
             iconAnchor: [12, 24]
         });
 
-        L.marker([latitude, longitude], { icon })
+       L.marker([latitude, longitude], { icon })
             .addTo(map).bindPopup(textpop);
                 // `<div style="direction: rtl; text-align: right;">
                 //     <strong>موقعیت انتخاب شده</strong><br>
