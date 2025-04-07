@@ -832,8 +832,10 @@ export class GandomMap {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                          
                             map.once(L.Draw.Event.CREATED, async (e) => {
+                                this.clearMap(map);                   
+                                
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
                             const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
@@ -1896,20 +1898,70 @@ export class GandomMap {
                 const [lng, lat] = location.location.coordinates;
                 const name = location.name || subcategory;
                 const address = location.address || 'آدرس موجود نیست';
-                const distance = location.distance?.[0] ? `${location.distance[0].toFixed(0)} متر` : 'نامشخص';
-                console.log( location,'-ط-====================-', location.distance.amount , '----------');
+                const distance = location.distance?.amount ? `${Math.round(location.distance.amount)} متر` : 'نامشخص';
+                const province = location.province || '';
+                const county = location.county || '';
+                const district = location.district || '';
+                const city = location.city || '';
+                const region = location.region || '';
+                const neighborhood = location.neighborhood || '';
+                const village = location.village || '';
+
                 // افزودن مارکر به نقشه
                 L.marker([lat, lng], { 
                     icon: this.geticon(subcategory)
                 })
                 .addTo(map)
                 .bindPopup(`
-                    <div style="direction: rtl; text-align: right;">
-                        <strong>${name}</strong><br>
-                        ${address}<br>
-                        فاصله: ${distance}
+                    <div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 0.9em;">
+                        <h6 style="color: #2c3e50; margin-bottom: 8px; font-size: 1em;">${name}</h6>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>استان:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${province}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>شهرستان:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${county}</td>
+                            </tr>
+                            ${district ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>بخش:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${district}</td>
+                            </tr>
+                            ` : ''}
+                            ${region ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>منطقه:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${region}</td>
+                            </tr>
+                            ` : ''}
+                            ${neighborhood ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>محله:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${neighborhood}</td>
+                            </tr>
+                            ` : ''}
+                            ${village ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>روستا:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${village}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>فاصله:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${distance}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px;"><strong>آدرس:</strong></td>
+                                <td style="padding: 4px;">${address.replace(`${province}، ${county}، `, '')}</td>
+                            </tr>
+                        </table>
                     </div>
-                `);
+                `, {
+                    className: 'custom-popup',
+                    maxWidth: 280
+                });
             });
 
         } catch (error) {
@@ -1949,29 +2001,179 @@ export class GandomMap {
                 className: 'category-marker hospital',
                 iconSize: [24, 24]
             }),
-            'school': L.divIcon({
-                html: '<i class="fas fa-school" style="color: #4444FF;"></i>',
-                className: 'category-marker school',
+            'attraction': L.divIcon({
+                html: '<i class="fas fa-landmark" style="color: #FFA500;"></i>',
+                className: 'category-marker attraction',
                 iconSize: [24, 24]
             }),
-            'bus_station': L.divIcon({
-                html: '<i class="fas fa-bus" style="color: #44FF44;"></i>',
-                className: 'category-marker bus',
-                iconSize: [24, 24]
-            }),
-            'mosque': L.divIcon({
-                html: '<i class="fas fa-mosque" style="color: #44FF44;"></i>',
-                className: 'category-marker mosque',
+            'bakery': L.divIcon({
+                html: '<i class="fas fa-bread-slice" style="color: #8B4513;"></i>',
+                className: 'category-marker bakery',
                 iconSize: [24, 24]
             }),
             'bank': L.divIcon({
-                html: '<i class="fas fa-university" style="color: #FFFF44;"></i>',
+                html: '<i class="fas fa-university" style="color: #4B0082;"></i>',
                 className: 'category-marker bank',
                 iconSize: [24, 24]
             }),
+            'barracks': L.divIcon({
+                html: '<i class="fas fa-shield-alt" style="color: #808080;"></i>',
+                className: 'category-marker barracks',
+                iconSize: [24, 24]
+            }),
+            'bus_line': L.divIcon({
+                html: '<i class="fas fa-route" style="color: #006400;"></i>',
+                className: 'category-marker bus-line',
+                iconSize: [24, 24]
+            }),
+            'bus_station': L.divIcon({
+                html: '<i class="fas fa-bus" style="color: #006400;"></i>',
+                className: 'category-marker bus-station',
+                iconSize: [24, 24]
+            }),
+            'bus_stop': L.divIcon({
+                html: '<i class="fas fa-stop-circle" style="color: #006400;"></i>',
+                className: 'category-marker bus-stop',
+                iconSize: [24, 24]
+            }),
+            'camp_site': L.divIcon({
+                html: '<i class="fas fa-campground" style="color: #228B22;"></i>',
+                className: 'category-marker camp-site',
+                iconSize: [24, 24]
+            }),
+            'caravan_site': L.divIcon({
+                html: '<i class="fas fa-caravan" style="color: #8B4513;"></i>',
+                className: 'category-marker caravan-site',
+                iconSize: [24, 24]
+            }),
+            'clinic': L.divIcon({
+                html: '<i class="fas fa-clinic-medical" style="color: #FF69B4;"></i>',
+                className: 'category-marker clinic',
+                iconSize: [24, 24]
+            }),
+            'elementray_school': L.divIcon({
+                html: '<i class="fas fa-chalkboard-teacher" style="color: #4169E1;"></i>',
+                className: 'category-marker elementary-school',
+                iconSize: [24, 24]
+            }),
+            'fruit_vegetable_store': L.divIcon({
+                html: '<i class="fas fa-apple-alt" style="color: #FF6347;"></i>',
+                className: 'category-marker fruit-store',
+                iconSize: [24, 24]
+            }),
+            'fuel': L.divIcon({
+                html: '<i class="fas fa-gas-pump" style="color: #FFD700;"></i>',
+                className: 'category-marker fuel',
+                iconSize: [24, 24]
+            }),
+            'high_school': L.divIcon({
+                html: '<i class="fas fa-school" style="color: #4169E1;"></i>',
+                className: 'category-marker high-school',
+                iconSize: [24, 24]
+            }),
+            'hospice': L.divIcon({
+                html: '<i class="fas fa-heartbeat" style="color: #FF69B4;"></i>',
+                className: 'category-marker hospice',
+                iconSize: [24, 24]
+            }),
+            'hotel': L.divIcon({
+                html: '<i class="fas fa-hotel" style="color: #FFD700;"></i>',
+                className: 'category-marker hotel',
+                iconSize: [24, 24]
+            }),
+            'kindergarten': L.divIcon({
+                html: '<i class="fas fa-baby" style="color: #FFB6C1;"></i>',
+                className: 'category-marker kindergarten',
+                iconSize: [24, 24]
+            }),
+            'hyper_market': L.divIcon({
+                html: '<i class="fas fa-shopping-bag" style="color: #32CD32;"></i>',
+                className: 'category-marker hyper-market',
+                iconSize: [24, 24]
+            }),
+            'laboratory': L.divIcon({
+                html: '<i class="fas fa-flask" style="color: #9370DB;"></i>',
+                className: 'category-marker laboratory',
+                iconSize: [24, 24]
+            }),
+            'marketplace': L.divIcon({
+                html: '<i class="fas fa-store" style="color: #FF8C00;"></i>',
+                className: 'category-marker marketplace',
+                iconSize: [24, 24]
+            }),
+            'mosque': L.divIcon({
+                html: '<i class="fas fa-mosque" style="color: #008080;"></i>',
+                className: 'category-marker mosque',
+                iconSize: [24, 24]
+            }),
+            'parking': L.divIcon({
+                html: '<i class="fas fa-parking" style="color: #808080;"></i>',
+                className: 'category-marker parking',
+                iconSize: [24, 24]
+            }),
+            'parking_space': L.divIcon({
+                html: '<i class="fas fa-car" style="color: #808080;"></i>',
+                className: 'category-marker parking-space',
+                iconSize: [24, 24]
+            }),
+            'police': L.divIcon({
+                html: '<i class="fas fa-shield-alt" style="color: #000080;"></i>',
+                className: 'category-marker police',
+                iconSize: [24, 24]
+            }),
+            'public_transport_building': L.divIcon({
+                html: '<i class="fas fa-building" style="color: #006400;"></i>',
+                className: 'category-marker transport-building',
+                iconSize: [24, 24]
+            }),
+            'public_transportation': L.divIcon({
+                html: '<i class="fas fa-train" style="color: #006400;"></i>',
+                className: 'category-marker public-transport',
+                iconSize: [24, 24]
+            }),
+            'school': L.divIcon({
+                html: '<i class="fas fa-graduation-cap" style="color: #4169E1;"></i>',
+                className: 'category-marker school',
+                iconSize: [24, 24]
+            }),
+            'subway': L.divIcon({
+                html: '<i class="fas fa-subway" style="color: #006400;"></i>',
+                className: 'category-marker subway',
+                iconSize: [24, 24]
+            }),
+            'subway_line': L.divIcon({
+                html: '<i class="fas fa-route" style="color: #006400;"></i>',
+                className: 'category-marker subway-line',
+                iconSize: [24, 24]
+            }),
             'supermarket': L.divIcon({
-                html: '<i class="fas fa-shopping-cart" style="color: #FF44FF;"></i>',
+                html: '<i class="fas fa-shopping-cart" style="color: #32CD32;"></i>',
                 className: 'category-marker supermarket',
+                iconSize: [24, 24]
+            }),
+            'theme_park': L.divIcon({
+                html: '<i class="fas fa-theater-masks" style="color: #FF69B4;"></i>',
+                className: 'category-marker theme-park',
+                iconSize: [24, 24]
+            }),
+            'tower': L.divIcon({
+                html: '<i class="fas fa-building" style="color: #808080;"></i>',
+                className: 'category-marker tower',
+                iconSize: [24, 24]
+            }),
+            'trade_store': L.divIcon({
+                html: '<i class="fas fa-store-alt" style="color: #FF8C00;"></i>',
+                className: 'category-marker trade-store',
+                iconSize: [24, 24]
+            }),
+            'train_station': L.divIcon({
+                html: '<i class="fas fa-train" style="color: #006400;"></i>',
+                className: 'category-marker train-station',
+                iconSize: [24, 24]
+            }),
+            'university': L.divIcon({
+                html: '<i class="fas fa-university" style="color: #4169E1;"></i>',
+                className: 'category-marker university',
                 iconSize: [24, 24]
             }),
             'default': L.divIcon({
