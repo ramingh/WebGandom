@@ -18,7 +18,7 @@ async function initApp() {
     try {
         // Initialize map
         map.init();
-        console.log('Main   111111111');
+ 
         // Load layers
         await layerManager.loadLayers();
 

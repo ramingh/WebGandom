@@ -616,25 +616,15 @@ a.leaflet-draw-draw-codeposti {
     font-size: 14px;
 }
 
-/* اضافه کردن استایل برای tooltip ترسیم */
-.leaflet-draw-tooltip {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid transparent;
-    border-radius: 4px;
-    color: #fff;
-    font-family: 'Vazir', sans-serif;
-    font-size: 12px;
-    padding: 4px 8px;
-    white-space: nowrap;
-    min-width: 150px;
-    text-align: center;
-    direction: rtl;
-}
-
-.leaflet-draw-tooltip:before {
-    border-top: 6px solid rgba(0, 0, 0, 0.8);
-}
-
-.leaflet-draw-tooltip-single {
-    margin-top: -12px;
-}
+ 
+ 
+    /* اضافه کردن این استایل برای مخفی کردن پیام راهنمای ترسیم */
+    .leaflet-draw-tooltip {
+        display: none !important;
+    }
+    
+    /* یا اگر فقط متن را می‌خواهید مخفی کنید */
+    .leaflet-draw-tooltip-single {
+        display: none !important;
+    }
+ 

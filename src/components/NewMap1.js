@@ -10,6 +10,7 @@ export class GandomMap {
         this.baseLayer = null;
         this.markers = [];
         this.currentBaseLayer = null;
+        this.listmaarker = []; // اضافه کردن آرایه برای نگهداری لیست مارکرها
         this.baseMaps = {
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 20,
@@ -23,8 +24,8 @@ export class GandomMap {
                 maxZoom: 17,
                 attribution: '© OpenTopoMap'
             })
-
         };
+        this.addCustomStyles(); // اضافه کردن استایل‌های سفارشی
     }
 
     init() {
@@ -50,8 +51,7 @@ export class GandomMap {
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
-        console.log('111111111');
-        // this.servicemap();
+        
     }
 
     initBaseMapControls() {
@@ -262,35 +262,7 @@ export class GandomMap {
             const layer = this.layers.get(layerId);
             this.map.removeLayer(layer);
         }
-    }
-
-    // getLayerTypeMapping(layerId) {
-    //     // Map layer IDs to their corresponding types in the database
-    //     const mapping = {
-    //         'shop': 'shop',
-    //         'park': 'park',
-    //         'nutrition_supplements': 'nutrition_supplements',
-    //         'bus_station': 'bus_station',
-    //         'train_station': 'train_station',
-    //         'marketplace': 'marketplace',
-    //         'tower': 'tower',
-    //         'hospital': 'hospital',
-    //         'bus_stop': 'bus_stop',
-    //         'university': 'university',
-    //         'high_school': 'high_school',
-    //         'clinic': 'clinic',
-    //         'supermarket': 'supermarket',
-    //         'school': 'school',
-    //         'elementray_school': 'elementray_school',
-    //         'mosque': 'mosque',
-    //         'kindergarten': 'kindergarten',
-    //         'fruit_vegetable_store': 'fruit_vegetable_store',
-    //         'bakery': 'bakery',
-    //         'hyper_market': 'hyper_market'
-    //     };
-    //     return mapping[layerId] || layerId;
-    // }
-
+    } 
     getMarkerIcon(type) {
         // Define icons for different types
         const icons = {
@@ -393,80 +365,7 @@ export class GandomMap {
                 return this.createMarkerLayer(data);
         }
     }
-
-    // createMarkerLayer(data) {
-    //     return L.geoJSON(data, {
-    //         pointToLayer: (feature, latlng) => {
-    //             return L.marker(latlng, {
-    //                 icon: this.getMarkerIcon(feature.properties.type)
-    //             });
-    //         },
-    //         onEachFeature: (feature, layer) => {
-    //             if (feature.properties) {
-    //                 layer.bindPopup(this.createPopupContent(feature.properties));
-    //             }
-    //         }
-    //     });
-    // }
-
-    // createPopupContent(properties) {
-    //     let content = '<div class="popup-content" style="direction: rtl; text-align: right;">';
-
-    //     // Define Persian labels for properties
-    //     const persianLabels = {
-    //         'name': 'نام',
-    //         'address': 'آدرس',
-    //         'phone': 'تلفن',
-    //         'type': 'نوع',
-    //         'description': 'توضیحات'
-    //     };
-
-    //     for (const [key, value] of Object.entries(properties)) {
-    //         if (value && key !== 'type') {
-    //             const label = persianLabels[key] || key;
-    //             content += `<strong>${label}:</strong> ${value}<br>`;
-    //         }
-    //     }
-    //     content += '</div>';
-    //     return content;
-    // }
-
-    // initTrashButton() {
-    //     // اطمینان از وجود نقشه
-    //     if (!this.map) return;
-
-    //     const TrashControl = L.Control.extend({
-    //         options: {
-    //             position: 'topleft'
-    //         },
-    //         onAdd: (map) => {
-    //             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control trash-control');
-    //             const link = L.DomUtil.create('a', 'trash-control-link', container);
-
-    //             link.href = '#';
-    //             link.title = 'پاک کردن';
-    //             link.innerHTML = '<i class="fas fa-trash"></i>';
-
-    //             L.DomEvent.on(link, 'click', (e) => {
-    //                 L.DomEvent.preventDefault(e);
-    //                 this.clearAllMarkers();
-    //             });
-
-    //             // جلوگیری از انتشار رویداد کلیک به نقشه
-    //             L.DomEvent.stopPropagation(link);
-
-    //             return container;
-    //         }
-    //     });
-
-    //     // اطمینان از وجود نقشه
-    //     if (this.map) {
-    //         this.map.addControl(new TrashControl());
-    //     } else {
-    //         console.error('نقشه هنوز ایجاد نشده است');
-    //     }
-    // }
-
+  
     clearAllMarkers() {
         try {
             // حذف تمام لایه‌ها از نقشه
@@ -614,105 +513,105 @@ export class GandomMap {
         if (!this.map) return;
 
         // تنظیم متن‌های فارسی برای ابزار ترسیم
-        if (!L.drawLocal) {
-            L.drawLocal = {};
-        }
+        // if (!L.drawLocal) {
+        //     L.drawLocal = {};
+        // }
 
-        L.drawLocal = {
-            draw: {
-                toolbar: {
-                    actions: {
-                        title: 'لغو ترسیم',
-                        text: 'لغو'
-                    },
-                    finish: {
-                        title: 'پایان ترسیم',
-                        text: 'پایان'
-                    },
-                    undo: {
-                        title: 'حذف آخرین نقطه ترسیم شده',
-                        text: 'حذف آخرین نقطه'
-                    },
-                    buttons: {
-                        polyline: 'ترسیم خط',
-                        polygon: 'ترسیم چندضلعی',
-                        rectangle: 'ترسیم مستطیل',
-                        circle: 'ترسیم دایره',
-                        marker: 'ترسیم نشانگر',
-                        circlemarker: 'ترسیم نشانگر دایره‌ای'
-                    }
-                },
-                handlers: {
-                    circle: {
-                        tooltip: {
-                            start: 'برای ترسیم دایره کلیک کرده و بکشید'
-                        },
-                        radius: 'شعاع'
-                    },
-                    circlemarker: {
-                        tooltip: {
-                            start: 'برای قرار دادن نشانگر دایره‌ای کلیک کنید'
-                        }
-                    },
-                    marker: {
-                        tooltip: {
-                            start: 'برای قرار دادن نشانگر کلیک کنید'
-                        }
-                    },
-                    polygon: {
-                        tooltip: {
-                            start: 'برای شروع ترسیم کلیک کنید',
-                            cont: 'برای ادامه ترسیم کلیک کنید',
-                            end: 'برای پایان ترسیم روی اولین نقطه کلیک کنید'
-                        }
-                    },
-                    polyline: {
-                        error: 'خطا',
-                        tooltip: {
-                            start: 'برای شروع ترسیم خط کلیک کنید',
-                            cont: 'برای ادامه ترسیم خط کلیک کنید',
-                            end: 'برای پایان ترسیم خط روی آخرین نقطه دابل کلیک کنید'
-                        }
-                    },
-                    rectangle: {
-                        tooltip: {
-                            start: 'برای شروع ترسیم مستطیل کلیک کنید و نگه دارید',
-                            cont: 'برای ترسیم مستطیل ماوس را حرکت دهید',
-                            end: 'برای پایان ترسیم رها کنید'
-                        }
-                    },
-                    simpleshape: {
-                        tooltip: {
-                            end: 'برای پایان ترسیم رها کنید'
-                        }
-                    }
-                }
-            },
-            edit: {
-                toolbar: {
-                    actions: {
-                        save: {
-                            title: 'ذخیره تغییرات',
-                            text: 'ذخیره'
-                        },
-                        cancel: {
-                            title: 'لغو ویرایش و حذف همه تغییرات',
-                            text: 'لغو'
-                        },
-                        clearAll: {
-                            title: 'پاک کردن همه لایه‌ها',
-                            text: 'پاک کردن همه'
-                        }
-                    },
-                    buttons: {
-                        edit: 'ویرایش لایه‌ها',
-                        editDisabled: 'لایه‌ای برای ویرایش وجود ندارد',
-                        remove: 'حذف لایه‌ها',
-                        removeDisabled: 'لایه‌ای برای حذف وجود ندارد'
-                    }
-                }
-            }
-        };
+        // L.drawLocal = {
+        //     draw: {
+        //         toolbar: {
+        //             actions: {
+        //                 title: 'لغو ترسیم',
+        //                 text: 'لغو'
+        //             },
+        //             finish: {
+        //                 title: 'پایان ترسیم',
+        //                 text: 'پایان'
+        //             },
+        //             undo: {
+        //                 title: 'حذف آخرین نقطه ترسیم شده',
+        //                 text: 'حذف آخرین نقطه'
+        //             },
+        //             buttons: {
+        //                 polyline: 'ترسیم خط',
+        //                 polygon: 'ترسیم چندضلعی',
+        //                 rectangle: 'ترسیم مستطیل',
+        //                 circle: 'ترسیم دایره',
+        //                 marker: 'ترسیم نشانگر',
+        //                 circlemarker: 'ترسیم نشانگر دایره‌ای'
+        //             }
+        //         },
+        //         handlers: {
+        //             circle: {
+        //                 tooltip: {
+        //                     start: 'برای ترسیم دایره کلیک کرده و بکشید'
+        //                 },
+        //                 radius: 'شعاع'
+        //             },
+        //             circlemarker: {
+        //                 tooltip: {
+        //                     start: 'برای قرار دادن نشانگر دایره‌ای کلیک کنید'
+        //                 }
+        //             },
+        //             marker: {
+        //                 tooltip: {
+        //                     start: 'برای قرار دادن نشانگر کلیک کنید'
+        //                 }
+        //             },
+        //             polygon: {
+        //                 tooltip: {
+        //                     start: 'برای شروع ترسیم کلیک کنید',
+        //                     cont: 'برای ادامه ترسیم کلیک کنید',
+        //                     end: 'برای پایان ترسیم روی اولین نقطه کلیک کنید'
+        //                 }
+        //             },
+        //             polyline: {
+        //                 error: 'خطا',
+        //                 tooltip: {
+        //                     start: 'برای شروع ترسیم خط کلیک کنید',
+        //                     cont: 'برای ادامه ترسیم خط کلیک کنید',
+        //                     end: 'برای پایان ترسیم خط روی آخرین نقطه دابل کلیک کنید'
+        //                 }
+        //             },
+        //             rectangle: {
+        //                 tooltip: {
+        //                     start: 'برای شروع ترسیم مستطیل کلیک کنید و نگه دارید',
+        //                     cont: 'برای ترسیم مستطیل ماوس را حرکت دهید',
+        //                     end: 'برای پایان ترسیم رها کنید'
+        //                 }
+        //             },
+        //             simpleshape: {
+        //                 tooltip: {
+        //                     end: 'برای پایان ترسیم رها کنید'
+        //                 }
+        //             }
+        //         }
+        //     },
+        //     edit: {
+        //         toolbar: {
+        //             actions: {
+        //                 save: {
+        //                     title: 'ذخیره تغییرات',
+        //                     text: 'ذخیره'
+        //                 },
+        //                 cancel: {
+        //                     title: 'لغو ویرایش و حذف همه تغییرات',
+        //                     text: 'لغو'
+        //                 },
+        //                 clearAll: {
+        //                     title: 'پاک کردن همه لایه‌ها',
+        //                     text: 'پاک کردن همه'
+        //                 }
+        //             },
+        //             buttons: {
+        //                 edit: 'ویرایش لایه‌ها',
+        //                 editDisabled: 'لایه‌ای برای ویرایش وجود ندارد',
+        //                 remove: 'حذف لایه‌ها',
+        //                 removeDisabled: 'لایه‌ای برای حذف وجود ندارد'
+        //             }
+        //         }
+        //     }
+        // };
 
         // تعریف کنترل سفارشی
         const CustomDrawControl = L.Control.extend({
@@ -931,8 +830,27 @@ export class GandomMap {
                         icon: 'fas fa-shopping-cart', 
                         title: 'همه کسب و کارها', 
                         action: () => {
-                            const rectangleDrawer = new L.Draw.Rectangle(map);
-                            rectangleDrawer.enable();
+                            const markerDrawer = new L.Draw.Marker(map);
+                            markerDrawer.enable();
+                            this.clearMap(map);
+                            map.once(L.Draw.Event.CREATED, async (e) => {
+                                const marker = e.layer;
+                                const latlng = marker.getLatLng();
+                                // const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
+                                const list1 = [ 'hyper_market'];
+                               
+                                // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
+                                const promises = list1.map(category => 
+                                    this.count_other(latlng.lng, latlng.lat, 1, map, category, 1)
+                                );
+                                
+                                try {
+                                    await Promise.all(promises);
+                                    console.log('تمام دسته‌بندی‌ها با موفقیت پردازش شدند');
+                                } catch (error) {
+                                    console.error('خطا در پردازش دسته‌بندی‌ها:', error);
+                                }
+                            });
                         }
                     },
                     { 
@@ -1012,7 +930,7 @@ export class GandomMap {
     // متدهای کمکی برای هر نوع شکل
     handleMarkerCreation(layer) {
         const latlng = layer.getLatLng();
-        console.log(' دریافت دو مختصات نشانگر:', latlng);
+        // console.log(' دریافت دو مختصات نشانگر:', latlng);
         // می‌توانید عملیات بیشتری اینجا انجام دهید
     }
 
@@ -1659,7 +1577,7 @@ export class GandomMap {
                 enabled: this.options.modir,
                 handler: new L.Draw.Modir(map, this.options.modir),
                 title: 'مدیران مناطق'
-                // title: L.drawLocal.draw.toolbar.buttons.modir
+            
             },
             {
                 enabled: this.options.tarakom,
@@ -1894,5 +1812,223 @@ export class GandomMap {
             return false;
         }
         // console.log(total_khan, '-------------------', total_pop);
+    }
+
+    // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
+    async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
+        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q';
+        
+        try {
+            // نمایش مارکر موقعیت انتخاب شده
+            this.addLocationMarker(longitude, latitude, map);
+            
+            // ساخت URL درخواست
+            const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
+            
+            // انجام درخواست با استفاده از jQuery (برای سازگاری با کد قبلی)
+            const response = await $.ajax({
+                type: 'GET',
+                url: url,
+                headers: {
+                    'x-api-key': API_KEY,
+                    'content-type': 'application/json'
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.status === 401) {
+                        console.error(`خطای اعتبارسنجی برای ${subcategory}:`, error);
+                        return;
+                    }
+                    if (xhr.status === 500) {
+                        console.error(`خطای سرور برای ${subcategory}:`, error);
+                        return;
+                    }
+                    console.error(`خطای ناشناخته برای ${subcategory}:`, error);
+                }
+            });
+
+            if (!response?.data?.count) {
+                console.log(`هیچ نتیجه‌ای برای ${subcategory} یافت نشد`);
+                return;
+            }
+
+            // دریافت تعداد کل نتایج
+            const totalCount = response.data.count;
+
+          
+
+            // دریافت نتایج به صورت صفحه‌بندی شده
+            const batchSize = 20;
+            for (let offset = 0; offset < totalCount; offset += batchSize) {
+                // await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY);
+            console.log (  offset,`هz==zz=== `, subcategory);
+          
+            }
+            
+            console.log(`تمام ${totalCount} مکان برای دسته ${subcategory} با موفقیت نمایش داده شد`);
+
+        } catch (error) {
+            // مدیریت خطاها به صورت جداگانه
+            if (error.status === 401) {
+                console.error('خطای اعتبارسنجی - لطفا API key را بررسی کنید');
+            } else if (error.status === 500) {
+                console.error('خطای سرور - لطفا بعداً تلاش کنید');
+            } else {
+                console.error('خطا در دریافت اطلاعات مکان‌ها:', error);
+            }
+        }
+    }
+
+    // تابع کمکی برای دریافت جزئیات مکان‌ها
+    async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY) {
+        try {
+            const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
+            
+            const response = await $.ajax({
+                type: 'GET',
+                url: url,
+                headers: {
+                    'x-api-key': API_KEY,
+                    'content-type': 'application/json'
+                }
+            });
+
+            if (!response?.value) return;
+
+            // پردازش و نمایش نتایج
+            Object.values(response.value).forEach(location => {
+                if (!location?.location?.coordinates) return;
+
+                const [lng, lat] = location.location.coordinates;
+                const name = location.name || subcategory;
+                const address = location.address || 'آدرس موجود نیست';
+                const distance = location.distance?.[0] ? `${location.distance[0].toFixed(0)} متر` : 'نامشخص';
+
+                // افزودن مارکر به نقشه
+                L.marker([lat, lng], { 
+                    icon: this.geticon(subcategory)
+                })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="direction: rtl; text-align: right;">
+                        <strong>${name}</strong><br>
+                        ${address}<br>
+                        فاصله: ${distance}
+                    </div>
+                `);
+            });
+
+        } catch (error) {
+            console.error(`خطا در دریافت جزئیات برای ${subcategory}:`, error);
+        }
+    }
+
+    // تابع کمکی برای نمایش مکان روی نقشه
+    addLocationToMap(location, map) {
+        if (!location.location?.coordinates) return;
+
+        const icon = L.divIcon({
+            html: '<i class="fas fa-building" style="color: #4444FF; font-size: 18px;"></i>',
+            className: 'location-marker',
+            iconSize: [18, 18],
+            iconAnchor: [9, 18]
+        });
+
+        const [lng, lat] = location.location.coordinates;
+        
+        L.marker([lat, lng], { icon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="direction: rtl; text-align: right;">
+                    <strong>${location.title || 'بدون نام'}</strong><br>
+                    ${location.address || 'آدرس موجود نیست'}<br>
+                    فاصله: ${(location.distance || 0).toFixed(2)} متر
+                </div>
+            `);
+    }
+
+    // تابع کمکی برای تعیین آیکون بر اساس دسته‌بندی
+    geticon(category) {
+        const icons = {
+            'hospital': L.divIcon({
+                html: '<i class="fas fa-hospital" style="color: #FF4444;"></i>',
+                className: 'category-marker hospital',
+                iconSize: [24, 24]
+            }),
+            'school': L.divIcon({
+                html: '<i class="fas fa-school" style="color: #4444FF;"></i>',
+                className: 'category-marker school',
+                iconSize: [24, 24]
+            }),
+            'bus_station': L.divIcon({
+                html: '<i class="fas fa-bus" style="color: #44FF44;"></i>',
+                className: 'category-marker bus',
+                iconSize: [24, 24]
+            }),
+            'mosque': L.divIcon({
+                html: '<i class="fas fa-mosque" style="color: #44FF44;"></i>',
+                className: 'category-marker mosque',
+                iconSize: [24, 24]
+            }),
+            'bank': L.divIcon({
+                html: '<i class="fas fa-university" style="color: #FFFF44;"></i>',
+                className: 'category-marker bank',
+                iconSize: [24, 24]
+            }),
+            'supermarket': L.divIcon({
+                html: '<i class="fas fa-shopping-cart" style="color: #FF44FF;"></i>',
+                className: 'category-marker supermarket',
+                iconSize: [24, 24]
+            }),
+            'default': L.divIcon({
+                html: '<i class="fas fa-map-marker-alt" style="color: #888888;"></i>',
+                className: 'category-marker default',
+                iconSize: [24, 24]
+            })
+        };
+
+        return icons[category] || icons.default;
+    }
+
+    // اضافه کردن CSS برای پاپ‌آپ‌ها
+    addCustomStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .custom-popup {
+                direction: rtl;
+                font-family: Vazir, sans-serif;
+            }
+            .custom-popup .leaflet-popup-content {
+                margin: 8px 10px;
+            }
+            .category-marker {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .category-marker i {
+                font-size: 24px;
+                text-shadow: 2px 2px 2px rgba(0,0,0,0.2);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    addLocationMarker(longitude, latitude, map) {
+        const icon = L.divIcon({
+            html: '<i class="fas fa-map-marker-alt" style="color: #FF0000; font-size: 24px;"></i>',
+            className: 'location-marker',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        });
+
+        L.marker([latitude, longitude], { icon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="direction: rtl; text-align: right;">
+                    <strong>موقعیت انتخاب شده</strong><br>
+                    عرض جغرافیایی: ${latitude}<br>
+                    طول جغرافیایی: ${longitude}
+                </div>
+            `);
     }
 } 

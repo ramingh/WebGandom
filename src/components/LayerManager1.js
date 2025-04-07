@@ -242,7 +242,7 @@ export class LayerManager {
         // Add event listeners
         this.addLayerEventListeners();
         
-        console.log('Layers rendered:', layerData.length); // اضافه کردن لاگ برای بررسی رندر
+        // console.log('Layers rendered:', layerData.length); // اضافه کردن لاگ برای بررسی رندر
     }
 
     createLayerItem(id, name) {
