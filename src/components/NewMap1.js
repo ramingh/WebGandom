@@ -836,8 +836,8 @@ export class GandomMap {
                             map.once(L.Draw.Event.CREATED, async (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                // const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
-                                const list1 = [ 'hyper_market'];
+                            const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
+                                // const list1 = [ 'hyper_market'];
                                
                                 // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
                                 const promises = list1.map(category => 
@@ -1864,9 +1864,9 @@ export class GandomMap {
         } catch (error) {
             // مدیریت خطاها به صورت جداگانه
             if (error.status === 401) {
-                console.error('خطای اعتبارسنجی - لطفا API key را بررسی کنید');
+                console.error('خطای اعتبارسنجی - لطفا API key را بررسی401 کنید');
             } else if (error.status === 500) {
-                console.error('خطای سرور - لطفا بعداً تلاش کنید');
+                console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ' );
             } else {
                 console.log('خطا در دریافت اطلاعات مکان‌ها:', error);
             }
@@ -1877,7 +1877,7 @@ export class GandomMap {
     async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY) {
         try {
             const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
-            console.log('-ط--', url);
+            // console.log('-ط--', url);
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
@@ -1897,7 +1897,7 @@ export class GandomMap {
                 const name = location.name || subcategory;
                 const address = location.address || 'آدرس موجود نیست';
                 const distance = location.distance?.[0] ? `${location.distance[0].toFixed(0)} متر` : 'نامشخص';
-
+                console.log( location,'-ط-====================-', location.distance.amount , '----------');
                 // افزودن مارکر به نقشه
                 L.marker([lat, lng], { 
                     icon: this.geticon(subcategory)
