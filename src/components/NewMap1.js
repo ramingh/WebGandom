@@ -1816,8 +1816,7 @@ export class GandomMap {
 
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
-        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q';
-        
+        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q'; 
         try {
             // نمایش مارکر موقعیت انتخاب شده
             this.addLocationMarker(longitude, latitude, map);
@@ -1825,7 +1824,7 @@ export class GandomMap {
             // ساخت URL درخواست
             const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
             
-            // انجام درخواست با استفاده از jQuery (برای سازگاری با کد قبلی)
+            // انجام درخواست با استفاده از jQuery
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
@@ -1842,7 +1841,7 @@ export class GandomMap {
                         console.error(`خطای سرور برای ${subcategory}:`, error);
                         return;
                     }
-                    console.error(`خطای ناشناخته برای ${subcategory}:`, error);
+                    console.log(`خطای ناشناخته برای ${subcategory}:`, error);
                 }
             });
 
@@ -1854,14 +1853,10 @@ export class GandomMap {
             // دریافت تعداد کل نتایج
             const totalCount = response.data.count;
 
-          
-
             // دریافت نتایج به صورت صفحه‌بندی شده
             const batchSize = 20;
             for (let offset = 0; offset < totalCount; offset += batchSize) {
-                // await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY);
-            console.log (  offset,`هz==zz=== `, subcategory);
-          
+                await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY);
             }
             
             console.log(`تمام ${totalCount} مکان برای دسته ${subcategory} با موفقیت نمایش داده شد`);
@@ -1873,7 +1868,7 @@ export class GandomMap {
             } else if (error.status === 500) {
                 console.error('خطای سرور - لطفا بعداً تلاش کنید');
             } else {
-                console.error('خطا در دریافت اطلاعات مکان‌ها:', error);
+                console.log('خطا در دریافت اطلاعات مکان‌ها:', error);
             }
         }
     }
@@ -1882,7 +1877,7 @@ export class GandomMap {
     async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY) {
         try {
             const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
-            
+            console.log('-ط--', url);
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
