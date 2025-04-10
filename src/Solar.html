@@ -568,10 +568,10 @@
 
   // -------------------------------------------------------------------------------------------
 
-
+// http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=10453
 
 function checkStore(storeCode) {
-    fetch(`http://10.131.3.17:3000/proxy/check-store?storeCode=${storeCode}`)
+    fetch(` http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=${storeCode}`)
         .then(response => response.json())
         .then(data => {
             console.log('نتیجه دریافت‌شده:', data);

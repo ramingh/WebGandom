@@ -1852,7 +1852,7 @@ export class GandomMap {
 
             // دریافت تعداد کل نتایج
             const totalCount = response.data.count;
-
+            window.locationCounts = {}; 
             // دریافت نتایج به صورت صفحه‌بندی شده
             const batchSize = 20;
             for (let offset = 0; offset < totalCount; offset += batchSize) {
@@ -1893,7 +1893,8 @@ export class GandomMap {
             if (!window.locationCounts) {
                 window.locationCounts = {};
             }
-            
+            // window.locationCounts = {}; // پاک کردن همه قبل از شروع loop
+
             // افزایش شمارنده برای این دسته‌بندی
             if (!window.locationCounts[subcategory]) {
                 window.locationCounts[subcategory] = 0;
@@ -1937,41 +1938,49 @@ export class GandomMap {
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>بخش:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${district}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
+                            ${city ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>شهر:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${city}</td>
+                            </tr>` : ''}
                             ${region ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>منطقه:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${region}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
                             ${neighborhood ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>محله:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${neighborhood}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
                             ${village ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>روستا:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${village}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
+                            ${(() => {
+                                // حذف نام استان، شهرستان و شهر از آدرس
+                                let cleanAddress = address;
+                                if (province) cleanAddress = cleanAddress.replace(province, '').trim();
+                                if (county) cleanAddress = cleanAddress.replace(county, '').trim();
+                                if (city) cleanAddress = cleanAddress.replace(city, '').trim();
+                                // حذف کاماهای اضافی
+                                cleanAddress = cleanAddress.replace(/,\s*,/g, ',').replace(/^,\s*|\s*,$/g, '');
+                                
+                                return cleanAddress !== 'آدرس موجود نیست' && cleanAddress ? `
+                                <tr>
+                                    <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>آدرس:</strong></td>
+                                    <td style="padding: 4px; border-bottom: 1px solid #eee;">${cleanAddress}</td>
+                                </tr>` : '';
+                            })()}
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>فاصله:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${distance}</td>
                             </tr>
-                            <tr>
-                                <td style="padding: 4px;"><strong>آدرس:</strong></td>
-                                <td style="padding: 4px;">${address.replace(`${province}، ${county}، `, '')}</td>
-                            </tr>
                         </table>
- 
                     </div>
-                `, {
-                    className: 'custom-popup',
-                    maxWidth: 280
-                });
+                `);
             });
 
             // نمایش گزارش کلی پس از اتمام همه درخواست‌ها
@@ -1987,7 +1996,7 @@ export class GandomMap {
         if (!window.locationCounts) return;
 
         let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 10px;">';
-        reportContent += '<h6 style="color:rgb(179, 7, 7); margin-bottom: 7px; font-size: 12px;"> گزارش کلی کسب و کارها</h6>';
+        reportContent += '<h6 style="color:rgb(4, 123, 2); margin-bottom: 7px; font-size: 12px;"> گزارش کلی کسب و کارها</h6>';
         reportContent += '<table style="width: 100%; border-collapse: collapse;">';
 
         // تبدیل نام‌های انگلیسی به فارسی و مرتب‌سازی
@@ -2040,7 +2049,7 @@ export class GandomMap {
                         <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
                     </tr>`;
             });
-
+console.log(      '===========',reportContent);
         reportContent += '</table>';
         
         // اضافه کردن دکمه‌های خروجی
@@ -2059,7 +2068,7 @@ export class GandomMap {
 
         // نمایش مارکر موقعیت انتخاب شده popup02
         this.addLocationMarker(longitude, latitude, map, reportContent);
-
+    
         // ایجاد پاپ‌آپ گزارش
         // const reportPopup = L.popup({
         //     className: 'custom-popup',
