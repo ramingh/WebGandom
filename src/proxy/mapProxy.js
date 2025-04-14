@@ -2212,7 +2212,7 @@ export class GandomMap {
 
         // تعریف نام‌های فارسی برای انواع کسب و کارها
         const persianNames = {
-            'attraction': 'جاذبه گردشگری',
+            'attraction': 'جاذبه00 گردشگری',
             'bakery': 'نانوایی',
             'bank': 'بانک',
             'barracks': 'پادگان',
