@@ -40,7 +40,7 @@ function addEventListeners() {
     layerManager.container.addEventListener('layerToggle', async (e) => {
         const { id, visible } = e.detail;
         try {
-            await map.toggleLayer(id, visible);
+            // await map.toggleLayer(id, visible);
         } catch (error) {
             console.error(`خطا در تغییر وضعیت لایه ${id}:`, error);
             // Uncheck the checkbox if layer loading fails

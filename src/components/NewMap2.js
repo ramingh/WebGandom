@@ -1,59 +1,81 @@
 import icons from '../assets/js/icons.Js';
 
-// Map Component
+/**
+ * کلاس GandomMap برای مدیریت و نمایش نقشه تعاملی
+ * این کلاس شامل توابع مختلف برای مدیریت لایه‌ها، مارکرها و کنترل‌های نقشه است
+ */
 export class GandomMap {
+    /**
+     * سازنده کلاس GandomMap
+     * @param {string} containerId - شناسه المان HTML که نقشه در آن رندر می‌شود
+     */
     constructor(containerId) {
+        // تنظیمات اولیه نقشه
         this.containerId = containerId;
         this.map = null;
-        this.initTrashButton();
         this.layers = new Map();
         this.baseLayer = null;
         this.markers = [];
         this.currentBaseLayer = null;
-        this.listmaarker = []; // اضافه کردن آرایه برای نگهداری لیست مارکرها
+        this.listmaarker = []; // آرایه برای نگهداری لیست مارکرها
+
+        // تعریف لایه‌های پایه نقشه
         this.baseMaps = {
+            // لایه OpenStreetMap
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 20,
                 attribution: '© OpenStreetMap contributors'
             }),
+            // لایه تصاویر ماهواره‌ای
             satellite: L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
                 maxZoom: 21,
                 attribution: '© Esri'
             }),
+            // لایه توپوگرافی
             terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
                 maxZoom: 17,
                 attribution: '© OpenTopoMap'
             })
         };
-        this.addCustomStyles(); // اضافه کردن استایل‌های سفارشی
+
+        // راه‌اندازی دکمه حذف و استایل‌های سفارشی
+        this.initTrashButton();
+        this.addCustomStyles();
     }
 
+    /**
+     * راه‌اندازی اولیه نقشه
+     * تنظیم موقعیت اولیه، زوم و اضافه کردن کنترل‌های مختلف
+     */
     init() {
-        // Initialize map
+        // ایجاد نقشه با تنظیمات اولیه
         this.map = L.map(this.containerId, {
-            center: [32.4279, 53.6880],
+            center: [32.4279, 53.6880], // مرکز ایران
             zoom: 6,
             zoomControl: false
         });
-        // Add zoom control to top-left
+
+        // اضافه کردن کنترل زوم در گوشه بالا سمت چپ
         L.control.zoom({
             position: 'topleft'
         }).addTo(this.map);
-        // Set default base layer
+
+        // تنظیم لایه پایه پیش‌فرض
         this.setBaseMap('osm');
-        // Initialize base map controls
+
+        // راه‌اندازی کنترل‌های مختلف
         this.initBaseMapControls();
-        // Initialize layer toggle button
-        // this.initLayerToggleButton();
-        // Add controls
         this.addRulerControl();
         this.addSearchControl();
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
-        
     }
 
+    /**
+     * راه‌اندازی کنترل‌های نقشه پایه
+     * مدیریت دکمه‌های تغییر لایه پایه و منوی مربوطه
+     */
     initBaseMapControls() {
         const toggleButton = document.querySelector('.basemap-toggle');
         const menu = document.querySelector('.basemap-menu');
@@ -63,17 +85,20 @@ export class GandomMap {
             return;
         }
 
+        // مدیریت رویداد کلیک روی دکمه تغییر لایه
         toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             menu.classList.toggle('show');
         });
 
+        // بستن منو با کلیک خارج از آن
         document.addEventListener('click', (e) => {
             if (!toggleButton.contains(e.target) && !menu.contains(e.target)) {
                 menu.classList.remove('show');
             }
         });
 
+        // مدیریت رویداد تغییر لایه پایه
         const radioButtons = document.querySelectorAll('.basemap-option input[type="radio"]');
         radioButtons.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -83,18 +108,27 @@ export class GandomMap {
         });
     }
 
+    /**
+     * تنظیم لایه پایه نقشه
+     * @param {string} type - نوع لایه پایه (osm, satellite, terrain)
+     */
     setBaseMap(type) {
+        // حذف لایه فعلی در صورت وجود
         if (this.currentBaseLayer) {
             this.map.removeLayer(this.currentBaseLayer);
         }
 
+        // اضافه کردن لایه جدید
         this.currentBaseLayer = this.baseMaps[type];
         this.map.addLayer(this.currentBaseLayer);
         this.currentBaseLayer.bringToBack();
     }
 
+    /**
+     * اضافه کردن کنترل جستجو به نقشه
+     * با پشتیبانی از زبان فارسی
+     */
     addSearchControl() {
-        // Add search control with Persian labels
         const searchControl = new L.Control.Geocoder({
             position: 'topleft',
             placeholder: 'جستجوی مکان...',
@@ -105,10 +139,42 @@ export class GandomMap {
             })
         }).addTo(this.map);
 
+        // تنظیم رویداد برای نمایش نتیجه جستجو
         searchControl.on('markgeocode', (e) => {
             const center = e.geocode.center;
             this.map.setView(center, 13);
         });
+    }
+
+    /**
+     * اضافه کردن کنترل خط‌کش به نقشه
+     * برای اندازه‌گیری فاصله و زاویه
+     */
+    addRulerControl() {
+        const rulerOptions = {
+            position: 'topleft',
+            circleMarker: {
+                color: 'red',
+                radius: 2
+            },
+            lineStyle: {
+                color: 'red',
+                dashArray: '1,6'
+            },
+            lengthUnit: {
+                display: 'کیلومتر',
+                decimal: 2,
+                factor: null,
+                label: 'فاصله:'
+            },
+            angleUnit: {
+                display: 'درجه',
+                decimal: 2,
+                factor: null,
+                label: 'زاویه:'
+            }
+        };
+        L.control.ruler(rulerOptions).addTo(this.map);
     }
 
     initLayerToggleButton() {
@@ -148,34 +214,12 @@ export class GandomMap {
         });
     }
 
-    addRulerControl() {
-        // Add ruler control with Persian labels
-        const rulerOptions = {
-            position: 'topleft',
-            circleMarker: {
-                color: 'red',
-                radius: 2
-            },
-            lineStyle: {
-                color: 'red',
-                dashArray: '1,6'
-            },
-            lengthUnit: {
-                display: 'کیلومتر',
-                decimal: 2,
-                factor: null,
-                label: 'فاصله:'
-            },
-            angleUnit: {
-                display: 'درجه',
-                decimal: 2,
-                factor: null,
-                label: 'زاویه:'
-            }
-        };
-        L.control.ruler(rulerOptions).addTo(this.map);
-    }
-
+    /**
+     * اضافه کردن لایه به نقشه
+     * @param {string} id - شناسه یکتای لایه
+     * @param {L.Layer} layer - لایه مورد نظر
+     * @param {Object} options - تنظیمات اضافی
+     */
     addLayer(id, layer, options = {}) {
         this.layers.set(id, layer);
         if (options.visible) {
@@ -183,6 +227,10 @@ export class GandomMap {
         }
     }
 
+    /**
+     * حذف لایه از نقشه
+     * @param {string} id - شناسه لایه
+     */
     removeLayer(id) {
         const layer = this.layers.get(id);
         if (layer) {
@@ -191,11 +239,19 @@ export class GandomMap {
         }
     }
 
+    /**
+     * اضافه کردن مارکر به نقشه
+     * @param {L.LatLng} latlng - موقعیت جغرافیایی مارکر
+     */
     addMarker(latlng) {
         const marker = L.marker(latlng).addTo(this.map);
         this.markers.push(marker);
     }
 
+    /**
+     * حذف مارکر از نقشه
+     * @param {string} id - شناسه مارکر
+     */
     removeMarker(id) {
         const marker = this.markers.get(id);
         if (marker) {
@@ -204,21 +260,38 @@ export class GandomMap {
         }
     }
 
+    /**
+     * پاک کردن تمام مارکرها از نقشه
+     */
     clearMarkers() {
         this.markers.forEach(marker => {
             this.map.removeLayer(marker);
         });
-        this.markers.clear();
+        this.markers = []; // پاک کردن آرایه مارکرها
     }
 
+    /**
+     * تنظیم محدوده دید نقشه
+     * @param {L.LatLngBounds} bounds - محدوده جغرافیایی
+     */
     fitBounds(bounds) {
         this.map.fitBounds(bounds);
     }
 
+    /**
+     * تنظیم مرکز و زوم نقشه
+     * @param {L.LatLng} latlng - موقعیت جغرافیایی مرکز
+     * @param {number} zoom - سطح زوم
+     */
     setView(latlng, zoom) {
         this.map.setView(latlng, zoom);
     }
 
+    /**
+     * تغییر وضعیت نمایش لایه
+     * @param {string} layerId - شناسه لایه
+     * @param {boolean} visible - وضعیت نمایش
+     */
     async toggleLayer(layerId, visible) {
         console.log(`Toggling layer: ${layerId}, Visible: ${visible}`);
         this.map.addLayer(gandompoint1);
@@ -439,10 +512,7 @@ export class GandomMap {
 
         L.control.layers(null, drawingLayers, { position: 'topleft', collapsed: false }).addTo(this.map);
 
-    }
-
-
-
+    } 
     clearMap(map) {
         var i = 0;
         for (i in this.map._layers) {
@@ -832,10 +902,10 @@ export class GandomMap {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-
+                          
                             map.once(L.Draw.Event.CREATED, async (e) => {
-                                this.clearMap(map);
-
+                                this.clearMap(map);                   
+                                
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
                             const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
@@ -1179,8 +1249,10 @@ export class GandomMap {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
             }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+
             try {
                 // اضافه کردن فونت فارسی
                 doc.addFont('Vazir.ttf', 'Vazir', 'normal');
@@ -1190,25 +1262,14 @@ export class GandomMap {
                 // استفاده از فونت پیش‌فرض
                 doc.setFont('helvetica');
             }
+
             // تنظیم اندازه فونت
-            doc.setFontSize(11);
+            doc.setFontSize(12);
+
             // عنوان گزارش
             const title = "گزارش فروشگاه‌های محدوده";
             const date = new Date().toLocaleDateString('fa-IR');
 
-            let tem1 = reportContent.replace(/<td style="padding: 4px; border-bottom: 1px solid #eee;">/g, '').trim();
-            tem1 = reportContent.replace(/<\/?[^>]+(>|$)/g, '');  
-           
-            const words = tem1.match(/[\u0600-\u06FF]+/g);  
-            tem1=  words.join(' ');
-            // چسباندن کلمات با یک فاصله  
-            // if (words) {  
-            //   return words.join(' ');  
-            // } else {  
-            //   return '';  
-            // }  
-
-            console.log(reportContent, '++++', tem1);
             // حذف تگ‌های HTML از محتوا
             const cleanContent = reportContent.replace(/<br\/?>/g, '\n').replace(/<\/?[^>]+(>|$)/g, '');
 
@@ -1223,7 +1284,7 @@ export class GandomMap {
             
             // تقسیم محتوا به خطوط
             const lines = cleanContent.split('\n');
-            let y = 20;
+            let y = 30;
             
             lines.forEach(line => {
                 if (y > 280) { // اگر به انتهای صفحه نزدیک شدیم
@@ -1231,7 +1292,7 @@ export class GandomMap {
                     y = 10;
                 }
                 doc.text(line, xPosition, y, { align: 'right' });
-                y += 8;
+                y += 10;
             });
 
             // ذخیره فایل
@@ -1770,7 +1831,7 @@ export class GandomMap {
         });
     }
 
-    async Draw_abdi(idcode, map) {
+    async   Draw_abdi(idcode, map) {
         const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/find?searchText=${idcode}&contains=false&searchFields=NEAR_FID&sr=&layers=ID%3A2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=pjson`;
         console.log('---Abadi---', baseUrl);
         let total_khan = 0, total_pop = 0;
@@ -1829,8 +1890,7 @@ export class GandomMap {
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
         const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q'; 
         try {
-            // نمایش مارکر موقعیت انتخاب شده
-            this.addLocationMarker(longitude, latitude, map);
+  
             
             // ساخت URL درخواست
             const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
@@ -1843,7 +1903,7 @@ export class GandomMap {
                     'x-api-key': API_KEY,
                     'content-type': 'application/json'
                 },
-                error: function (xhr, status, error) {
+                error: function(xhr, status, error) {
                     if (xhr.status === 401) {
                         console.error(`خطای اعتبارسنجی برای ${subcategory}:`, error);
                         return;
@@ -1863,7 +1923,7 @@ export class GandomMap {
 
             // دریافت تعداد کل نتایج
             const totalCount = response.data.count;
-
+            window.locationCounts = {}; 
             // دریافت نتایج به صورت صفحه‌بندی شده
             const batchSize = 20;
             for (let offset = 0; offset < totalCount; offset += batchSize) {
@@ -1877,7 +1937,7 @@ export class GandomMap {
             if (error.status === 401) {
                 console.error('خطای اعتبارسنجی - لطفا API key را بررسی401 کنید');
             } else if (error.status === 500) {
-                console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ');
+                console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ' );
             } else {
                 console.log('خطا در دریافت اطلاعات مکان‌ها:', error);
             }
@@ -1888,7 +1948,7 @@ export class GandomMap {
     async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY) {
         try {
             const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
-
+            
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
@@ -1904,6 +1964,7 @@ export class GandomMap {
             if (!window.locationCounts) {
                 window.locationCounts = {};
             }
+            // window.locationCounts = {}; // پاک کردن همه قبل از شروع loop
 
             // افزایش شمارنده برای این دسته‌بندی
             if (!window.locationCounts[subcategory]) {
@@ -1948,41 +2009,49 @@ export class GandomMap {
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>بخش:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${district}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
+                            ${city ? `
+                            <tr>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>شهر:</strong></td>
+                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${city}</td>
+                            </tr>` : ''}
                             ${region ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>منطقه:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${region}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
                             ${neighborhood ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>محله:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${neighborhood}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
                             ${village ? `
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>روستا:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${village}</td>
-                            </tr>
-                            ` : ''}
+                            </tr>` : ''}
+                            ${(() => {
+                                // حذف نام استان، شهرستان و شهر از آدرس
+                                let cleanAddress = address;
+                                if (province) cleanAddress = cleanAddress.replace(province, '').trim();
+                                if (county) cleanAddress = cleanAddress.replace(county, '').trim();
+                                if (city) cleanAddress = cleanAddress.replace(city, '').trim();
+                                // حذف کاماهای اضافی
+                                cleanAddress = cleanAddress.replace(/,\s*,/g, ',').replace(/^,\s*|\s*,$/g, '');
+                                
+                                return cleanAddress !== 'آدرس موجود نیست' && cleanAddress ? `
+                                <tr>
+                                    <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>آدرس:</strong></td>
+                                    <td style="padding: 4px; border-bottom: 1px solid #eee;">${cleanAddress}</td>
+                                </tr>` : '';
+                            })()}
                             <tr>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>فاصله:</strong></td>
                                 <td style="padding: 4px; border-bottom: 1px solid #eee;">${distance}</td>
                             </tr>
-                            <tr>
-                                <td style="padding: 4px;"><strong>آدرس:</strong></td>
-                                <td style="padding: 4px;">${address.replace(`${province}، ${county}، `, '')}</td>
-                            </tr>
                         </table>
-                 
                     </div>
-                `, {
-                        className: 'custom-popup',
-                        maxWidth: 280
-                    });
+                `);
             });
 
             // نمایش گزارش کلی پس از اتمام همه درخواست‌ها
@@ -1993,162 +2062,90 @@ export class GandomMap {
         }
     }
 
-    // تابع نمایش گزارش کلی
+    /**
+     * نمایش گزارش خلاصه از کسب و کارهای اطراف نقطه انتخابی
+     * @param {number} latitude - عرض جغرافیایی
+     * @param {number} longitude - طول جغرافیایی
+     * @param {L.Map} map - نقشه
+     */
     showSummaryReport(latitude, longitude, map) {
-        // اگر شمارنده‌ها وجود ندارند، خارج شو
         if (!window.locationCounts) return;
 
-        let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir;">';
-        reportContent += '<h6 style="color: #2c3e50; margin-bottom: 10px;">گزارش کلی کسب و کارها</h6>';
+        // ایجاد محتوای گزارش
+        let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 10px;">';
+        reportContent += '<h6 style="color:rgb(4, 123, 2); margin-bottom: 7px; font-size: 12px;"> گزارش کلی کسب و کارها</h6>';
         reportContent += '<table style="width: 100%; border-collapse: collapse;">';
 
-        // تبدیل نام‌های انگلیسی به فارسی
-        const persianNames = {
-            'hospital': 'بیمارستان',
-            'attraction': 'جاذبه گردشگری',
-            'bakery': 'نانوایی',
-            'bank': 'بانک',
-            'barracks': 'پادگان',
-            'bus_line': 'خط اتوبوس',
-            'bus_station': 'ایستگاه اتوبوس',
-            'bus_stop': 'ایستگاه اتوبوس',
-            'camp_site': 'اردوگاه',
-            'caravan_site': 'کاروانسرا',
-            'clinic': 'درمانگاه',
-            'elementray_school': 'مدرسه ابتدایی',
-            'fruit_vegetable_store': 'میوه و سبزی فروشی',
-            'fuel': 'پمپ بنزین',
-            'high_school': 'دبیرستان',
-            'hospice': 'آسایشگاه',
-            'hotel': 'هتل',
-            'kindergarten': 'مهدکودک',
-            'hyper_market': 'هایپرمارکت',
-            'laboratory': 'آزمایشگاه',
-            'marketplace': 'بازار',
-            'mosque': 'مسجد',
-            'parking': 'پارکینگ',
-            'parking_space': 'پارکینگ',
-            'police': 'کلانتری',
-            'public_transport_building': 'ساختمان حمل و نقل عمومی',
-            'public_transportation': 'حمل و نقل عمومی',
-            'school': 'مدرسه',
-            'subway': 'مترو',
-            'subway_line': 'خط مترو',
-            'supermarket': 'سوپرمارکت',
-            'theme_park': 'شهربازی',
-            'tower': 'برج',
-            'trade_store': 'فروشگاه',
-            'train_station': 'ایستگاه قطار',
-            'university': 'دانشگاه'
-        };
+        // تعریف نام‌های فارسی برای انواع کسب و کارها
+        const persianNames = {  
+            'attraction': 'جاذبه گردشگری',  
+            'bakery': 'نانوایی',  
+            'bank': 'بانک',  
+            'barracks': 'پادگان',  
+            'bus_line': 'خط اتوبوس',  
+            'bus_station': 'ایستگاه اتوبوس',  
+            'bus_stop': 'ایستگاه اتوبوس',  
+            'camp_site': 'اردوگاه',  
+            'caravan_site': 'کاروانسرا',  
+            'clinic': 'درمانگاه',  
+            'elementray_school': 'مدرسه ابتدایی',  
+            'fruit_vegetable_store': 'میوه فروشی',  
+            'fuel': 'پمپ بنزین',  
+            'high_school': 'دبیرستان',  
+            'hospice': 'آسایشگاه سالمندان',  
+            'hospital': 'بیمارستان',  
+            'hotel': 'هتل',  
+            'hyper_market': 'فروشگاه بزرگ',  
+            'kindergarten': 'مهد کودک',  
+            'laboratory': 'آزمایشگاه',  
+            'marketplace': 'بازار',  
+            'mosque': 'مسجد',  
+            'parking': 'پارکینگ',  
+            'parking_space': 'محل پارک',  
+            'police': 'پلیس',  
+            'public_transport_building': 'ساختمان حمل و نقل عمومی',  
+            'public_transportation': 'حمل و نقل عمومی',  
+            'school': 'مدرسه',  
+            'subway': 'مترو',  
+            'subway_line': 'خط مترو',  
+            'supermarket': 'سوپرمارکت',  
+            'theme_park': 'شهربازی',  
+            'tower': 'برج',  
+            'trade_store': 'فروشگاه تجاری',  
+            'train_station': 'ایستگاه قطار',  
+            'university': 'دانشگاه'  
+        };  
 
+        // مرتب‌سازی و نمایش اطلاعات کسب و کارها
         Object.entries(window.locationCounts)
             .sort(([keyA], [keyB]) => (persianNames[keyA] || keyA).localeCompare(persianNames[keyB] || keyB))
             .forEach(([category, count]) => {
                 const persianName = persianNames[category] || category;
                 reportContent += `
                     <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
-                        <td style="padding: 4px; border-bottom: 1px solid #eee;">${count} مورد</td>
+                        <td style="padding: 3px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
+                        <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
                     </tr>`;
             });
 
         reportContent += '</table>';
-
-        // اضافه کردن دکمه‌های خروجی
-        // "window.exportToPDF('${encodeURIComponent(report)}')" 
-
+        
+        // اضافه کردن دکمه خروجی PDF
         reportContent += `
-            <div style="margin-top: 10px; text-align: center;"> 
-                <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn">
+            <div style="margin-top: 7px; text-align: center;">
+                <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn" style="font-size: 11px;">
                     <i class="fas fa-file-pdf"></i> خروجی PDF
                 </button>
             </div>
         </div>`;
+
+        // تنظیم تابع خروجی PDF در window
         window.exportToPDF = (reportData) => {
             this.exportToPDF(decodeURIComponent(reportData));
         };
-        // ایجاد پاپ‌آپ گزارش
-        const reportPopup = L.popup({
-            className: 'custom-popup',
-            maxWidth: 200
-        })
-            .setLatLng([latitude, longitude])
-            .setContent(reportContent)
-            .openOn(map);
-    }
 
-    // تابع کمکی برای تعیین آیکون بر اساس دسته‌بندی
-    geticon(category) {
-        const icons = {
-            'hospital': L.divIcon({
-                html: '<i class="fas fa-hospital" style="color: #FF4444;"></i>',
-                className: 'category-marker hospital',
-                iconSize: [24, 24],
-                iconAnchor: [12, 24],
-                popupAnchor: [0, -24]
-            }),
-            'attraction': L.divIcon({
-                html: '<i class="fas fa-landmark" style="color: #FFA500;"></i>',
-                className: 'category-marker attraction',
-                iconSize: [24, 24],
-                iconAnchor: [12, 24],
-                popupAnchor: [0, -24]
-            }),
-            // ... تکرار برای سایر آیکون‌ها با همان ساختار
-            'default': L.divIcon({
-                html: '<i class="fas fa-map-marker-alt" style="color: #888888;"></i>',
-                className: 'category-marker default',
-                iconSize: [24, 24],
-                iconAnchor: [12, 24],
-                popupAnchor: [0, -24]
-            })
-        };
-
-        const icon = icons[category] || icons.default;
-
-        // اضافه کردن عنوان فارسی به آیکون
-        const persianNames = {
-            'hospital': 'بیمارستان',
-            'attraction': 'جاذبه گردشگری',
-            'bakery': 'نانوایی',
-            'bank': 'بانک',
-            'barracks': 'پادگان',
-            'bus_line': 'خط اتوبوس',
-            'bus_station': 'ایستگاه اتوبوس',
-            'bus_stop': 'ایستگاه اتوبوس',
-            'camp_site': 'اردوگاه',
-            'caravan_site': 'کاروانسرا',
-            'clinic': 'درمانگاه',
-            'elementray_school': 'مدرسه ابتدایی',
-            'fruit_vegetable_store': 'میوه و سبزی فروشی',
-            'fuel': 'پمپ بنزین',
-            'high_school': 'دبیرستان',
-            'hospice': 'آسایشگاه',
-            'hotel': 'هتل',
-            'kindergarten': 'مهدکودک',
-            'hyper_market': 'هایپرمارکت',
-            'laboratory': 'آزمایشگاه',
-            'marketplace': 'بازار',
-            'mosque': 'مسجد',
-            'parking': 'پارکینگ',
-            'parking_space': 'پارکینگ',
-            'police': 'کلانتری',
-            'public_transport_building': 'ساختمان حمل و نقل عمومی',
-            'public_transportation': 'حمل و نقل عمومی',
-            'school': 'مدرسه',
-            'subway': 'مترو',
-            'subway_line': 'خط مترو',
-            'supermarket': 'سوپرمارکت',
-            'theme_park': 'شهربازی',
-            'tower': 'برج',
-            'trade_store': 'فروشگاه',
-            'train_station': 'ایستگاه قطار',
-            'university': 'دانشگاه'
-        };
-
-        icon.options.title = persianNames[category] || category;
-        return icon;
+        // نمایش مارکر موقعیت انتخاب شده با پاپ‌آپ گزارش
+        this.addLocationMarker(longitude, latitude, map, reportContent);
     }
 
     // اضافه کردن استایل‌های جدید
@@ -2226,194 +2223,194 @@ export class GandomMap {
             'hospital': L.divIcon({
                 html: '<i class="fas fa-hospital" style="color: #FF4444;"></i>',
                 className: 'category-marker hospital',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'attraction': L.divIcon({
                 html: '<i class="fas fa-landmark" style="color: #FFA500;"></i>',
                 className: 'category-marker attraction',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'bakery': L.divIcon({
                 html: '<i class="fas fa-bread-slice" style="color: #8B4513;"></i>',
                 className: 'category-marker bakery',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'bank': L.divIcon({
                 html: '<i class="fas fa-university" style="color: #4B0082;"></i>',
                 className: 'category-marker bank',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'barracks': L.divIcon({
                 html: '<i class="fas fa-shield-alt" style="color: #808080;"></i>',
                 className: 'category-marker barracks',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'bus_line': L.divIcon({
                 html: '<i class="fas fa-route" style="color: #006400;"></i>',
                 className: 'category-marker bus-line',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'bus_station': L.divIcon({
                 html: '<i class="fas fa-bus" style="color: #006400;"></i>',
                 className: 'category-marker bus-station',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'bus_stop': L.divIcon({
                 html: '<i class="fas fa-stop-circle" style="color: #006400;"></i>',
                 className: 'category-marker bus-stop',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'camp_site': L.divIcon({
                 html: '<i class="fas fa-campground" style="color: #228B22;"></i>',
                 className: 'category-marker camp-site',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'caravan_site': L.divIcon({
                 html: '<i class="fas fa-caravan" style="color: #8B4513;"></i>',
                 className: 'category-marker caravan-site',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'clinic': L.divIcon({
                 html: '<i class="fas fa-clinic-medical" style="color: #FF69B4;"></i>',
                 className: 'category-marker clinic',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'elementray_school': L.divIcon({
                 html: '<i class="fas fa-chalkboard-teacher" style="color: #4169E1;"></i>',
                 className: 'category-marker elementary-school',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'fruit_vegetable_store': L.divIcon({
                 html: '<i class="fas fa-apple-alt" style="color: #FF6347;"></i>',
                 className: 'category-marker fruit-store',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'fuel': L.divIcon({
                 html: '<i class="fas fa-gas-pump" style="color: #FFD700;"></i>',
                 className: 'category-marker fuel',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'high_school': L.divIcon({
                 html: '<i class="fas fa-school" style="color: #4169E1;"></i>',
                 className: 'category-marker high-school',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'hospice': L.divIcon({
                 html: '<i class="fas fa-heartbeat" style="color: #FF69B4;"></i>',
                 className: 'category-marker hospice',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'hotel': L.divIcon({
                 html: '<i class="fas fa-hotel" style="color: #FFD700;"></i>',
                 className: 'category-marker hotel',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'kindergarten': L.divIcon({
                 html: '<i class="fas fa-baby" style="color: #FFB6C1;"></i>',
                 className: 'category-marker kindergarten',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'hyper_market': L.divIcon({
                 html: '<i class="fas fa-shopping-bag" style="color: #32CD32;"></i>',
                 className: 'category-marker hyper-market',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'laboratory': L.divIcon({
                 html: '<i class="fas fa-flask" style="color: #9370DB;"></i>',
                 className: 'category-marker laboratory',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'marketplace': L.divIcon({
                 html: '<i class="fas fa-store" style="color: #FF8C00;"></i>',
                 className: 'category-marker marketplace',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'mosque': L.divIcon({
                 html: '<i class="fas fa-mosque" style="color: #008080;"></i>',
                 className: 'category-marker mosque',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'parking': L.divIcon({
                 html: '<i class="fas fa-parking" style="color: #808080;"></i>',
                 className: 'category-marker parking',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'parking_space': L.divIcon({
                 html: '<i class="fas fa-car" style="color: #808080;"></i>',
                 className: 'category-marker parking-space',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'police': L.divIcon({
                 html: '<i class="fas fa-shield-alt" style="color: #000080;"></i>',
                 className: 'category-marker police',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'public_transport_building': L.divIcon({
                 html: '<i class="fas fa-building" style="color: #006400;"></i>',
                 className: 'category-marker transport-building',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'public_transportation': L.divIcon({
                 html: '<i class="fas fa-train" style="color: #006400;"></i>',
                 className: 'category-marker public-transport',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'school': L.divIcon({
                 html: '<i class="fas fa-graduation-cap" style="color: #4169E1;"></i>',
                 className: 'category-marker school',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'subway': L.divIcon({
                 html: '<i class="fas fa-subway" style="color: #006400;"></i>',
                 className: 'category-marker subway',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'subway_line': L.divIcon({
                 html: '<i class="fas fa-route" style="color: #006400;"></i>',
                 className: 'category-marker subway-line',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'supermarket': L.divIcon({
                 html: '<i class="fas fa-shopping-cart" style="color: #32CD32;"></i>',
                 className: 'category-marker supermarket',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'theme_park': L.divIcon({
                 html: '<i class="fas fa-theater-masks" style="color: #FF69B4;"></i>',
                 className: 'category-marker theme-park',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'tower': L.divIcon({
                 html: '<i class="fas fa-building" style="color: #808080;"></i>',
                 className: 'category-marker tower',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'trade_store': L.divIcon({
                 html: '<i class="fas fa-store-alt" style="color: #FF8C00;"></i>',
                 className: 'category-marker trade-store',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'train_station': L.divIcon({
                 html: '<i class="fas fa-train" style="color: #006400;"></i>',
                 className: 'category-marker train-station',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'university': L.divIcon({
                 html: '<i class="fas fa-university" style="color: #4169E1;"></i>',
                 className: 'category-marker university',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             }),
             'default': L.divIcon({
                 html: '<i class="fas fa-map-marker-alt" style="color: #888888;"></i>',
                 className: 'category-marker default',
-                iconSize: [24, 24]
+                iconSize: [20, 20]
             })
         };
 
         return icons[category] || icons.default;
     }
 
-    addLocationMarker(longitude, latitude, map) {
+    addLocationMarker(longitude, latitude, map,textpop) {
         const icon = L.divIcon({
             html: '<i class="fas fa-map-marker-alt" style="color: #FF0000; font-size: 24px;"></i>',
             className: 'location-marker',
@@ -2421,14 +2418,12 @@ export class GandomMap {
             iconAnchor: [12, 24]
         });
 
-        L.marker([latitude, longitude], { icon })
-            .addTo(map)
-            .bindPopup(`
-                <div style="direction: rtl; text-align: right;">
-                    <strong>موقعیت انتخاب شده</strong><br>
-                    عرض جغرافیایی: ${latitude}<br>
-                    طول جغرافیایی: ${longitude}
-                </div>
-            `);
+       L.marker([latitude, longitude], { icon })
+            .addTo(map).bindPopup(textpop);
+                // `<div style="direction: rtl; text-align: right;">
+                //     <strong>موقعیت انتخاب شده</strong><br>
+                //     عرض جغرافیایی: ${latitude}<br>
+                //     طول جغرافیایی: ${longitude}
+                // </div>`);
     }
 } 

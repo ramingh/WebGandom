@@ -1,3 +1,5 @@
+const L = window.L;
+
 const url_path = '/IMG/';
 
 function createIcon(iconName) {

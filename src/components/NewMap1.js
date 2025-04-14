@@ -1,61 +1,84 @@
 import icons from '../assets/js/icons.Js';
 
-// Map Component
+/**
+ * کلاس GandomMap برای مدیریت و نمایش نقشه تعاملی
+ * این کلاس شامل توابع مختلف برای مدیریت لایه‌ها، مارکرها و کنترل‌های نقشه است
+ */
 export class GandomMap {
+    /**
+     * سازنده کلاس GandomMap
+     * @param {string} containerId - شناسه المان HTML که نقشه در آن رندر می‌شود
+     */
     constructor(containerId) {
+        // تنظیمات اولیه نقشه
         this.containerId = containerId;
         this.map = null;
-        this.initTrashButton();
         this.layers = new Map();
         this.baseLayer = null;
         this.markers = [];
         this.currentBaseLayer = null;
-        this.listmaarker = []; // اضافه کردن آرایه برای نگهداری لیست مارکرها
+        this.listmaarker = []; // آرایه برای نگهداری لیست مارکرها
+        this.araypoint1 = [];
+        this.API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q';
+
+        this.timeall = [];
+        // تعریف لایه‌های پایه نقشه
         this.baseMaps = {
+            // لایه OpenStreetMap
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 20,
                 attribution: '© OpenStreetMap contributors'
             }),
+            // لایه تصاویر ماهواره‌ای
             satellite: L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
                 maxZoom: 21,
                 attribution: '© Esri'
             }),
+            // لایه توپوگرافی
             terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
                 maxZoom: 17,
                 attribution: '© OpenTopoMap'
             })
         };
-        this.addCustomStyles(); // اضافه کردن استایل‌های سفارشی
-      
+
+        // راه‌اندازی دکمه حذف و استایل‌های سفارشی
+        this.initTrashButton();
+        this.addCustomStyles();
     }
 
+    /**
+     * راه‌اندازی اولیه نقشه
+     * تنظیم موقعیت اولیه، زوم و اضافه کردن کنترل‌های مختلف
+     */
     init() {
-        // Initialize map
+        // ایجاد نقشه با تنظیمات اولیه
         this.map = L.map(this.containerId, {
-            center: [32.4279, 53.6880],
+            center: [32.4279, 53.6880], // مرکز ایران
             zoom: 6,
             zoomControl: false
         });
-        // Add zoom control to top-left
+
+        // اضافه کردن کنترل زوم در گوشه بالا سمت چپ
         L.control.zoom({
             position: 'topleft'
         }).addTo(this.map);
-        // Set default base layer
+
+        // تنظیم لایه پایه پیش‌فرض
         this.setBaseMap('osm');
-        // Initialize base map controls
+
+        // راه‌اندازی کنترل‌های مختلف
         this.initBaseMapControls();
-        // Initialize layer toggle button
-        // this.initLayerToggleButton();
-        // Add controls
         this.addRulerControl();
         this.addSearchControl();
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
-     
-        
     }
 
+    /**
+     * راه‌اندازی کنترل‌های نقشه پایه
+     * مدیریت دکمه‌های تغییر لایه پایه و منوی مربوطه
+     */
     initBaseMapControls() {
         const toggleButton = document.querySelector('.basemap-toggle');
         const menu = document.querySelector('.basemap-menu');
@@ -65,17 +88,20 @@ export class GandomMap {
             return;
         }
 
+        // مدیریت رویداد کلیک روی دکمه تغییر لایه
         toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             menu.classList.toggle('show');
         });
 
+        // بستن منو با کلیک خارج از آن
         document.addEventListener('click', (e) => {
             if (!toggleButton.contains(e.target) && !menu.contains(e.target)) {
                 menu.classList.remove('show');
             }
         });
 
+        // مدیریت رویداد تغییر لایه پایه
         const radioButtons = document.querySelectorAll('.basemap-option input[type="radio"]');
         radioButtons.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -85,18 +111,27 @@ export class GandomMap {
         });
     }
 
+    /**
+     * تنظیم لایه پایه نقشه
+     * @param {string} type - نوع لایه پایه (osm, satellite, terrain)
+     */
     setBaseMap(type) {
+        // حذف لایه فعلی در صورت وجود
         if (this.currentBaseLayer) {
             this.map.removeLayer(this.currentBaseLayer);
         }
 
+        // اضافه کردن لایه جدید
         this.currentBaseLayer = this.baseMaps[type];
         this.map.addLayer(this.currentBaseLayer);
         this.currentBaseLayer.bringToBack();
     }
 
+    /**
+     * اضافه کردن کنترل جستجو به نقشه
+     * با پشتیبانی از زبان فارسی
+     */
     addSearchControl() {
-        // Add search control with Persian labels
         const searchControl = new L.Control.Geocoder({
             position: 'topleft',
             placeholder: 'جستجوی مکان...',
@@ -107,10 +142,42 @@ export class GandomMap {
             })
         }).addTo(this.map);
 
+        // تنظیم رویداد برای نمایش نتیجه جستجو
         searchControl.on('markgeocode', (e) => {
             const center = e.geocode.center;
             this.map.setView(center, 13);
         });
+    }
+
+    /**
+     * اضافه کردن کنترل خط‌کش به نقشه
+     * برای اندازه‌گیری فاصله و زاویه
+     */
+    addRulerControl() {
+        const rulerOptions = {
+            position: 'topleft',
+            circleMarker: {
+                color: 'red',
+                radius: 2
+            },
+            lineStyle: {
+                color: 'red',
+                dashArray: '1,6'
+            },
+            lengthUnit: {
+                display: 'کیلومتر',
+                decimal: 2,
+                factor: null,
+                label: 'فاصله:'
+            },
+            angleUnit: {
+                display: 'درجه',
+                decimal: 2,
+                factor: null,
+                label: 'زاویه:'
+            }
+        };
+        L.control.ruler(rulerOptions).addTo(this.map);
     }
 
     initLayerToggleButton() {
@@ -150,34 +217,12 @@ export class GandomMap {
         });
     }
 
-    addRulerControl() {
-        // Add ruler control with Persian labels
-        const rulerOptions = {
-            position: 'topleft',
-            circleMarker: {
-                color: 'red',
-                radius: 2
-            },
-            lineStyle: {
-                color: 'red',
-                dashArray: '1,6'
-            },
-            lengthUnit: {
-                display: 'کیلومتر',
-                decimal: 2,
-                factor: null,
-                label: 'فاصله:'
-            },
-            angleUnit: {
-                display: 'درجه',
-                decimal: 2,
-                factor: null,
-                label: 'زاویه:'
-            }
-        };
-        L.control.ruler(rulerOptions).addTo(this.map);
-    }
-
+    /**
+     * اضافه کردن لایه به نقشه
+     * @param {string} id - شناسه یکتای لایه
+     * @param {L.Layer} layer - لایه مورد نظر
+     * @param {Object} options - تنظیمات اضافی
+     */
     addLayer(id, layer, options = {}) {
         this.layers.set(id, layer);
         if (options.visible) {
@@ -185,6 +230,10 @@ export class GandomMap {
         }
     }
 
+    /**
+     * حذف لایه از نقشه
+     * @param {string} id - شناسه لایه
+     */
     removeLayer(id) {
         const layer = this.layers.get(id);
         if (layer) {
@@ -193,11 +242,19 @@ export class GandomMap {
         }
     }
 
+    /**
+     * اضافه کردن مارکر به نقشه
+     * @param {L.LatLng} latlng - موقعیت جغرافیایی مارکر
+     */
     addMarker(latlng) {
         const marker = L.marker(latlng).addTo(this.map);
         this.markers.push(marker);
     }
 
+    /**
+     * حذف مارکر از نقشه
+     * @param {string} id - شناسه مارکر
+     */
     removeMarker(id) {
         const marker = this.markers.get(id);
         if (marker) {
@@ -206,21 +263,38 @@ export class GandomMap {
         }
     }
 
+    /**
+     * پاک کردن تمام مارکرها از نقشه
+     */
     clearMarkers() {
         this.markers.forEach(marker => {
             this.map.removeLayer(marker);
         });
-        this.markers.clear();
+        this.markers = []; // پاک کردن آرایه مارکرها
     }
 
+    /**
+     * تنظیم محدوده دید نقشه
+     * @param {L.LatLngBounds} bounds - محدوده جغرافیایی
+     */
     fitBounds(bounds) {
         this.map.fitBounds(bounds);
     }
 
+    /**
+     * تنظیم مرکز و زوم نقشه
+     * @param {L.LatLng} latlng - موقعیت جغرافیایی مرکز
+     * @param {number} zoom - سطح زوم
+     */
     setView(latlng, zoom) {
         this.map.setView(latlng, zoom);
     }
 
+    /**
+     * تغییر وضعیت نمایش لایه
+     * @param {string} layerId - شناسه لایه
+     * @param {boolean} visible - وضعیت نمایش
+     */
     async toggleLayer(layerId, visible) {
         console.log(`Toggling layer: ${layerId}, Visible: ${visible}`);
         this.map.addLayer(gandompoint1);
@@ -264,7 +338,7 @@ export class GandomMap {
             const layer = this.layers.get(layerId);
             this.map.removeLayer(layer);
         }
-    } 
+    }
     getMarkerIcon(type) {
         // Define icons for different types
         const icons = {
@@ -367,7 +441,7 @@ export class GandomMap {
                 return this.createMarkerLayer(data);
         }
     }
-  
+
     clearAllMarkers() {
         try {
             // حذف تمام لایه‌ها از نقشه
@@ -441,7 +515,7 @@ export class GandomMap {
 
         L.control.layers(null, drawingLayers, { position: 'topleft', collapsed: false }).addTo(this.map);
 
-    } 
+    }
     clearMap(map) {
         var i = 0;
         for (i in this.map._layers) {
@@ -620,14 +694,14 @@ export class GandomMap {
 
             onAdd: (map) => {
                 const container = L.DomUtil.create('div', 'leaflet-bar leaflet-draw-toolbar');
-                
+
                 // آیکون‌ها و عملکردهای مختلف
                 const tools = [
-                    { 
-                        icon: 'fas fa-square', 
+                    {
+                        icon: 'fas fa-square',
                         title: 'فروشگاه‌ها',
                         action: () => {
-                           
+
 
                             const rectangleDrawer = new L.Draw.Rectangle(map, {
                                 shapeOptions: {
@@ -635,22 +709,22 @@ export class GandomMap {
                                     weight: 2
                                 }
                             });
-                             this.clearMap(map);
+                            this.clearMap(map);
                             rectangleDrawer.enable();
                         }
                     },
-                    { 
-                        icon: 'fas fa-map-marker-alt', 
-                        title: 'مسیر دسترسی', 
+                    {
+                        icon: 'fas fa-map-marker-alt',
+                        title: 'مسیر دسترسی',
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-  this.clearMap(map);
+                            this.clearMap(map);
                             // اضافه کردن رویداد برای زمانی که نشانگر قرار می‌گیرد
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                              
+
                                 // درخواست شعاع از کاربر
                                 let radius = prompt("              Km" + ": لطفا شعاع را وارد کنید" + "(0.5 تا 2)", "1");
 
@@ -675,16 +749,17 @@ export class GandomMap {
                                 }
 
                                 // نمایش مختصات و شعاع در کنسول
-                                console.log('مختصات نقطه:', latlng);
-                                console.log('شعاع:', radius);
+                                this.Draw_buffer(latlng.lng, latlng.lat, radius, map);
+                                // console.log('مختصات نقطه:', latlng);
+                                // console.log('شعاع:', radius);
 
                                 // اینجا می‌توانید کد مربوط به ارسال به سرویس را اضافه کنید
                             });
                         }
                     },
-                    { 
-                        icon: 'fas fa-user', 
-                        title: 'مدیران مناطق', 
+                    {
+                        icon: 'fas fa-user',
+                        title: 'مدیران مناطق',
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
@@ -700,9 +775,9 @@ export class GandomMap {
                             });
                         }
                     },
-                    { 
-                        icon: 'fas fa-users', 
-                        title: 'تراکم جمعیت', 
+                    {
+                        icon: 'fas fa-users',
+                        title: 'تراکم جمعیت',
                         action: () => {
 
                             const markerDrawer = new L.Draw.Marker(map);
@@ -819,32 +894,32 @@ export class GandomMap {
                                     .catch(error => {
                                         console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
                                         alert('خطا در دریافت اطلاعات تراکم جمعیت');
-                                    });                                   
-                                  
+                                    });
+
                             });
-                            
+
                         }
                     },
-                    { 
-                        icon: 'fas fa-shopping-cart', 
-                        title: 'همه کسب و کارها', 
+                    {
+                        icon: 'fas fa-shopping-cart',
+                        title: 'همه کسب و کارها',
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                          
+
                             map.once(L.Draw.Event.CREATED, async (e) => {
-                                this.clearMap(map);                   
-                                
+                                this.clearMap(map);
+
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                            const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
+                                const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
                                 // const list1 = [ 'hyper_market'];
-                               
+
                                 // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
-                                const promises = list1.map(category => 
+                                const promises = list1.map(category =>
                                     this.count_other(latlng.lng, latlng.lat, 1, map, category, 1)
                                 );
-                                
+
                                 try {
                                     await Promise.all(promises);
                                     console.log('تمام دسته‌بندی‌ها با موفقیت پردازش شدند');
@@ -854,14 +929,14 @@ export class GandomMap {
                             });
                         }
                     },
-                    { 
-                        icon: 'fas fa-envelope', 
-                        title: 'کد پستی', 
+                    {
+                        icon: 'fas fa-envelope',
+                        title: 'کد پستی',
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
                             this.clearMap(map);
-                            
+
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
@@ -869,22 +944,22 @@ export class GandomMap {
                             });
                         }
                     },
-                    { 
-                        icon: 'fas fa-home', 
-                        title: 'آبادی  ', 
+                    {
+                        icon: 'fas fa-home',
+                        title: 'آبادی  ',
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
                             this.clearMap(map);
-                            
+
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                            this.drawDistrict(latlng.lat, latlng.lng, map);
+                                this.drawDistrict(latlng.lat, latlng.lng, map);
 
-                                 //    this.Draw_abdi('316', map);
-                       
-                                
+                                //    this.Draw_abdi('316', map);
+
+
                             });
                         }
                     }
@@ -894,9 +969,9 @@ export class GandomMap {
                     const toolButton = L.DomUtil.create('a', 'leaflet-draw-toolbar-button', container);
                     toolButton.href = '#';
                     toolButton.title = tool.title;
-                    
+
                     const icon = L.DomUtil.create('i', tool.icon, toolButton);
-                    
+
                     L.DomEvent.on(toolButton, 'click', (e) => {
                         L.DomEvent.preventDefault(e);
                         L.DomEvent.stopPropagation(e);
@@ -928,6 +1003,289 @@ export class GandomMap {
         });
     }
 
+    // Start help code
+
+    async Draw_buffer(l1, l2, textRadius, map) {
+        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        let base_point = [];
+        base_point.push(parseFloat(l2), parseFloat(l1));
+        let data = [];
+
+        var buffer = this.calculateBuffer(parseFloat(l1), parseFloat(l2), textRadius);
+        var url_market = Url_domain + 'IR22/MapServer/identify?geometryType=esriGeometryPoint&' +
+            'layers=id:0&tolerance=' + textRadius * 3 + '&mapExtent=50,40,55,33&imageDisplay=10000,10000,100&f=json&geometry=' + buffer;
+        $.ajax({
+            type: 'GET',
+            url: url_market,
+            data: data,
+            async: true,
+            beforeSend: (xhr) => {
+                if (xhr && xhr.overrideMimeType) {
+                    xhr.overrideMimeType('application/json;charset=utf-8');
+                }
+            },
+            dataType: 'json',
+            success: (data) => {
+                if (data.results.length == 0) {
+                    return [1];
+                }
+                this.clearMap(map);
+                // let ring = [],                    category0,                    name0;
+                let promises = []; // آرایه‌ای برای نگهداری Promiseها  
+                let allPopups = []; // آرایه‌ای برای نگهداری تمام popup1ها  
+                let popup1 = []; // ایجاد popup1 بیرون از حلقه  
+
+                for (let i = 0; i < data.results.length; i++) {
+                    var sums123 = data.results[i].geometry;
+                    let Point_mark = [];
+                    Point_mark.push(sums123.y, sums123.x);
+                    let name0 = data.results[i].attributes.Name;
+
+                    let category0 = data.results[i].attributes.Category.trim();
+
+
+                    let icooo = category0;
+                    if (name0 == '0') {
+                        name0 = '';
+                    }
+                    let txt = category0 + '  <br /> ' + name0;
+                    if (category0 != 'سوپرمارکت') {
+                        // console.log(category0, 'z z z z    =', txt, 'hhhh  = = =', name0);
+                        // ایجاد Promise و اضافه کردن به آرایه  
+                        let promise = this.Route_find(Point_mark, base_point, map)
+                            .then(popup2 => {
+                                // به جای push کردن به popup2، مقادیر رو به یک آرایه جدید اضافه کنید  
+                                let newPopup = [category0, name0, ...popup2]; // ترکیب اطلاعات  
+                                popup1.push(newPopup); // اضافه کردن آرایه جدید به popup1  
+
+                                console.warn('-- = ', newPopup);
+
+                                this.createPolyLine(Point_mark, newPopup, map);
+                                return popup1; // برگرداندن popup1 برای استفاده در Promise.all  
+                            });
+                        promises.push(promise);
+                    }
+                }
+                // console.log("    tresults :", promises);
+                // صبر کردن تا تمام Promiseها انجام بشن  
+                Promise.all(promises)
+                    .then((results) => {
+                        // جمع‌آوری تمام popup1ها در یک آرایه  
+
+                        results.forEach(popup1 => {
+                            if (popup1) { // بررسی اینکه popup1 تعریف شده باشه  
+                                allPopups = allPopups.concat(popup1);
+                            }
+                        });
+                        this.Draw_popup(base_point, allPopups, map);
+                    });
+            }
+        });
+    }
+
+    async Route_find(loc1, loc2, map) {
+        // Get the selected route type from radio buttons
+        const selectedRoute = document.querySelector('input[name="route"]:checked').value;
+        let selrot = selectedRoute === 'walking' ? 'foot' : 'route';
+        let xx1 = loc1[1];
+        let yy1 = loc1[0];
+        let l1 = loc2[1];
+        let l2 = loc2[0];
+        let time_all1 = [];
+        // let this.timeall = []; // تعریف قبل از ایجکس  
+
+        let xxyy = xx1 + ',' + yy1 + ';' + l1 + ',' + l2;
+
+        let utlmap = `https://map.ir/routes/${selrot}/v1/driving/${xxyy}?alternatives=true&steps=true&overview=false`;
+        // console.log(utlmap);
+
+        let data = [];
+        $.ajax({
+            type: 'GET',
+            url: utlmap,
+            data: data,
+            async: false,
+            beforeSend: (xhr) => {
+                if (xhr && xhr.overrideMimeType) {
+                    xhr.overrideMimeType('application/json;charset=utf-8');
+                    xhr.setRequestHeader("x-api-key", this.API_KEY);
+                    xhr.setRequestHeader("content-type", "application/json");
+                }
+            },
+            dataType: 'json',
+            success: (data) => {
+                if (typeof data == 'undefined') {
+                    console.log('ERRR ----> ', utlmap);
+                }
+                if (data.length == 0) { return [1] }
+                let summary = data.routes[0].legs[0].summary;
+
+                // دسترسی به مراحل مسیر  intersections
+                let location1 = [];
+                let steps = data.routes[0].legs[0].steps;
+                steps.forEach(step => {
+                    let loc1 = step.intersections;
+                    loc1.forEach(po1 => {
+                        location1.push(po1.location);
+                        // console.log("    جهت    :", po1.location);
+                    })
+                });
+
+                // console.log(data.routes, ' - - - + ', data.routes[0].distance);
+                this.timeall = [];
+                let Geom = location1;// data.routes[0].geometry.coordinates;
+
+                let timee = (data.routes[0].duration / 60);
+                let dist = data.routes[0].distance;
+                let timm = timee.toFixed(1);
+                dist = dist.toFixed(0);
+                this.timeall = [{ timm: timm, dist: dist }]; // این درسته  
+                timee = ' زمان ' + timm + ' دقیقه <br /> فاصله ' + dist + ' متر ';
+                let araypoint = [];
+                Geom.forEach(function (item) {
+                    let pnt = new L.LatLng(item[1], item[0]);
+                    araypoint.push(pnt);
+                });
+                this.Draw_line(araypoint, timee, map);
+
+
+                time_all1 = [{ timm: timm, dist: dist }]; // مقداردهی در داخل success  
+            },
+            error: (jqXHR, textStatus, errorThrown) => {
+                console.error("Error in ajax:", textStatus, errorThrown);
+                // در صورت بروز خطا، یک آرایه خالی برگردون  
+                time_all1 = [];
+            }
+        });
+
+        // اگر time_all1 مقداردهی نشده، یک آرایه خالی برگردون  
+        if (!time_all1) {
+            time_all1 = [];
+        }
+
+        return time_all1; // برگرداندن مقدار  
+    }
+
+
+    createPolyLine(loc1, pop0, map) {
+
+        //
+        //  L.marker(loc2, { icon: a2_ }).addTo(map);
+
+        // let dis1 = getDistance(loc1, loc2);
+
+
+        // var latlongs = [loc1, loc2];
+
+        // var polyline = new L.Polyline(latlongs, {
+        //     color: 'orange',
+        //     opacity: 1,
+        //     weight: 3,
+        //     clickable: false
+        // }).addTo(map);
+        // let dis = 0;
+        var er = pop0[2].dist + '&nbsp;  متر فاصله دسترسی ' + '<br />' + pop0[2].timm + '&nbsp;  دقیقه زمان دسترسی   '; //  (dis1 / 1000).toFixed(2);
+        // dis += (1 / er);
+
+
+        let categoryid = ' <center>  <span style=" color: #CC33FF"> ' + ' </span>   ' + pop0[1] + '<br />' + er + '</center>';
+        const counters = {
+            gandom: 0,
+            super: 0,
+            sorena: 0,
+            refah: 0,
+            ofog: 0,
+            sepah: 0,
+            canbo: 0,
+            winmarket: 0,
+            mohsen: 0,
+            daily: 0,
+            haft: 0,
+            etka: 0,
+            family: 0,
+            shahrvand: 0,
+            hyperstar: 0,
+            amiran: 0,
+            hypermy: 0,
+            mofid: 0,
+            kousar: 0,
+            yas: 0
+        };
+
+        // const coords = [result.geometry.y, result.geometry.x];
+        let icoo = this.addBusinessMarker(pop0[0], categoryid, loc1, counters);
+        console.warn(pop0, icoo);
+        // var marker = L.marker(loc1, {
+        //     icon: this.geticon(pop0[0])
+        // }).addTo(map);
+        // if (marker) {
+        //     marker.bindPopup(categoryid);
+        // };
+    };
+
+
+
+    Draw_line(lipoint, txtp, map) {
+        var firstpolyline = new L.Polyline(lipoint, {
+            color: this.generateRandomColor(),
+            weight: 5,
+            opacity: 0.9,
+            smoothFactor: 1
+        });
+        firstpolyline.addTo(map).bindPopup(txtp);
+
+    }
+    Draw_popup(base_p, arrpop, map) {
+        const numberFormatter = Intl.NumberFormat('en-US');
+
+        const uniqueDataArray = Array.from(new Set(arrpop.map(JSON.stringify))).map(JSON.parse);
+        uniqueDataArray.sort(function (a, b) {
+            return a[0].timm - b[0].timm;
+        });
+
+
+        let tar = '<table>';
+        tar += '<thead><tr><th> &nbsp; نام فروشگاه &nbsp; </th><th>&nbsp; زمان &nbsp; </th><th>&nbsp; فاصله  &nbsp;</th></tr></thead>'; // عنوان جدول با سه ستون  
+        tar += '<tbody>'; // شروع بدنه جدول  
+
+        uniqueDataArray.forEach(function (item) {
+            console.log('******= ', item);
+            const dist2 = numberFormatter.format(item[2].dist);
+
+            tar += '<tr>';
+            tar += '<td>' + item[0] + '</td>'; // ستون نام فروشگاه  
+               tar += '<td>      </td>'; // ستون نام فروشگاه  
+
+            tar += '<td>' + item[2].timm + '</td>'; // ستون زمان  
+               tar += '<td> &nbsp; ' + ' - ' + ' &nbsp;  </td>'; // ستون نام فروشگاه  
+            tar += '<td>' + dist2 + '</td>'; // ستون فاصله  
+            tar += '</tr>';
+        });
+
+        tar += '</tbody></table>';
+
+        // حالا tar رو به عنوان محتوای popup استفاده کنید  
+        const a2_ = L.icon({
+            iconUrl: url_path + 'Location3.png',
+            iconSize: [35, 40], // size of the icon
+            popupAnchor: [-3, -3] // point from which the popup should open relative to the iconAnchor
+        });
+
+        L.marker(base_p, { icon: a2_ }).addTo(map).bindPopup(tar);
+    };
+
+
+    // End help code
+
+    generateRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+
+        }
+        return color;
+    }
     // متدهای کمکی برای هر نوع شکل
     handleMarkerCreation(layer) {
         const latlng = layer.getLatLng();
@@ -1122,9 +1480,12 @@ export class GandomMap {
         }
 
         if (icon) {
+            let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
+
+
             L.marker(coords, { icon: icon })
                 .addTo(this.map)
-                .bindPopup(`${category}<br/>${title}`, { opacity: 0.1 });
+                .bindPopup(categoryid2, { opacity: 0.1 });
         }
     }
 
@@ -1155,18 +1516,18 @@ export class GandomMap {
                     </div>
                 </div>`;
 
-                // اضافه کردن متد exportToPDF به window
-                window.exportToPDF = (reportData) => {
-                    this.exportToPDF(decodeURIComponent(reportData));
-                };
+            // اضافه کردن متد exportToPDF به window
+            window.exportToPDF = (reportData) => {
+                this.exportToPDF(decodeURIComponent(reportData));
+            };
 
-                layer.bindPopup(popupContent, {
-                    className: 'custom-popup',
-                    offset: L.point(0, -10),
-                    closeButton: true,
-                    closeOnClick: true,
-                    autoClose: true
-                }).openPopup();
+            layer.bindPopup(popupContent, {
+                className: 'custom-popup',
+                offset: L.point(0, -10),
+                closeButton: true,
+                closeOnClick: true,
+                autoClose: true
+            }).openPopup();
         }
     }
 
@@ -1210,11 +1571,11 @@ export class GandomMap {
             // افزودن محتوا به PDF
             doc.text(title, xPosition, 10, { align: 'right' });
             doc.text(`تاریخ: ${date}`, xPosition, 20, { align: 'right' });
-            
+
             // تقسیم محتوا به خطوط
             const lines = cleanContent.split('\n');
             let y = 30;
-            
+
             lines.forEach(line => {
                 if (y > 280) { // اگر به انتهای صفحه نزدیک شدیم
                     doc.addPage();
@@ -1462,7 +1823,7 @@ export class GandomMap {
     }
 
     servicemap() {//این درسته باشه
-  
+
         L.Draw.codeposti = L.Draw.Marker.extend({
             statics: {
                 TYPE: 'codeposti',
@@ -1519,7 +1880,7 @@ export class GandomMap {
                 L.Draw.Feature.prototype.initialize.call(this, map, options);
                 this.title = 'as'
             }
-    
+
         });
         L.Draw.Tarakom = L.Draw.Marker.extend({
             statics: {
@@ -1536,7 +1897,7 @@ export class GandomMap {
                 L.Draw.Feature.prototype.initialize.call(this, map, options);
             }
         });
-    
+
         L.Draw.OtherService = L.Draw.Marker.extend({
             statics: {
                 TYPE: 'otherService',
@@ -1547,67 +1908,67 @@ export class GandomMap {
                 zIndexOffset: 1000,
                 title: 'otherService',
             },
-    
+
             initialize: function (map, options) {
                 this.type = L.Draw.OtherService.TYPE;
                 L.Draw.Feature.prototype.initialize.call(this, map, options);
             }
-    
+
         });
-    
+
         L.DrawToolbar.prototype.options = {
             marker: {},
             modir: {}, codeposti: {}, abadi: {},
             tarakom: {},
             OtherService: {}
         };
-    
+
         L.DrawToolbar.prototype.getModeHandlers = function (map) {
             return [
                 {
-                enabled: this.options.rectangle,
-                handler: new L.Draw.Rectangle(map, this.options.rectangle),
-                title: 'فروشگاههای'
-            },
-            {
-                enabled: this.options.marker,
-                handler: new L.Draw.Marker(map, this.options.marker),
-                title: 'مسیر دسترسی '
-            },
-            {
-                enabled: this.options.modir,
-                handler: new L.Draw.Modir(map, this.options.modir),
-                title: 'مدیران مناطق'
-            
-            },
-            {
-                enabled: this.options.tarakom,
-                handler: new L.Draw.Tarakom(map, this.options.tarakom),
-                title: 'تراکم جمعیت',
-            },
-            {
-                enabled: this.options.OtherService,
-                handler: new L.Draw.OtherService(map, this.options.OtherService),
-                title: 'همه کسب و کارها',
-                // title: L.drawLocal.draw.toolbar.buttons.supermarket
-            },
-            {
-                enabled: this.options.codeposti,
-                handler: new L.Draw.codeposti(map, this.options.codeposti),
-                title: 'کد پستی',
-                // title: L.drawLocal.draw.toolbar.buttons.modir
-            },
-            {
-                enabled: this.options.abadi,
-                handler: new L.Draw.abadi(map, this.options.abadi),
-                title: 'آبادی  ',
-                // title: L.drawLocal.draw.toolbar.buttons.modir
-            }
+                    enabled: this.options.rectangle,
+                    handler: new L.Draw.Rectangle(map, this.options.rectangle),
+                    title: 'فروشگاههای'
+                },
+                {
+                    enabled: this.options.marker,
+                    handler: new L.Draw.Marker(map, this.options.marker),
+                    title: 'مسیر دسترسی '
+                },
+                {
+                    enabled: this.options.modir,
+                    handler: new L.Draw.Modir(map, this.options.modir),
+                    title: 'مدیران مناطق'
+
+                },
+                {
+                    enabled: this.options.tarakom,
+                    handler: new L.Draw.Tarakom(map, this.options.tarakom),
+                    title: 'تراکم جمعیت',
+                },
+                {
+                    enabled: this.options.OtherService,
+                    handler: new L.Draw.OtherService(map, this.options.OtherService),
+                    title: 'همه کسب و کارها',
+                    // title: L.drawLocal.draw.toolbar.buttons.supermarket
+                },
+                {
+                    enabled: this.options.codeposti,
+                    handler: new L.Draw.codeposti(map, this.options.codeposti),
+                    title: 'کد پستی',
+                    // title: L.drawLocal.draw.toolbar.buttons.modir
+                },
+                {
+                    enabled: this.options.abadi,
+                    handler: new L.Draw.abadi(map, this.options.abadi),
+                    title: 'آبادی  ',
+                    // title: L.drawLocal.draw.toolbar.buttons.modir
+                }
             ];
         };
-    
+
         /********** Old */
-    
+
         var drawOptions = {
             position: 'topleft',
             draw: {
@@ -1693,8 +2054,8 @@ export class GandomMap {
                         opacity: 0.5,
                         fillOpacity: 0.4
                     })
-                    .bindPopup(popupContent)
-                    .addTo(map);
+                        .bindPopup(popupContent)
+                        .addTo(map);
                 });
             });
         });
@@ -1708,7 +2069,7 @@ export class GandomMap {
             if (!data.results?.length) return;
 
             const url_path = '/IMG/';
-                
+
             const icons = {
                 populated: L.icon({
                     iconUrl: url_path + 'vilage1.png',
@@ -1760,17 +2121,17 @@ export class GandomMap {
         });
     }
 
-    async   Draw_abdi(idcode, map) {
+    async Draw_abdi(idcode, map) {
         const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/find?searchText=${idcode}&contains=false&searchFields=NEAR_FID&sr=&layers=ID%3A2&layerDefs=&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&dynamicLayers=&returnZ=false&returnM=false&gdbVersion=&f=pjson`;
         console.log('---Abadi---', baseUrl);
         let total_khan = 0, total_pop = 0;
-    
+
         try {
             let icons;
             try {
 
                 const url_path = '/IMG/';
-                
+
                 icons = {
                     populated: L.icon({
                         iconUrl: url_path + 'vlag01.png',
@@ -1786,10 +2147,10 @@ export class GandomMap {
             } catch (error) {
                 console.error('خطا در ایجاد آیکون‌ها:', error);
             }
-    
+
             const response = await fetch(baseUrl);
             if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
-    
+
             const json = await response.json();
             if (json.results?.length > 0) {
                 json.results.forEach(result => {
@@ -1801,11 +2162,11 @@ export class GandomMap {
                         icon = icons.empty;
                     }
                     const txt1 = `<span style="color: blue; font-size: 10px;">   فروشگاه تعاوني: ${tavon}  <br /> بقالي: ${bagali} <br /> نانوايي: ${nanva}  <br /> گوشت فروشي: ${gosht}</span> <br /> <span style="color: red; font-size: 12px;"> جمعیت :  ${Populat} </span> <br /> خانوار: ${Khanevar}`;
-    
+
                     let po1 = result.geometry;
                     const swapped = [po1.y, po1.x];
                     L.marker(swapped, { icon }).addTo(map).bindPopup(txt1);
-    
+
                 });
             }
         } catch (error) {
@@ -1817,22 +2178,21 @@ export class GandomMap {
 
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
-        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q'; 
         try {
-  
-            
+
+
             // ساخت URL درخواست
             const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
-            
+
             // انجام درخواست با استفاده از jQuery
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
                 headers: {
-                    'x-api-key': API_KEY,
+                    'x-api-key': this.API_KEY,
                     'content-type': 'application/json'
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     if (xhr.status === 401) {
                         console.error(`خطای اعتبارسنجی برای ${subcategory}:`, error);
                         return;
@@ -1852,13 +2212,13 @@ export class GandomMap {
 
             // دریافت تعداد کل نتایج
             const totalCount = response.data.count;
-            window.locationCounts = {}; 
+            window.locationCounts = {};
             // دریافت نتایج به صورت صفحه‌بندی شده
             const batchSize = 20;
             for (let offset = 0; offset < totalCount; offset += batchSize) {
-                await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY);
+                await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius);
             }
-            
+
             console.log(`تمام ${totalCount} مکان برای دسته ${subcategory} با موفقیت نمایش داده شد`);
 
         } catch (error) {
@@ -1866,7 +2226,7 @@ export class GandomMap {
             if (error.status === 401) {
                 console.error('خطای اعتبارسنجی - لطفا API key را بررسی401 کنید');
             } else if (error.status === 500) {
-                console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ' );
+                console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ');
             } else {
                 console.log('خطا در دریافت اطلاعات مکان‌ها:', error);
             }
@@ -1874,15 +2234,15 @@ export class GandomMap {
     }
 
     // تابع کمکی برای دریافت جزئیات مکان‌ها
-    async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius, API_KEY) {
+    async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius) {
         try {
             const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
-            
+
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
                 headers: {
-                    'x-api-key': API_KEY,
+                    'x-api-key': this.API_KEY,
                     'content-type': 'application/json'
                 }
             });
@@ -1920,65 +2280,22 @@ export class GandomMap {
                 // افزودن مارکر به نقشه
                 L.marker([lat, lng], { 
                     icon: this.geticon(subcategory)
-                })
-                .addTo(map)
+                }).addTo(map)
                 .bindPopup(`
-                    <div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 0.9em;">
-                        <h6 style="color: #2c3e50; margin-bottom: 8px; font-size: 1em;">${name}</h6>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>استان:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${province}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>شهرستان:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${county}</td>
-                            </tr>
-                            ${district ? `
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>بخش:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${district}</td>
-                            </tr>` : ''}
-                            ${city ? `
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>شهر:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${city}</td>
-                            </tr>` : ''}
-                            ${region ? `
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>منطقه:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${region}</td>
-                            </tr>` : ''}
-                            ${neighborhood ? `
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>محله:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${neighborhood}</td>
-                            </tr>` : ''}
-                            ${village ? `
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>روستا:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${village}</td>
-                            </tr>` : ''}
-                            ${(() => {
-                                // حذف نام استان، شهرستان و شهر از آدرس
-                                let cleanAddress = address;
-                                if (province) cleanAddress = cleanAddress.replace(province, '').trim();
-                                if (county) cleanAddress = cleanAddress.replace(county, '').trim();
-                                if (city) cleanAddress = cleanAddress.replace(city, '').trim();
-                                // حذف کاماهای اضافی
-                                cleanAddress = cleanAddress.replace(/,\s*,/g, ',').replace(/^,\s*|\s*,$/g, '');
-                                
-                                return cleanAddress !== 'آدرس موجود نیست' && cleanAddress ? `
-                                <tr>
-                                    <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>آدرس:</strong></td>
-                                    <td style="padding: 4px; border-bottom: 1px solid #eee;">${cleanAddress}</td>
-                                </tr>` : '';
-                            })()}
-                            <tr>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;"><strong>فاصله:</strong></td>
-                                <td style="padding: 4px; border-bottom: 1px solid #eee;">${distance}</td>
-                            </tr>
-                        </table>
+                    <div style="direction: rtl; text-align: right; font-family: IRANSans;">
+                        <h3 style="color: #2c3e50; margin-bottom: 10px;">${name}</h3>
+                        <div style="border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
+                            <strong>آدرس:</strong> ${address}
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <strong>منطقه:</strong> ${region || 'نامشخص'}
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <strong>محله:</strong> ${neighborhood || 'نامشخص'}
+                        </div>
+                        <div style="color: #27ae60;">
+                            <strong>فاصله:</strong> ${distance}
+                        </div>
                     </div>
                 `);
             });
@@ -1991,54 +2308,61 @@ export class GandomMap {
         }
     }
 
-    // تابع نمایش گزارش کلی
+    /**
+     * نمایش گزارش خلاصه از کسب و کارهای اطراف نقطه انتخابی
+     * @param {number} latitude - عرض جغرافیایی
+     * @param {number} longitude - طول جغرافیایی
+     * @param {L.Map} map - نقشه
+     */
     showSummaryReport(latitude, longitude, map) {
         if (!window.locationCounts) return;
 
+        // ایجاد محتوای گزارش
         let reportContent = '<div style="direction: rtl; text-align: right; font-family: Vazir; font-size: 10px;">';
         reportContent += '<h6 style="color:rgb(4, 123, 2); margin-bottom: 7px; font-size: 12px;"> گزارش کلی کسب و کارها</h6>';
         reportContent += '<table style="width: 100%; border-collapse: collapse;">';
 
-        // تبدیل نام‌های انگلیسی به فارسی و مرتب‌سازی
-        const persianNames = {  
-            'attraction': 'جاذبه گردشگری',  
-            'bakery': 'نانوایی',  
-            'bank': 'بانک',  
-            'barracks': 'پادگان',  
-            'bus_line': 'خط اتوبوس',  
-            'bus_station': 'ایستگاه اتوبوس',  
-            'bus_stop': 'ایستگاه اتوبوس',  
-            'camp_site': 'اردوگاه',  
-            'caravan_site': 'کاروانسرا',  
-            'clinic': 'درمانگاه',  
-            'elementray_school': 'مدرسه ابتدایی',  
-            'fruit_vegetable_store': 'میوه فروشی',  
-            'fuel': 'پمپ بنزین',  
-            'high_school': 'دبیرستان',  
-            'hospice': 'آسایشگاه سالمندان',  
-            'hospital': 'بیمارستان',  
-            'hotel': 'هتل',  
-            'hyper_market': 'فروشگاه بزرگ',  
-            'kindergarten': 'مهد کودک',  
-            'laboratory': 'آزمایشگاه',  
-            'marketplace': 'بازار',  
-            'mosque': 'مسجد',  
-            'parking': 'پارکینگ',  
-            'parking_space': 'محل پارک',  
-            'police': 'پلیس',  
-            'public_transport_building': 'ساختمان حمل و نقل عمومی',  
-            'public_transportation': 'حمل و نقل عمومی',  
-            'school': 'مدرسه',  
-            'subway': 'مترو',  
-            'subway_line': 'خط مترو',  
-            'supermarket': 'سوپرمارکت',  
-            'theme_park': 'شهربازی',  
-            'tower': 'برج',  
-            'trade_store': 'فروشگاه تجاری',  
-            'train_station': 'ایستگاه قطار',  
-            'university': 'دانشگاه'  
-        };  
+        // تعریف نام‌های فارسی برای انواع کسب و کارها
+        const persianNames = {
+            'attraction': 'جاذبه گردشگری',
+            'bakery': 'نانوایی',
+            'bank': 'بانک',
+            'barracks': 'پادگان',
+            'bus_line': 'خط اتوبوس',
+            'bus_station': 'ایستگاه اتوبوس',
+            'bus_stop': 'ایستگاه اتوبوس',
+            'camp_site': 'اردوگاه',
+            'caravan_site': 'کاروانسرا',
+            'clinic': 'درمانگاه',
+            'elementray_school': 'مدرسه ابتدایی',
+            'fruit_vegetable_store': 'میوه فروشی',
+            'fuel': 'پمپ بنزین',
+            'high_school': 'دبیرستان',
+            'hospice': 'آسایشگاه سالمندان',
+            'hospital': 'بیمارستان',
+            'hotel': 'هتل',
+            'hyper_market': 'فروشگاه بزرگ',
+            'kindergarten': 'مهد کودک',
+            'laboratory': 'آزمایشگاه',
+            'marketplace': 'بازار',
+            'mosque': 'مسجد',
+            'parking': 'پارکینگ',
+            'parking_space': 'محل پارک',
+            'police': 'پلیس',
+            'public_transport_building': 'ساختمان حمل و نقل عمومی',
+            'public_transportation': 'حمل و نقل عمومی',
+            'school': 'مدرسه',
+            'subway': 'مترو',
+            'subway_line': 'خط مترو',
+            'supermarket': 'سوپرمارکت',
+            'theme_park': 'شهربازی',
+            'tower': 'برج',
+            'trade_store': 'فروشگاه تجاری',
+            'train_station': 'ایستگاه قطار',
+            'university': 'دانشگاه'
+        };
 
+        // مرتب‌سازی و نمایش اطلاعات کسب و کارها
         Object.entries(window.locationCounts)
             .sort(([keyA], [keyB]) => (persianNames[keyA] || keyA).localeCompare(persianNames[keyB] || keyB))
             .forEach(([category, count]) => {
@@ -2049,10 +2373,10 @@ export class GandomMap {
                         <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
                     </tr>`;
             });
-console.log(      '===========',reportContent);
+
         reportContent += '</table>';
-        
-        // اضافه کردن دکمه‌های خروجی
+
+        // اضافه کردن دکمه خروجی PDF
         reportContent += `
             <div style="margin-top: 7px; text-align: center;">
                 <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn" style="font-size: 11px;">
@@ -2061,54 +2385,13 @@ console.log(      '===========',reportContent);
             </div>
         </div>`;
 
-        // اضافه کردن متد exportToPDF به window
+        // تنظیم تابع خروجی PDF در window
         window.exportToPDF = (reportData) => {
             this.exportToPDF(decodeURIComponent(reportData));
         };
 
-        // نمایش مارکر موقعیت انتخاب شده popup02
+        // نمایش مارکر موقعیت انتخاب شده با پاپ‌آپ گزارش
         this.addLocationMarker(longitude, latitude, map, reportContent);
-    
-        // ایجاد پاپ‌آپ گزارش
-        // const reportPopup = L.popup({
-        //     className: 'custom-popup',
-        //     maxWidth: 210
-        // })
-        // .setLatLng([latitude, longitude])
-        // .setContent(reportContent)
-        // .openOn(map);
-
-        // تعریف تابع خروجی DBF
-        window.exportToDBF = (lat, lng) => {
-            const data = Object.entries(window.locationCounts).map(([category, count]) => ({
-                Category: persianNames[category] || category,
-                Count: count,
-                Latitude: lat,
-                Longitude: lng
-            }));
-
-            // تبدیل به فرمت DBF و دانلود
-            const dbfWriter = new DBFWriter();
-            dbfWriter.fields = [
-                { name: 'Category', type: 'C', size: 50 },
-                { name: 'Count', type: 'N', size: 10 },
-                { name: 'Latitude', type: 'N', size: 20, decimals: 6 },
-                { name: 'Longitude', type: 'N', size: 20, decimals: 6 }
-            ];
-            dbfWriter.records = data;
-
-            const buffer = dbfWriter.getData();
-            const blob = new Blob([buffer], { type: 'application/x-dbf' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'locations_report.dbf';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
-       
     }
 
     // اضافه کردن استایل‌های جدید
@@ -2168,7 +2451,7 @@ console.log(      '===========',reportContent);
         });
 
         const [lng, lat] = location.location.coordinates;
-        
+
         L.marker([lat, lng], { icon })
             .addTo(map)
             .bindPopup(`
@@ -2373,7 +2656,7 @@ console.log(      '===========',reportContent);
         return icons[category] || icons.default;
     }
 
-    addLocationMarker(longitude, latitude, map,textpop) {
+    addLocationMarker(longitude, latitude, map, textpop) {
         const icon = L.divIcon({
             html: '<i class="fas fa-map-marker-alt" style="color: #FF0000; font-size: 24px;"></i>',
             className: 'location-marker',
@@ -2381,12 +2664,12 @@ console.log(      '===========',reportContent);
             iconAnchor: [12, 24]
         });
 
-       L.marker([latitude, longitude], { icon })
+        L.marker([latitude, longitude], { icon })
             .addTo(map).bindPopup(textpop);
-                // `<div style="direction: rtl; text-align: right;">
-                //     <strong>موقعیت انتخاب شده</strong><br>
-                //     عرض جغرافیایی: ${latitude}<br>
-                //     طول جغرافیایی: ${longitude}
-                // </div>`);
+        // `<div style="direction: rtl; text-align: right;">
+        //     <strong>موقعیت انتخاب شده</strong><br>
+        //     عرض جغرافیایی: ${latitude}<br>
+        //     طول جغرافیایی: ${longitude}
+        // </div>`);
     }
 } 
