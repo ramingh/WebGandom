@@ -1,10 +1,9 @@
-// import { GandomMap } from '../../components/Map.js';
+ import { GandomMap1 } from '../../components/NewMap.js';
 // import { LayerManager } from '../../components/LayerManager.js';
-import { GandomMap } from '../../components/NewMap1.js';
 import { LayerManager } from '../../components/LayerManager1.js';
 
 // Initialize components
-const map = new GandomMap('map'); 
+const map = new GandomMap1('map'); 
 const layerManager = new LayerManager('sidebar', map);
 
 // Show loading indicator
