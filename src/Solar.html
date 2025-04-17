@@ -4,71 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title> Solar System </title>
+    <title> Solar System </title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
- <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/leaflet.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/leaflet.css">
 
-<link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/markercluster.css">
-<link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/MarkerCluster.Default.css">
-<!-- JS -->
-   <script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.js"></script>
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/markercluster.css">
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/MarkerCluster.Default.css">
+    <!-- JS -->
+    <script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.js"></script>
 
-<script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.markercluster.js"></script>
- 
+    <script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.markercluster.js"></script>
 
 
-  <style>
 
-.popup-body p {
-    margin: 2px 0; /* کاهش فاصله بین پاراگراف‌ها */
-    line-height: 2; /* کاهش ارتفاع خطوط */
-    font-size: 12px; /* کوچکتر کردن متن برای نظم بیشتر */
-    text-align: center;
-}
+    <style>
+        .popup-body p {
+            margin: 2px 0;
+            /* کاهش فاصله بین پاراگراف‌ها */
+            line-height: 2;
+            /* کاهش ارتفاع خطوط */
+            font-size: 12px;
+            /* کوچکتر کردن متن برای نظم بیشتر */
+            text-align: center;
+        }
 
 
 
         .leaflet-popup {
-      background: #22374b;
-      border: 2px solid #272d25;
-      border-radius: 10px;
-      /* margin-top: -20; */
-      /* width: 250px; line-height: 1; */
-    }
- 
-    .popup-header {
-    padding: 10px;
-    font-size: 14px;
-    text-align: center;
-    font-weight: bold;
-}
-   
-    /* .leaflet-popup p {
+            background: #22374b;
+            border: 2px solid #272d25;
+            border-radius: 10px;
+            /* margin-top: -20; */
+            /* width: 250px; line-height: 1; */
+        }
+
+        .popup-header {
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* .leaflet-popup p {
       font-size: 10px;
       margin: 5px 0;
     } */
 
-    .node-up {
-      color: green; line-height: 0.4;
-    }
+        .node-up {
+            color: green;
+            line-height: 0.4;
+        }
 
-    .node-down {
-      color: red;
-    }
+        .node-down {
+            color: red;
+        }
 
-    form {
-      overflow: hidden;
-      margin-top: -160px;
-      margin-left: 10px;
-      margin-right: 0px;
-      background: rgba(226, 236, 215, 0.79);
-      overflow: hidden;
-      z-index: 2;
-    }
+        form {
+            overflow: hidden;
+            margin-top: -160px;
+            margin-left: 10px;
+            margin-right: 0px;
+            background: rgba(226, 236, 215, 0.79);
+            overflow: hidden;
+            z-index: 2;
+        }
 
-    /* .leaflet-popup {
+        /* .leaflet-popup {
       background: #22374b;
       border: 3px solid #272d25;
       border-radius: 9px;
@@ -83,262 +86,351 @@
       background-color: #a1df81;
     } */
 
-    .container {
-      height: 90vh;
-      display: flex;  
-      align-items: center;
-      justify-content: center;
-      background-color: #bedca090;
-    }
+        .container {
+            height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #bedca090;
+        }
 
-    .closebtn {
-      color: rgb(230, 223, 14);
-      background-color: rgba(54, 23, 211, 0.756);
-      cursor: pointer;  
-    }
+        .closebtn {
+            color: rgb(230, 223, 14);
+            background-color: rgba(54, 23, 211, 0.756);
+            cursor: pointer;
+        }
 
-    .popup-footer {
-        text-align: right;
-        padding: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        margin-top: 8px;
-        direction: rtl;
-    }
+        .popup-footer {
+            text-align: right;
+            padding: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 8px;
+            direction: rtl;
+        }
 
-    .continue-btn {
-        background-color: #c4da214a;
-        color: rgb(0, 0, 0);
-        padding: 4px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
-        font-family: Vazir, Courier,  monospace;
-         margin-top:  -85px;
-        text-decoration: none;
-        display: inline-block;
-        height: 22px;
-    }
+        .continue-btn {
+            background-color: #c4da214a;
+            color: rgb(0, 0, 0);
+            padding: 4px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: Vazir, Courier, monospace;
+            margin-top: -85px;
+            text-decoration: none;
+            display: inline-block;
+            height: 22px;
+        }
 
-    .continue-btn:hover {
-        background-color: #abd8e9d8;
-        font-size: 10px;
-    }
+        .continue-btn:hover {
+            background-color: #abd8e9d8;
+            font-size: 10px;
+        }
 
-    .continue-btn::after {
-        content: ' ←';
-        display: inline-block;
-        margin-right: 50px;
-        color: white;
-        font-size: 17px;
-        height: 12px;
-    }
+        .continue-btn::after {
+            content: ' ←';
+            display: inline-block;
+            margin-right: 50px;
+            color: white;
+            font-size: 17px;
+            height: 12px;
+        }
 
-    /* استایل فرم وضعیت فروشگاه */
-    .store-status-form {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
-        padding: 12px;
-        border-radius: 6px;
-        width: 60%;
-        max-width: 400px;
-        z-index: 1000;
-        direction: rtl;
-        font-size: 12px;
-    }
+        /* استایل فرم وضعیت فروشگاه */
+        .store-status-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            width: 60%;
+            max-width: 400px;
+            z-index: 1000;
+            direction: rtl;
+            font-size: 12px;
+        }
 
-    .store-status-form h1 {
-        text-align: center;
-        margin-bottom: 10px;
-        font-size: 16px;
-    }
+        .store-status-form h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
 
-    .store-status-form h2 {
-        text-align: center;
-        font-size: 14px;
-        margin-bottom: 8px;
-    }
+        .store-status-form h2 {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
 
-    .store-info {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 8px;
-        border-radius: 4px;
-        margin-bottom: 12px;
-    }
+        .store-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
 
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 6px;
-        font-size: 11px;
-    }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
 
-    .info-label {
-        font-weight: bold;
-        color: #ffd700;
-        margin-left: 8px;
-    }
+        .info-label {
+            font-weight: bold;
+            color: #ffd700;
+            margin-left: 8px;
+        }
 
-    .ping-results {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
-        margin-top: 12px;
-        font-size: 11px;
-    }
+        .ping-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 11px;
+        }
 
-    .ping-item {
-        background: rgba(0, 0, 0, 0.5);
-        padding: 6px;
-        border-radius: 3px;
-    }
+        .ping-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px;
+            border-radius: 3px;
+        }
 
-    .status-ok {
-        color: #00ff00;
-    }
+        .status-ok {
+            color: #00ff00;
+        }
 
-    .status-not-ok {
-        color: #ff0000;
-    }
+        .status-not-ok {
+            color: #ff0000;
+        }
 
-    .update-button {
-        background-color: rgba(59, 158, 13, 0.537);
-        height: 30px;
-        width: 85px;
-        color: rgb(33, 14, 14);
-        font-size: 11px;
-        text-align: center;
-        border: none;
-        border-radius: 5px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-  </style>
+        .update-button {
+            background-color: rgba(59, 158, 13, 0.537);
+            height: 30px;
+            width: 85px;
+            color: rgb(33, 14, 14);
+            font-size: 11px;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* اضافه کردن استایل جدول وضعیت */
+        .status-table {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            direction: rtl;
+        }
+        
+        .status-table table {
+            border-collapse: collapse;
+            width: 200px;
+        }
+        
+        .status-table th, .status-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .status-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .status-1 {
+            background-color: rgba(0, 255, 0, 0.2); /* سبز روشن */
+            color: #006400; /* سبز تیره */
+        }
+        
+        .status-2 {
+            background-color: rgba(255, 0, 0, 0.2); /* قرمز روشن */
+            color: #8B0000; /* قرمز تیره */
+        }
+        
+        .status-9 {
+            background-color: rgba(0, 0, 255, 0.2); /* آبی روشن */
+            color: #00008B; /* آبی تیره */
+        }
+    </style>
 </head>
 
 <body>
 
-  <div id="MapSection" class="container">
-  </div>
-  <!-- <input type="button" onclick="clearMap(map) " value=" به روز رسانی"    style="  background-color: rgba(23, 216, 100, 0.579);height: 25px; color: rgb(62, 12, 240); " /> -->
+    <!-- اضافه کردن جدول وضعیت -->
+    <div class="status-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>وضعیت</th>
+                    <th>تعداد</th>
+                </tr>
+            </thead>
+            <tbody id="status-counts">
+                <!-- محتوا با JavaScript پر می‌شود -->
+            </tbody>
+        </table>
+    </div>
 
-  <input type="button" onclick="clearMap(map)" value="به روز رسانی   ." class="update-button" />
-  <span class="closebtn">&times;</span>
+    <div id="MapSection" class="container">
+    </div>
+    <!-- <input type="button" onclick="clearMap(map) " value=" به روز رسانی"    style="  background-color: rgba(23, 216, 100, 0.579);height: 25px; color: rgb(62, 12, 240); " /> -->
+
+    <input type="button" onclick="clearMap(map)" value="به روز رسانی   ." class="update-button" />
+    <span class="closebtn">&times;</span>
 
 
-  <script>
-    const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreCode%2CLongitude%2CLatitude%2CStoreName%2CGZone&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
-    const url_rest1 = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreId%2CStoreStatus%2CGZone%2CStoreCode%2CStoreName%2CAddress%2CLongitude%2CLatitude&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
-    var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+    <script>
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreCode%2CLongitude%2CLatitude%2CStoreName%2CGZone&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        const url_rest1 = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreId%2CStoreStatus%2CGZone%2CStoreCode%2CStoreName%2CAddress%2CLongitude%2CLatitude&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
 
-    let array2 = [];
-    let aray1 = [];
-    const state1_ = L.icon({
-      iconUrl: url_path + 'state1.png',
-      iconSize: [12, 12],
-      popupAnchor: [50, 0]
-    });
-    const state2_ = L.icon({
-      iconUrl: url_path + 'state2.png',
-      iconSize: [12, 12]
-    });
-
-    async function get_solar() {
-    try {
-        const url = 'https://gis1.gandomcs.com/gandom/getdata.asmx/All_solar';
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': "application/xml" }
+        let array2 = [];
+        let aray1 = [];
+        const state1_ = L.icon({
+            iconUrl: url_path + 'state1.png',
+            iconSize: [12, 12],
+            popupAnchor: [50, 0]
+        });
+        const state2_ = L.icon({
+            iconUrl: url_path + 'state2.png',
+            iconSize: [12, 12]
         });
 
-        if (!response.ok) throw new Error('خطا در ارتباط با سرور سولار: ' + response.statusText);
+        async function get_solar() {
+            try {
+                const url = 'https://gis1.gandomcs.com/gandom/getdata.asmx/All_solar';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': "application/xml" }
+                });
 
-        const xmlString = await response.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-        const result = xmlDoc.getElementsByTagName("string")[0]?.textContent;
+                if (!response.ok) throw new Error('خطا در ارتباط با سرور سولار: ' + response.statusText);
 
-        if (!result) throw new Error('داده‌ای یافت نشد');
+                const xmlString = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+                const result = xmlDoc.getElementsByTagName("string")[0]?.textContent;
 
-        // نمایش مقادیر خام دریافت‌شده
-        // console.log("🚀 داده خام دریافتی:", result);
+                if (!result) throw new Error('داده‌ای یافت نشد');
 
-        const resultArray = result.split("#").map(store => {
-            const dataArray = store.split(',');
-            return {
-                NodeID: dataArray[0],
-                City: dataArray[1],
-                Department: dataArray[2],
-                StoreCode: dataArray[3],
-                IPAddress: dataArray[4],
-                Caption: dataArray[5],
-                Status: dataArray[6],  // مقدار Status
-                StatusLED: dataArray[7],
-                AvgResponseTime: dataArray[8],
-                ResponseTime: dataArray[9],
-                PercentLoss: dataArray[10]
-            };
-        });
+                // نمایش مقادیر خام دریافت‌شده
+                // console.log("🚀 داده خام دریافتی:", result);
 
-        // نمایش تمام مقادیر قبل از فیلتر شدن
-        // console.log("📌 تمام داده‌های قبل از فیلتر:", resultArray);
+                const resultArray = result.split("#").map(store => {
+                    const dataArray = store.split(',');
+                    return {
+                        NodeID: dataArray[0],
+                        City: dataArray[1],
+                        Department: dataArray[2],
+                        StoreCode: dataArray[3],
+                        IPAddress: dataArray[4],
+                        Caption: dataArray[5],
+                        Status: dataArray[6],  // مقدار Status
+                        StatusLED: dataArray[7],
+                        AvgResponseTime: dataArray[8],
+                        ResponseTime: dataArray[9],
+                        PercentLoss: dataArray[10]
+                    };
+                });
 
-        // اعمال فیلتر برای حذف فقط Status=9
-        array2 = resultArray.filter(item => {
-            const statusNum = Number(item.Status);
-            if (statusNum==2){
-            console.log(`ℹ بررسی مقدار Status: ${statusNum}`); // دیباگ مقدار
+                // نمایش تمام مقادیر قبل از فیلتر شدن
+                // console.log("📌 تمام داده‌های قبل از فیلتر:", resultArray);
+
+                // شمارش تعداد هر وضعیت
+                const statusCounts = {
+                    status1: 0,
+                    status2: 0,
+                    status9: 0
+                };
+
+                resultArray.forEach(item => {
+                    const statusNum = Number(item.Status);
+                    if (statusNum === 1) statusCounts.status1++;
+                    else if (statusNum === 2) statusCounts.status2++;
+                    else if (statusNum === 9) statusCounts.status9++;
+                });
+
+                console.log('تعداد وضعیت 1:', statusCounts.status1);
+                console.log('تعداد وضعیت 2:', statusCounts.status2);
+                console.log('تعداد وضعیت 9:', statusCounts.status9);
+
+                // اعمال فیلتر برای حذف فقط Status=9
+                array2 = resultArray.filter(item => {
+                    const statusNum = Number(item.Status);
+                    return statusNum !== 9; // فقط مقدار 9 را حذف کن
+                });
+
+                // نمایش مقادیر نهایی بعد از فیلتر شدن
+                console.log(statusCounts);
+                
+                // به‌روزرسانی جدول وضعیت
+                const statusTable = document.getElementById('status-counts');
+                statusTable.innerHTML = `
+                    <tr class="status-1">
+                        <td>فروشگاه های فعال  </td>
+                        <td>${statusCounts.status1}</td>
+                    </tr>
+                    <tr class="status-2">
+                          <td>فروشگاه های غیرفعال  </td>
+                       
+                        <td>${statusCounts.status2}</td>
+                    </tr>
+                  
+                `;
+
+            } catch (error) {
+                console.error('⚠ خطا در دریافت اطلاعات سولار:', error);
             }
-            return statusNum !== 9; // فقط مقدار 9 را حذف کن
-        });
-
-        // نمایش مقادیر نهایی بعد از فیلتر شدن
- 
-        
-    } catch (error) {
-        console.error('⚠ خطا در دریافت اطلاعات سولار:', error);
-    }
-}
-
-
-    async function get_gandom() {
-      try {
-        const response = await fetch(url_rest);
-        if (!response.ok) throw new Error('پاسخ سرور نامعتبر است');
-        const json = await response.json();
-
-        if (json.features?.length > 0) {
-          aray1 = json.features.map(result => ({
-            StoreCode: result.attributes.StoreCode,
-            StoreName: result.attributes.StoreName,
-            GZone: result.attributes.GZone,
-            Longitude: parseFloat(result.attributes.Longitude),
-            Latitude: parseFloat(result.attributes.Latitude)
-          })).filter(store => isFinite(store.Longitude) && isFinite(store.Latitude));
         }
-      } catch (error) {
-        console.error('خطای Fetch:', error);
-      }
-    }
- 
 
-    function linkData() {
-    const linkedData = aray1.map(store1 => {
-        const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
-        return matchingStore2 ? { ...store1, ...matchingStore2 } : null;
-    }).filter(item => item);
 
-    // تعریف گروه خوشه‌بندی
-    const openMarkers = L.markerClusterGroup({
-        iconCreateFunction: function (cluster) {
-            return L.divIcon({
-                html: `<div style="
+        async function get_gandom() {
+            try {
+                const response = await fetch(url_rest);
+                if (!response.ok) throw new Error('پاسخ سرور نامعتبر است');
+                const json = await response.json();
+
+                if (json.features?.length > 0) {
+                    aray1 = json.features.map(result => ({
+                        StoreCode: result.attributes.StoreCode,
+                        StoreName: result.attributes.StoreName,
+                        GZone: result.attributes.GZone,
+                        Longitude: parseFloat(result.attributes.Longitude),
+                        Latitude: parseFloat(result.attributes.Latitude)
+                    })).filter(store => isFinite(store.Longitude) && isFinite(store.Latitude));
+                }
+            } catch (error) {
+                console.error('خطای Fetch:', error);
+            }
+        }
+
+
+        function linkData() {
+            const linkedData = aray1.map(store1 => {
+                const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
+                return matchingStore2 ? { ...store1, ...matchingStore2 } : null;
+            }).filter(item => item);
+
+            // تعریف گروه خوشه‌بندی
+            const openMarkers = L.markerClusterGroup({
+                iconCreateFunction: function (cluster) {
+                    return L.divIcon({
+                        html: `<div style="
                         background: green;
                         border-radius: 50%;
                         width: 35px; height: 35px; 
@@ -348,16 +440,16 @@
                         line-height: 35px;">
                         ${cluster.getChildCount()}
                     </div>`,
-                className: 'custom-cluster-icon',
-                iconSize: L.point(35, 35)
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(35, 35)
+                    });
+                }
             });
-        }
-    });
 
-    const closedMarkers = L.markerClusterGroup({
-        iconCreateFunction: function (cluster) {
-            return L.divIcon({
-                html: `<div style="
+            const closedMarkers = L.markerClusterGroup({
+                iconCreateFunction: function (cluster) {
+                    return L.divIcon({
+                        html: `<div style="
                         background: red;
                         border-radius: 50%;
                         width: 35px; height: 35px; 
@@ -367,17 +459,17 @@
                         line-height: 35px;">
                         ${cluster.getChildCount()}
                     </div>`,
-                className: 'custom-cluster-icon',
-                iconSize: L.point(35, 35)
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(35, 35)
+                    });
+                }
             });
-        }
-    });
 
-    linkedData.forEach(feature => {
-        if (isFinite(feature.Latitude) && isFinite(feature.Longitude)) {
-            const iconbase = parseInt(feature.Status) === 1 ? state2_ : state1_;
+            linkedData.forEach(feature => {
+                if (isFinite(feature.Latitude) && isFinite(feature.Longitude)) {
+                    const iconbase = parseInt(feature.Status) === 1 ? state2_ : state1_;
 
-            const popupContent = `
+                    const popupContent = `
                 <div class="popup-container">
                     <div class="popup-header" style="background-color: ${parseInt(feature.Status) === 1 ? 'green' : 'red'}; color: white;">
                     کد : <b>${feature.StoreCode} <br /> ${feature.StoreName}</b>
@@ -397,235 +489,235 @@
                 </div>
             `;
 
-            const marker = L.marker([feature.Latitude, feature.Longitude], { icon: iconbase })
-                .bindPopup(popupContent);
+                    const marker = L.marker([feature.Latitude, feature.Longitude], { icon: iconbase })
+                        .bindPopup(popupContent);
 
-            if (parseInt(feature.Status) === 1) {
-                openMarkers.addLayer(marker);  // فروشگاه‌های باز
-            } else {
-                closedMarkers.addLayer(marker); // فروشگاه‌های بسته
-            }
+                    if (parseInt(feature.Status) === 1) {
+                        openMarkers.addLayer(marker);  // فروشگاه‌های باز
+                    } else {
+                        closedMarkers.addLayer(marker); // فروشگاه‌های بسته
+                    }
+                }
+            });
+
+            // ✅ ✅ ✅ **حذف لایه‌های قبلی و اضافه کردن مجدد آنها به نقشه**
+            map.eachLayer(layer => {
+                if (layer instanceof L.MarkerClusterGroup) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            map.addLayer(openMarkers);
+            map.addLayer(closedMarkers);
         }
-    });
 
-    // ✅ ✅ ✅ **حذف لایه‌های قبلی و اضافه کردن مجدد آنها به نقشه**
-    map.eachLayer(layer => {
-        if (layer instanceof L.MarkerClusterGroup) {
-            map.removeLayer(layer);
+        ///////////////////////////////////////////////////////////////////
+        async function clearMap(map) {
+            Object.keys(map._layers).forEach(key => {
+                const layer = map._layers[key];
+                if (layer._path || layer._icon) {
+                    try { map.removeLayer(layer); } catch (e) { console.log("خطا در حذف لایه:", e); }
+                }
+            });
+
+            await get_solar();
+            linkData();
         }
-    });
 
-    map.addLayer(openMarkers);
-    map.addLayer(closedMarkers);
-}
+        async function init() {
+            await get_gandom();
+            await get_solar();
 
-    ///////////////////////////////////////////////////////////////////
-    async function clearMap(map) {
-      Object.keys(map._layers).forEach(key => {
-        const layer = map._layers[key];
-        if (layer._path || layer._icon) {
-          try { map.removeLayer(layer); } catch (e) { console.log("خطا در حذف لایه:", e); }
+            // ✅ اطمینان از اجرای صحیح `linkData()`
+            setTimeout(() => {
+                linkData();
+            }, 1000);
         }
-      });
-
-      await get_solar();
-      linkData();
-    }
-
-    async function init() {
-    await get_gandom();
-    await get_solar();
-    
-    // ✅ اطمینان از اجرای صحیح `linkData()`
-    setTimeout(() => {
-        linkData();
-    }, 1000);
-}
 
 
-    init();
+        init();
 
-    var map = L.map('MapSection').setView([32.287, 52.954], 5.7);
-    L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: 'Gandom',
-      scrollWheelZoom: false
-    }).addTo(map);
+        var map = L.map('MapSection').setView([32.287, 52.954], 5.7);
+        L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Gandom',
+            scrollWheelZoom: false
+        }).addTo(map);
 
-</script>
+    </script>
 
-<div id="store-status-form" class="store-status-form">
-    <h1>Stores Status Checking System</h1>
-    <h2>Design by GTK ICT Department</h2>
-    <h2>سیستم اطلاعات فروشگاه</h2>
-    
-    <div class="store-info">
-        <div class="info-row">
-            <span class="info-label">نام فروشگاه:</span>
-            <span id="store-name"></span>
+    <div id="store-status-form" class="store-status-form">
+        <h1>Stores Status Checking System</h1>
+        <h2>Design by GTK ICT Department</h2>
+        <h2>سیستم اطلاعات فروشگاه</h2>
+
+        <div class="store-info">
+            <div class="info-row">
+                <span class="info-label">نام فروشگاه:</span>
+                <span id="store-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">آخرین وضعیت:</span>
+                <span id="store-status"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">استان:</span>
+                <span id="store-province"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">شهر:</span>
+                <span id="store-city"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">منطقه گندم:</span>
+                <span id="wheat-zone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام کارشناس تجهیز:</span>
+                <span id="expert-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تلفن کارشناس تجهیز:</span>
+                <span id="expert-phone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ایمیل کارشناس تجهیز:</span>
+                <span id="expert-email"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام مدیر منطقه:</span>
+                <span id="manager-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تلفن مدیر منطقه:</span>
+                <span id="manager-phone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ایمیل مدیر منطقه:</span>
+                <span id="manager-email"></span>
+            </div>
         </div>
-        <div class="info-row">
-            <span class="info-label">آخرین وضعیت:</span>
-            <span id="store-status"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">استان:</span>
-            <span id="store-province"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">شهر:</span>
-            <span id="store-city"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">منطقه گندم:</span>
-            <span id="wheat-zone"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">نام کارشناس تجهیز:</span>
-            <span id="expert-name"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">تلفن کارشناس تجهیز:</span>
-            <span id="expert-phone"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">ایمیل کارشناس تجهیز:</span>
-            <span id="expert-email"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">نام مدیر منطقه:</span>
-            <span id="manager-name"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">تلفن مدیر منطقه:</span>
-            <span id="manager-phone"></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">ایمیل مدیر منطقه:</span>
-            <span id="manager-email"></span>
+
+        <h3>نتایج پینگ</h3>
+        <div id="ping-results" class="ping-results">
+            <!-- نتایج پینگ اینجا نمایش داده می‌شود -->
         </div>
     </div>
 
-    <h3>نتایج پینگ</h3>
-    <div id="ping-results" class="ping-results">
-        <!-- نتایج پینگ اینجا نمایش داده می‌شود -->
-    </div>
-</div>
+    <script>
+        // const url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';  
 
-<script>
-  // const url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';  
+        function linkData_old() {
+            const linkedData = [];
 
-  function linkData_old() {
-    const linkedData = [];
-
-    aray1.forEach(store1 => {
-      const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
-      if (matchingStore2) {
-        linkedData.push({
-          ...store1,
-          ...matchingStore2
-        });
-      }
-    });
-    // ----------------- - - - - - - - - - - - - - - - - - --------------------------------/////////
+            aray1.forEach(store1 => {
+                const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
+                if (matchingStore2) {
+                    linkedData.push({
+                        ...store1,
+                        ...matchingStore2
+                    });
+                }
+            });
+            // ----------------- - - - - - - - - - - - - - - - - - --------------------------------/////////
 
 
-    // تعریف گروه خوشه‌بندی  
-    const markers = L.markerClusterGroup();
+            // تعریف گروه خوشه‌بندی  
+            const markers = L.markerClusterGroup();
 
-    linkedData.forEach(feature => {
-      const latitude = feature.Latitude;
-      const longitude = feature.Longitude;
-      const title = feature.Caption;
-      const status = parseInt(feature.Status);
-      const IP_Address = feature.IPAddress;
-      const avgResponseTime = feature.AvgResponseTime;
-      const loss = feature.PercentLoss;
-      const comments = feature.StoreCode;
+            linkedData.forEach(feature => {
+                const latitude = feature.Latitude;
+                const longitude = feature.Longitude;
+                const title = feature.Caption;
+                const status = parseInt(feature.Status);
+                const IP_Address = feature.IPAddress;
+                const avgResponseTime = feature.AvgResponseTime;
+                const loss = feature.PercentLoss;
+                const comments = feature.StoreCode;
 
-      const statusClass = status === 1 ? 'node-up' : 'node-down';
-      const statusText = status === 1 ? 'Node is Up.' : 'Node is Down.';
+                const statusClass = status === 1 ? 'node-up' : 'node-down';
+                const statusText = status === 1 ? 'Node is Up.' : 'Node is Down.';
 
-      // ساخت محتوا برای popup  
-      const statusDiv = `<h2>${title}</h2><p class="${statusClass}">${statusText}</p>  
+                // ساخت محتوا برای popup  
+                const statusDiv = `<h2>${title}</h2><p class="${statusClass}">${statusText}</p>  
                            <p><strong>IP Address:</strong> ${IP_Address}</p>  
                            <p><strong>Avg Resp Time:</strong> ${avgResponseTime} ms</p>  
                            <p><strong>Packet Loss:</strong>% ${loss}</p>  
                            <p><strong>Code Market:</strong> ${comments}</p>`;
 
-      let iconbase = status === 1 ? state2_ : state1_;
+                let iconbase = status === 1 ? state2_ : state1_;
 
-      console.log("خطا در حذف لایه:", `<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
+                console.log("خطا در حذف لایه:", `<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
 
-      if (latitude && longitude) {
-        const marker = L.marker([latitude, longitude], { icon: iconbase })
-          .bindPopup(`<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
-        markers.addLayer(marker);
-      }
-    });
+                if (latitude && longitude) {
+                    const marker = L.marker([latitude, longitude], { icon: iconbase })
+                        .bindPopup(`<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
+                    markers.addLayer(marker);
+                }
+            });
 
-    map.addLayer(markers);
-  }; 
+            map.addLayer(markers);
+        };
 
-  // -------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------
 
-// http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=10453
+        // http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=10453
 
-function checkStore(storeCode) {
-    fetch(` http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=${storeCode}`)
-        .then(response => response.json())
-        .then(data => {
-            console.log('نتیجه دریافت‌شده:', data);
-            displayStoreStatus(data);
-            document.getElementById('store-status-form').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('خطا در اتصال به API:', error);
-        });
-}
+        function checkStore(storeCode) {
+            fetch(` http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=${storeCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('نتیجه دریافت‌شده:', data);
+                    displayStoreStatus(data);
+                    document.getElementById('store-status-form').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('خطا در اتصال به API:', error);
+                });
+        }
 
-function displayStoreStatus(data) {
-    document.getElementById('store-name').textContent = data.storeName;
-    document.getElementById('store-status').textContent = data.lastStatus;
-    document.getElementById('store-province').textContent = data.province;
-    document.getElementById('store-city').textContent = data.city;
-    document.getElementById('wheat-zone').textContent = data.wheatZone;
-    
-    document.getElementById('expert-name').textContent = data.equipmentExpert.name;
-    document.getElementById('expert-phone').textContent = data.equipmentExpert.phone;
-    document.getElementById('expert-email').textContent = data.equipmentExpert.email;
-    
-    document.getElementById('manager-name').textContent = data.regionManager.name;
-    document.getElementById('manager-phone').textContent = data.regionManager.phone;
-    document.getElementById('manager-email').textContent = data.regionManager.email;
+        function displayStoreStatus(data) {
+            document.getElementById('store-name').textContent = data.storeName;
+            document.getElementById('store-status').textContent = data.lastStatus;
+            document.getElementById('store-province').textContent = data.province;
+            document.getElementById('store-city').textContent = data.city;
+            document.getElementById('wheat-zone').textContent = data.wheatZone;
 
-    const pingResultsDiv = document.getElementById('ping-results');
-    pingResultsDiv.innerHTML = '';
-    
-    Object.entries(data.pingResults).forEach(([device, info]) => {
-        const statusClass = info.status === 'OK' ? 'status-ok' : 'status-not-ok';
-        const statusIcon = info.status === 'OK' ? '✓' : '✗';
-        
-        const pingItem = document.createElement('div');
-        pingItem.className = 'ping-item';
-        pingItem.innerHTML = `
+            document.getElementById('expert-name').textContent = data.equipmentExpert.name;
+            document.getElementById('expert-phone').textContent = data.equipmentExpert.phone;
+            document.getElementById('expert-email').textContent = data.equipmentExpert.email;
+
+            document.getElementById('manager-name').textContent = data.regionManager.name;
+            document.getElementById('manager-phone').textContent = data.regionManager.phone;
+            document.getElementById('manager-email').textContent = data.regionManager.email;
+
+            const pingResultsDiv = document.getElementById('ping-results');
+            pingResultsDiv.innerHTML = '';
+
+            Object.entries(data.pingResults).forEach(([device, info]) => {
+                const statusClass = info.status === 'OK' ? 'status-ok' : 'status-not-ok';
+                const statusIcon = info.status === 'OK' ? '✓' : '✗';
+
+                const pingItem = document.createElement('div');
+                pingItem.className = 'ping-item';
+                pingItem.innerHTML = `
             ${device} (${info.address}): 
             <span class="${statusClass}">${info.status} ${statusIcon}</span>
         `;
-        pingResultsDiv.appendChild(pingItem);
-    });
-}
+                pingResultsDiv.appendChild(pingItem);
+            });
+        }
 
-// اضافه کردن event listener برای بستن فرم
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        document.getElementById('store-status-form').style.display = 'none';
-    }
-});
+        // اضافه کردن event listener برای بستن فرم
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.getElementById('store-status-form').style.display = 'none';
+            }
+        });
 
-// اضافه کردن دکمه بستن به فرم
-const closeButton = document.createElement('button');
-closeButton.innerHTML = '×';
-closeButton.style.cssText = `
+        // اضافه کردن دکمه بستن به فرم
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = '×';
+        closeButton.style.cssText = `
     position: absolute;
     right: 10px;
     top: 10px;
@@ -635,11 +727,11 @@ closeButton.style.cssText = `
     font-size: 20px;
     cursor: pointer;
 `;
-closeButton.onclick = function() {
-    document.getElementById('store-status-form').style.display = 'none';
-};
-document.getElementById('store-status-form').appendChild(closeButton);
-</script>
+        closeButton.onclick = function () {
+            document.getElementById('store-status-form').style.display = 'none';
+        };
+        document.getElementById('store-status-form').appendChild(closeButton);
+    </script>
 </body>
 
 </html>

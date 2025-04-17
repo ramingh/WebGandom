@@ -1,13 +1,11 @@
-
-
 // import { GandomMap } from '../../components/Map.js';
 // import { LayerManager } from '../../components/LayerManager.js';
 import { GandomMap } from '../../components/NewMap1.js';
 import { LayerManager } from '../../components/LayerManager1.js';
 
 // Initialize components
-const map = new GandomMap('map');
-const layerManager = new LayerManager('sidebar');
+const map = new GandomMap('map'); 
+const layerManager = new LayerManager('sidebar', map);
 
 // Show loading indicator
 const loadingIndicator = document.getElementById('loading');

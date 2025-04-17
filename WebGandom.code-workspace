@@ -9,6 +9,12 @@
 		"workbench.preferredDarkColorTheme": "GitHub Dark High Contrast",
 		"window.autoDetectColorScheme": true,
 		"window.closeWhenEmpty": true,
-		"liveServer.settings.port": 5501
+		"liveServer.settings.port": 5501,
+		"files.exclude": {
+			"**/.*": true
+		},
+		"search.exclude": {
+			"*.*": true
+		}
 	}
 }

@@ -1254,10 +1254,10 @@ export class GandomMap {
 
             tar += '<tr>';
             tar += '<td>' + item[0] + '</td>'; // ستون نام فروشگاه  
-               tar += '<td>      </td>'; // ستون نام فروشگاه  
+            tar += '<td>      </td>'; // ستون نام فروشگاه  
 
             tar += '<td>' + item[2].timm + '</td>'; // ستون زمان  
-               tar += '<td> &nbsp; ' + ' - ' + ' &nbsp;  </td>'; // ستون نام فروشگاه  
+            tar += '<td> &nbsp; ' + ' - ' + ' &nbsp;  </td>'; // ستون نام فروشگاه  
             tar += '<td>' + dist2 + '</td>'; // ستون فاصله  
             tar += '</tr>';
         });
@@ -1534,59 +1534,125 @@ export class GandomMap {
     // تابع خروجی PDF
     exportToPDF(reportContent) {
         try {
-            // بررسی وجود کتابخانه jsPDF
             if (typeof window.jspdf === 'undefined') {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
             }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4',
+                putOnlyUsedFonts: true
+            });
 
             try {
-                // اضافه کردن فونت فارسی
                 doc.addFont('Vazir.ttf', 'Vazir', 'normal');
                 doc.setFont('Vazir');
             } catch (error) {
                 console.error('خطا در لود فونت Vazir:', error);
-                // استفاده از فونت پیش‌فرض
                 doc.setFont('helvetica');
             }
 
-            // تنظیم اندازه فونت
-            doc.setFontSize(12);
-
-            // عنوان گزارش
-            const title = "گزارش فروشگاه‌های محدوده";
-            const date = new Date().toLocaleDateString('fa-IR');
-
-            // حذف تگ‌های HTML از محتوا
-            const cleanContent = reportContent.replace(/<br\/?>/g, '\n').replace(/<\/?[^>]+(>|$)/g, '');
-
-            // محاسبه موقعیت متن
-            const marginRight = 10;
+            // تنظیمات صفحه
             const pageWidth = doc.internal.pageSize.getWidth();
+            const marginRight = 20;
+            const marginLeft = 20;
+            const lineHeight = 10;
             const xPosition = pageWidth - marginRight;
+            let yPosition = 20;
 
-            // افزودن محتوا به PDF
-            doc.text(title, xPosition, 10, { align: 'right' });
-            doc.text(`تاریخ: ${date}`, xPosition, 20, { align: 'right' });
+            // عنوان اصلی
+            doc.setFontSize(16);
+            doc.text("گزارش فروشگاه‌های محدوده", xPosition, yPosition, { align: 'right' });
+            // تاریخ
+            yPosition += lineHeight + 3;
+            doc.setFontSize(12);
+            doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, xPosition, yPosition, { align: 'right' });
+            // خط جداکننده
+            yPosition += lineHeight;
+            doc.setLineWidth(0.5);
+            doc.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+            // عنوان بخش
+            yPosition += lineHeight + 3;
+            doc.setFontSize(14);
+            doc.text("گزارش کلی کسب و کارها", xPosition, yPosition, { align: 'right' });
 
+            // پردازش محتوا
+            yPosition += lineHeight + 3;
+            doc.setFontSize(12);
+            
+            // تعریف رنگ‌ها
+            const colors = {
+                primary: [255, 255, 255],    // سفید
+                secondary: [240, 240, 250]   // آبی بسیار کمرنگ
+            };
+            let isAlternate = false;  // متغیر برای تعیین نوبت رنگ
+            
+            // تنظیمات صفحه
+            const rowPadding = 4;  // فاصله اضافی برای پس‌زمینه
+
+            // تمیز کردن متن
+            const cleanContent = reportContent
+                .replace(/<br\/?>/g, '\n')
+                .replace(/<\/?[^>]+(>|$)/g, '')
+                .replace(/\n\s*\n/g, '\n')
+                .replace(/([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF])\s(\d+)/g, '$1\u200D‎$2')
+                .trim();
             // تقسیم محتوا به خطوط
-            const lines = cleanContent.split('\n');
-            let y = 30;
-
+            const lines = cleanContent.split('\n')
+                .filter(line => line.trim())
+                .map(line => line.trim());
+            // پردازش هر خط
+            let tempall = '', tem2 = '';
+            const FIXED_WIDTH = 65; // افزایش عرض ثابت برای فاصله بیشتر
+            
             lines.forEach(line => {
-                if (y > 280) { // اگر به انتهای صفحه نزدیک شدیم
-                    doc.addPage();
-                    y = 10;
+                let tem1 = line.trim();
+                if (tem1.includes('مورد')) {
+                    // محاسبه تعداد فاصله مورد نیاز
+                    const currentWidth = tem2.length * 1.5;
+                    const spacesNeeded = FIXED_WIDTH - currentWidth;
+                    // اضافه کردن فاصله با دقت بیشتر
+                    const spaces = ' '.repeat(Math.max(5, spacesNeeded));
+                    tempall = tem2 + spaces + tem1;
                 }
-                doc.text(line, xPosition, y, { align: 'right' });
-                y += 10;
-            });
+                tem2 = line.trim();
+                if (tempall) {
+                    // بررسی نیاز به صفحه جدید
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 10;
+                    }
 
-            // ذخیره فایل
+                    // رنگ پس‌زمینه برای سطر فعلی
+                    const currentColor = isAlternate ? colors.secondary : colors.primary;
+                    
+                    // رسم مستطیل پس‌زمینه
+                    if (isAlternate) {
+                        doc.setFillColor(currentColor[0], currentColor[1], currentColor[2]);
+                        doc.rect(20, yPosition - rowPadding, pageWidth - 40, lineHeight + (rowPadding * 2), 'F');
+                    }
+                    
+                    // تنظیم رنگ متن به مشکی
+                    doc.setTextColor(200, 0, 0);
+                    
+                    // نمایش متن با ترازبندی راست
+                    doc.text(tempall, xPosition, yPosition, { align: 'right' });
+                    yPosition += lineHeight;
+                    tempall = '';
+                    
+                    // تغییر نوبت رنگ
+                    isAlternate = !isAlternate;
+                }
+            });
+            
+            // برگرداندن رنگ به حالت پیش‌فرض
+            doc.setTextColor(0, 0, 0);
+
             doc.save('store-report.pdf');
+            console.log('PDF generated successfully');
         } catch (error) {
             console.error('خطا در ایجاد PDF:', error);
         }
@@ -2278,12 +2344,12 @@ export class GandomMap {
                 const village = location.village || '';
 
                 // افزودن مارکر به نقشه
-                L.marker([lat, lng], { 
+                L.marker([lat, lng], {
                     icon: this.geticon(subcategory)
                 }).addTo(map)
-                .bindPopup(`
+                    .bindPopup(`
                     <div style="direction: rtl; text-align: right; font-family: IRANSans;">
-                        <h3 style="color: #2c3e50; margin-bottom: 10px;">${name}</h3>
+                        <h5 style="color: #2c3e50; margin-bottom: 10px;">${name}</h5>
                         <div style="border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
                             <strong>آدرس:</strong> ${address}
                         </div>
@@ -2347,6 +2413,7 @@ export class GandomMap {
             'marketplace': 'بازار',
             'mosque': 'مسجد',
             'parking': 'پارکینگ',
+            'parking': 'پارکینگ',
             'parking_space': 'محل پارک',
             'police': 'پلیس',
             'public_transport_building': 'ساختمان حمل و نقل عمومی',
@@ -2387,6 +2454,8 @@ export class GandomMap {
 
         // تنظیم تابع خروجی PDF در window
         window.exportToPDF = (reportData) => {
+            // console.log('reportData', reportData);
+
             this.exportToPDF(decodeURIComponent(reportData));
         };
 
@@ -2482,7 +2551,7 @@ export class GandomMap {
                 iconSize: [20, 20]
             }),
             'bank': L.divIcon({
-                html: '<i class="fas fa-university" style="color: #4B0082;"></i>',
+                html: '<i class="fas fa-university" style="color:rgb(168, 10, 220);"></i>',
                 className: 'category-marker bank',
                 iconSize: [20, 20]
             }),
@@ -2671,5 +2740,21 @@ export class GandomMap {
         //     عرض جغرافیایی: ${latitude}<br>
         //     طول جغرافیایی: ${longitude}
         // </div>`);
+    }
+
+    /**
+     * پاک کردن تمام لایه‌ها از نقشه
+     */
+    clearMap() {
+        var i = 0;
+        for (i in this.map._layers) {
+            if ((this.map._layers[i]._path != undefined) || (this.map._layers[i]._icon != undefined)) {
+                try {
+                    this.map.removeLayer(this.map._layers[i]);
+                } catch (e) {
+                    console.log("خطا در حذف لایه:", e);
+                }
+            }
+        }
     }
 } 
