@@ -125,7 +125,7 @@ export const persianNames = {
 };
 
 // تعریف آیکون‌ها برای هر دسته‌بندی
-const icons = {
+const categoryIcons = {
     'hospital': {
         icon: 'fa-hospital',
         color: '#FF4444'
@@ -166,7 +166,7 @@ const icons = {
 
 // تابع کمکی برای ایجاد آیکون
 export function geticon(category) {
-    const iconConfig = icons[category] || icons.default;
+    const iconConfig = categoryIcons[category] || categoryIcons.default;
     
     const icon = L.divIcon({
         html: `<i class="fas ${iconConfig.icon}" style="color: ${iconConfig.color};"></i>`,

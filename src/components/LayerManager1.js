@@ -11,35 +11,35 @@ export class LayerManager {
         // this.initTrashButton();
 
         // تعریف آیکون‌های مختلف
-        this.Gandom_ = this.L.icon({
-            iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        // this.Gandom_ = this.L.icon({
+        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon.png',
+        //     iconSize: [32, 32],
+        //     iconAnchor: [16, 32]
+        // });
 
-        this.Gandomb_ = this.L.icon({
-            iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_b.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        // this.Gandomb_ = this.L.icon({
+        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_b.png',
+        //     iconSize: [32, 32],
+        //     iconAnchor: [16, 32]
+        // });
 
-        this.Gandomj_ = this.L.icon({
-            iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_j.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        // this.Gandomj_ = this.L.icon({
+        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_j.png',
+        //     iconSize: [32, 32],
+        //     iconAnchor: [16, 32]
+        // });
 
-        this.Gandomd_ = this.L.icon({
-            iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_d.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        // this.Gandomd_ = this.L.icon({
+        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_d.png',
+        //     iconSize: [32, 32],
+        //     iconAnchor: [16, 32]
+        // });
 
-        this.user1_ = this.L.icon({
-            iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_u.png',
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        // this.user1_ = this.L.icon({
+        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_u.png',
+        //     iconSize: [32, 32],
+        //     iconAnchor: [16, 32]
+        // });
     }
 
     initToggleButton() {
@@ -336,17 +336,18 @@ export class LayerManager {
     }
 
     getIcon(stat) {
+        console.log(stat, 'مخت++++++++++و ه:', stat, '-----:', stat);
         switch (stat) {
             case "باز":
-                return this.Gandom_;
+                return Gandom_;
             case "بسته":
-                return this.Gandomb_;
+                return Gandomb_;
             case "در حال جمع آوری":
-                return this.Gandomj_;
+                return Gandomj_;
             case "در حال راه اندازی":
-                return this.Gandomd_;
+                return Gandomd_;
             default:
-                return this.user1_;
+                return user1_;
         }
     }
     // TODO: ================================================================================= find_market
@@ -360,8 +361,6 @@ export class LayerManager {
             f: 'pjson'
         });
         const url_mark = `${baseUrl}?${queryParams.toString()}`;
-
-        console.log('در حال جستجوی فروشگاه با کد:', marketcode);
         try {
             const response = await fetch(url_mark);
             if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
@@ -394,17 +393,17 @@ export class LayerManager {
                             </div>
                         `)
                         .openPopup();
-                    
-                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
+
+                    console.log(markerIcon, 'مخت++++++++++وشگاه:', latlng, '-----:', statos);
 
                     // فراخوانی متد count_other از NewMap
                     try {
-                        
-                        const result = await this.map.test1(
-                            latlng,
-                          
-                             // map instance
-                            'restaurant' 
+
+                        const result = await this.map.draw_loc(
+                            latlng,markerIcon,
+
+                            // map instance
+                            'restaurant'
                         );
                         console.log('نتایج test1:', result);
                     } catch (error) {

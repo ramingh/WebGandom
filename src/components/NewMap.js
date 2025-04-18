@@ -2253,18 +2253,20 @@ line=temp01[1] + ' ' + temp01[0];
     }
 
 
-    async test1(longitude, latitude, textRadius, map, subcategory, radius) {
+    async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
         try {
-            // const url_path = '/IMG/';
+         const url_path = '/IMG/';
 
-            var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
-            const super_ = L.icon({
-                iconUrl: url_path + 'Market.png',
-                iconSize: [20, 30], // size of the icon
-                popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
-            });
+              //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+            // const Gandomd_ = L.icon({
+            //     iconUrl: url_path + 'Gandome.png',
+            //     iconSize: [20, 30],
+            //     popupAnchor: [0, 0]
+            // });
      
-          L.marker([32.287, 52.954], { super_}).addTo(this.map);
+        //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
+          L.marker( longitude , {icon: icon1}).addTo(this.map).bindPopup('txt1');
+
 
             console.log(longitude,'Tes -------------ly',latitude);
         } catch (error) {
