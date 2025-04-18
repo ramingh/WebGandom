@@ -1,4 +1,4 @@
- import { GandomMap1 } from '../../components/NewMap.js';
+import { GandomMap1 } from '../../components/NewMap.js';
 // import { LayerManager } from '../../components/LayerManager.js';
 import { LayerManager } from '../../components/LayerManager1.js';
 
@@ -14,7 +14,7 @@ loadingIndicator.style.display = 'flex';
 async function initApp() {
     try {
         // Initialize map
-        map.init();
+        await map.init();
  
         // Load layers
         await layerManager.loadLayers();
@@ -25,7 +25,7 @@ async function initApp() {
         // Hide loading indicator
         loadingIndicator.style.display = 'none';
     } catch (error) {
-        console.error('Error initializing application:', error);
+        console.error('Error initial initializing application:', error);
         loadingIndicator.style.display = 'none';
         alert('خطا در بارگذاری برنامه. لطفاً صفحه را رفرش کنید.');
     }

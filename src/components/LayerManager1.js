@@ -2,40 +2,40 @@
 export class LayerManager {
     constructor(containerId, map) {
         this.container = document.getElementById(containerId);
-        this.map = map; // ذخیره map به عنوان یک ویژگی کلاس
-
-        this.layers = new Map();
+        this.map = map; // ذخیره نمونه map
+        this.L = window.L; // استفاده از L از طریق window
+        this.layers = {};
         this.isVisible = true;
         this.initSearchBox();
         this.initToggleButton();
         // this.initTrashButton();
 
         // تعریف آیکون‌های مختلف
-        this.Gandom_ = L.icon({
+        this.Gandom_ = this.L.icon({
             iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32]
         });
-        
-        this.Gandomb_ = L.icon({
+
+        this.Gandomb_ = this.L.icon({
             iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_b.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32]
         });
-        
-        this.Gandomj_ = L.icon({
+
+        this.Gandomj_ = this.L.icon({
             iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_j.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32]
         });
-        
-        this.Gandomd_ = L.icon({
+
+        this.Gandomd_ = this.L.icon({
             iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_d.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32]
         });
-        
-        this.user1_ = L.icon({
+
+        this.user1_ = this.L.icon({
             iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_u.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32]
@@ -99,36 +99,34 @@ export class LayerManager {
             <span>جستجو</span>
         `;
 
-        // Add click event (will be implemented later)
+        // Add click event
         searchButton.addEventListener('click', () => {
             const searchValue = searchInput.value.trim();
             if (searchValue) {
-                // TODO: Implement search functionality
                 if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
-                    this.find_market(searchValue, this.map);
-                    return;
+                    this.find_market(searchValue);
+                } else {
+                    console.log('Searching for:', searchValue);
                 }
-                console.log('Searching for:', searchValue);
             } else {
-                   
                 this.map.setView([32.287, 52.954], 5.7);
-                this.map.clearMap();            
-        }
+                this.map.clearMap();
+            }
         });
 
         // Add keypress event for Enter key
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const searchValue = searchInput.value.trim();
-
                 if (searchValue) {
-               
-                    // TODO: Implement search functionality
-                    console.log('Searching for:', searchValue);
+                    if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
+                        this.find_market(searchValue);
+                    } else {
+                        console.log('Searching for:', searchValue);
+                    }
                 } else {
-                   
-                        this.map.setView([32.287, 52.954], 5.7);
-                        this.map.clearMap();                    
+                    this.map.setView([32.287, 52.954], 5.7);
+                    this.map.clearMap();
                 }
             }
         });
@@ -351,8 +349,8 @@ export class LayerManager {
                 return this.user1_;
         }
     }
-
-    async find_market(marketcode, map) {
+    // TODO: ================================================================================= find_market
+    async find_market(marketcode) {
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
         const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
         const queryParams = new URLSearchParams({
@@ -362,14 +360,14 @@ export class LayerManager {
             f: 'pjson'
         });
         const url_mark = `${baseUrl}?${queryParams.toString()}`;
-      
+
         console.log('در حال جستجوی فروشگاه با کد:', marketcode);
         try {
             const response = await fetch(url_mark);
             if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
             const json = await response.json();
             if (json.features && json.features.length > 0) {
-                json.features.forEach(feature => {
+                json.features.forEach(async feature => {
                     const {
                         StoreName: name,
                         StoreCode: storid,
@@ -379,17 +377,14 @@ export class LayerManager {
                         Longitude: long1,
                         Latitude: lat1
                     } = feature.attributes;
-                    
-                    // تبدیل مختصات به عدد
+
                     const latitude = parseFloat(lat1);
                     const longitude = parseFloat(long1);
-                    
-                    console.log('مختصات فروشگاه:', [latitude, longitude], 'وضعیت:', statos);
-                    
-                    // ایجاد نشانگر با آیکون سفارشی
                     const markerIcon = this.getIcon(statos);
-                    L.marker([latitude, longitude], { icon: markerIcon })
-                        .addTo(map)
+                    var latlng = this.L.latLng(latitude, longitude);
+
+                    this.L.marker(latlng, { icon: markerIcon })
+                        .addTo(this.map)
                         .bindPopup(`
                             <div style="direction: rtl; text-align: right;">
                                 <strong>${name}</strong><br>
@@ -399,10 +394,26 @@ export class LayerManager {
                             </div>
                         `)
                         .openPopup();
+                    
+                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
+
+                    // فراخوانی متد count_other از NewMap
+                    try {
+                        
+                        const result = await this.map.test1(
+                            latlng,
+                          
+                             // map instance
+                            'restaurant' 
+                        );
+                        console.log('نتایج test1:', result);
+                    } catch (error) {
+                        console.error('خطا در فراخوانی test1:', error);
+                    }
                 });
-                
+
                 // تغییر دید نقشه به مرکز ایران
-                map.setView([32.287, 52.954], 5.5);
+                this.map.setView([32.287, 52.954], 5.5);
             } else {
                 console.log('هیچ فروشگاهی با این کد یافت نشد');
             }

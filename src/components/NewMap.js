@@ -1631,9 +1631,9 @@ line=temp01[1] + ' ' + temp01[0];
             doc.setLineWidth(0.2);
 
             items.forEach((item, index) => {
-                // بررسی نیاز به صفحه جدید
+                    // بررسی نیاز به صفحه جدید
                 if (yPosition > pageHeight - marginTop) {
-                    doc.addPage();
+                        doc.addPage();
                     yPosition = marginTop;
                 }
 
@@ -2252,6 +2252,27 @@ line=temp01[1] + ' ' + temp01[0];
         // console.log(total_khan, '-------------------', total_pop);
     }
 
+
+    async test1(longitude, latitude, textRadius, map, subcategory, radius) {
+        try {
+            // const url_path = '/IMG/';
+
+            var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+            const super_ = L.icon({
+                iconUrl: url_path + 'Market.png',
+                iconSize: [20, 30], // size of the icon
+                popupAnchor: [0, 0] // point from which the popup should open relative to the iconAnchor
+            });
+     
+          L.marker([32.287, 52.954], { super_}).addTo(this.map);
+
+            console.log(longitude,'Tes -------------ly',latitude);
+        } catch (error) {
+            console.error('Error in test1:', error);
+        }
+    }
+        
+
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
         try {
@@ -2756,15 +2777,99 @@ line=temp01[1] + ' ' + temp01[0];
      * پاک کردن تمام لایه‌ها از نقشه
      */
     clearMap() {
-        var i = 0;
-        for (i in this.map._layers) {
-            if ((this.map._layers[i]._path != undefined) || (this.map._layers[i]._icon != undefined)) {
-                try {
-                    this.map.removeLayer(this.map._layers[i]);
-                } catch (e) {
-                    console.log("خطا در حذف لایه:", e);
+        if (this.map) {
+            this.map.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    this.map.removeLayer(layer);
                 }
+            });
+        }
+    }
+
+    async find_market(marketcode) {
+        if (!this.map) {
+            console.error('Map instance not initialized');
+            return;
+        }
+
+        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
+        const queryParams = new URLSearchParams({
+            where: `StoreCode like '%${marketcode}%'`,
+            outFields: 'Longitude,Latitude,StoreCode,StoreName,StoreStatus,GZone,ModireMantagheTXT',
+            returnGeometry: true,
+            f: 'pjson'
+        });
+        const url_mark = `${baseUrl}?${queryParams.toString()}`;
+
+        console.log('در حال جستجوی فروشگاه با کد:', marketcode);
+        try {
+            const response = await fetch(url_mark);
+            if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
+            const json = await response.json();
+            
+            if (json.features && json.features.length > 0) {
+                // پاک کردن نشانگرهای قبلی
+                this.map.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        this.map.removeLayer(layer);
+                    }
+                });
+
+                json.features.forEach(feature => {
+                    const {
+                        StoreName: name,
+                        StoreCode: storid,
+                        StoreStatus: statos,
+                        GZone: mantag,
+                        ModireMantagheTXT: usename,
+                        Longitude: long1,
+                        Latitude: lat1
+                    } = feature.attributes;
+
+                    const latitude = parseFloat(lat1);
+                    const longitude = parseFloat(long1);
+                    const markerIcon = this.getIcon(statos);
+                    const latlng = L.latLng(latitude, longitude);
+
+                    L.marker(latlng, { icon: markerIcon })
+                        .addTo(this.map)
+                        .bindPopup(`
+                            <div style="direction: rtl; text-align: right;">
+                                <strong>${name}</strong><br>
+                                منطقه: ${mantag}<br>
+                                وضعیت: ${statos}<br>
+                                کد فروشگاه: ${storid}
+                            </div>
+                        `)
+                        .openPopup();
+                    
+                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
+                });
+
+                // تغییر دید نقشه به مرکز ایران
+                this.map.setView([32.287, 52.954], 5.5);
+            } else {
+                console.log('هیچ فروشگاهی با این کد یافت نشد');
             }
+        } catch (error) {
+            console.error('خطا در جستجوی فروشگاه:', error);
+            return false;
+        }
+    }
+
+    getIcon(stat) {
+        switch (stat) {
+            case "باز":
+                return this.Gandom_;
+            case "بسته":
+                return this.Gandomb_;
+            case "در حال جمع آوری":
+                return this.Gandomj_;
+            case "در حال راه اندازی":
+                return this.Gandomd_;
+            default:
+                return this.user1_;
         }
     }
 } 
