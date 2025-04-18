@@ -1489,51 +1489,13 @@ export class GandomMap1 {
         }
     }
 
-    // متد نمایش گزارش را به‌روزرسانی کنید
-    showReport(counters, layer) {
-        let report = '';
-        Object.entries(counters).forEach(([key, value]) => {
-            if (value > 0) {
-                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
-            }
-        });
 
-        // نمایش گزارش در یک پنجره popup متصل به مستطیل
-        if (report) {
-            const bounds = layer.getBounds();
-            const center = bounds.getCenter();
-
-            // اضافه کردن دکمه Export به PDF در پایین گزارش
-            const popupContent = `
-                <div class="report-popup" style="direction: rtl; text-align: right;">
-                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
-                    ${report}
-                    <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
-                        <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
-                            <i class="fas fa-file-pdf"></i>
-                            Export to PDF
-                        </button>
-                    </div>
-                </div>`;
-
-            // اضافه کردن متد exportToPDF به window
-            window.exportToPDF = (reportData) => {
-                this.exportToPDF(decodeURIComponent(reportData));
-            };
-
-            layer.bindPopup(popupContent, {
-                className: 'custom-popup',
-                offset: L.point(0, -10),
-                closeButton: true,
-                closeOnClick: true,
-                autoClose: true
-            }).openPopup();
-        }
-    }
 
     // تابع خروجی PDF
     exportToPDF(reportContent) {
         try {
+            console.log( "  -------->->->->->->", reportContent);
+
             if (typeof window.jspdf === 'undefined') {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
@@ -1564,13 +1526,23 @@ export class GandomMap1 {
             const lineHeight = 10;
             let yPosition = marginTop;
 
-            // عنوان اصلی
-            doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
-            doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition, { align: 'right' });
+            // اضافه کردن لوگو
+            try {
+                const logoUrl = '/IMG/logo.png'; // مسیر لوگو
+                const logoWidth = 30; // عرض لوگو به میلی‌متر
+                const logoHeight = 15; // ارتفاع لوگو به میلی‌متر
+                doc.addImage(logoUrl, 'PNG', marginLeft, yPosition, logoWidth, logoHeight);
+                // متن اصلی را در کنار لوگو قرار می‌دهیم
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition + logoHeight / 2, { align: 'right' });
+                yPosition += logoHeight + 5;
+            } catch (error) {
+                console.error('خطا در اضافه کردن لوگو:', error);
+            }
 
             // تاریخ
-            yPosition += lineHeight + 3;
+            yPosition += lineHeight - 12;
             doc.setFontSize(12);
             doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, pageWidth - marginRight, yPosition, { align: 'right' });
 
@@ -1663,6 +1635,17 @@ export class GandomMap1 {
 
             // خط نهایی جدول
             doc.line(marginLeft, tableTop, pageWidth - marginRight, tableTop);
+
+            // اضافه کردن تصویر نقشه در انتهای PDF
+            try {
+                const mapImage = this.map.getContainer().toDataURL('image/png');
+                const mapWidth = pageWidth - marginLeft - marginRight;
+                const mapHeight = 100; // ارتفاع تصویر نقشه
+                doc.addPage();
+                doc.addImage(mapImage, 'PNG', marginLeft, marginTop, mapWidth, mapHeight);
+            } catch (error) {
+                console.error('خطا در اضافه کردن تصویر نقشه:', error);
+            }
 
             doc.save('گزارش-فروشگاه‌ها.pdf');
         } catch (error) {
@@ -2406,6 +2389,48 @@ export class GandomMap1 {
 
         } catch (error) {
             console.error(`خطا در دریافت جزئیات برای ${subcategory}:`, error);
+        }
+    }
+
+    // متد نمایش گزارش را به‌روزرسانی کنید
+    showReport(counters, layer) {
+        let report = '';
+        Object.entries(counters).forEach(([key, value]) => {
+            if (value > 0) {
+                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
+            }
+        });
+
+        // نمایش گزارش در یک پنجره popup متصل به مستطیل
+        if (report) {
+            const bounds = layer.getBounds();
+            const center = bounds.getCenter();
+
+            // اضافه کردن دکمه Export به PDF در پایین گزارش
+            const popupContent = `
+                <div class="report-popup" style="direction: rtl; text-align: right;">
+                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
+                    ${report}
+                    <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                        <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
+                            <i class="fas fa-file-pdf"></i>
+                            Export to PDF
+                        </button>
+                    </div>
+                </div>`;
+
+            // اضافه کردن متد exportToPDF به window
+            window.exportToPDF = (reportData) => {
+                this.exportToPDF(decodeURIComponent(reportData));
+            };
+
+            layer.bindPopup(popupContent, {
+                className: 'custom-popup',
+                offset: L.point(0, -10),
+                closeButton: true,
+                closeOnClick: true,
+                autoClose: true
+            }).openPopup();
         }
     }
 
