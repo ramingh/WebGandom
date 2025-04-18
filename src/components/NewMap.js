@@ -1595,61 +1595,63 @@ export class GandomMap1 {
             const lines = reportContent.split('\n')
                 .filter(line => line.trim())
                 .map(line => line.trim());
-   const rlo = '\u202E';  
+            const rlo = '\u202E';
             let title = '';
             lines.forEach(line => {
-
-                line = rlo + line; 
-
+                line = rlo + line;
                 let newStr = line.replace(/(<strong|<\/strong>|<\/td>|<td style=|padding: 3px; border-bottom: 1px solid #eee;|<td style=|<\/tr>|<tr>|<|>|"|\/table)/g, '');
-             
-                // let newStr = "آزمایشگاه مورد 10"; // فرض میکنیم این رشته مشکل داره  
-                line = rlo + newStr + rlo;  
-            
+                line = rlo + newStr + rlo;
+
                 if (line.includes('مورد')) {
                     if (title) {
-                        title=title.replace(':','');
-let temp01=line.split(' ');
-
-line=temp01[1] + ' ' + temp01[0];
-                        console.log(temp01 ,  '     =   '  ,title );
-
+                        title = title.replace(':', '');
+                        let temp01 = line.split(' ');
+                        line = temp01[1] + ' ' + temp01[0];
                         items.push({
                             title: title,
                             count: line.trim()
                         });
-
-                          
                     }
                 } else {
                     title = line.trim();
                 }
             });
 
+            // تعریف رنگ‌های مختلف برای سطرها
+            const rowColors = [
+                [240, 240, 250],  // آبی روشن
+                [250, 240, 240],  // قرمز روشن
+                [240, 250, 240],  // سبز روشن
+                [250, 250, 240],  // زرد روشن
+                [240, 240, 250],  // بنفش روشن
+                [250, 240, 250],  // صورتی روشن
+                [240, 250, 250],  // فیروزه‌ای روشن
+                [250, 250, 250]   // سفید
+            ];
+
             // رسم جدول
             doc.setFontSize(12);
             doc.setLineWidth(0.2);
 
             items.forEach((item, index) => {
-                    // بررسی نیاز به صفحه جدید
+                // بررسی نیاز به صفحه جدید
                 if (yPosition > pageHeight - marginTop) {
-                        doc.addPage();
+                    doc.addPage();
                     yPosition = marginTop;
                 }
 
-                // رنگ پس‌زمینه برای سطرهای متناوب
-                if (index % 2 === 1) {
-                    doc.setFillColor(240, 240, 250);
-                    doc.rect(marginLeft, yPosition, pageWidth - marginLeft - marginRight, rowHeight, 'F');
-                }
+                // انتخاب رنگ بر اساس index
+                const colorIndex = index % rowColors.length;
+                doc.setFillColor(...rowColors[colorIndex]);
+                doc.rect(marginLeft, yPosition, pageWidth - marginLeft - marginRight, rowHeight, 'F');
 
                 // رسم خطوط جدول
                 doc.setDrawColor(100, 100, 100);
-                doc.line(marginLeft, yPosition, pageWidth - marginRight, yPosition); // خط افقی بالا
-                doc.line(marginLeft, yPosition + rowHeight, pageWidth - marginRight, yPosition + rowHeight); // خط افقی پایین
-                doc.line(marginLeft, yPosition, marginLeft, yPosition + rowHeight); // خط عمودی راست
-                doc.line(pageWidth - marginRight, yPosition, pageWidth - marginRight, yPosition + rowHeight); // خط عمودی چپ
-                doc.line(marginLeft + colWidth, yPosition, marginLeft + colWidth, yPosition + rowHeight); // خط عمودی وسط
+                doc.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+                doc.line(marginLeft, yPosition + rowHeight, pageWidth - marginRight, yPosition + rowHeight);
+                doc.line(marginLeft, yPosition, marginLeft, yPosition + rowHeight);
+                doc.line(pageWidth - marginRight, yPosition, pageWidth - marginRight, yPosition + rowHeight);
+                doc.line(marginLeft + colWidth, yPosition, marginLeft + colWidth, yPosition + rowHeight);
 
                 // متن
                 doc.setTextColor(0, 0, 0);
@@ -2255,25 +2257,25 @@ line=temp01[1] + ' ' + temp01[0];
 
     async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
         try {
-         const url_path = '/IMG/';
+            const url_path = '/IMG/';
 
-              //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+            //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
             // const Gandomd_ = L.icon({
             //     iconUrl: url_path + 'Gandome.png',
             //     iconSize: [20, 30],
             //     popupAnchor: [0, 0]
             // });
-     
-        //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
-          L.marker( longitude , {icon: icon1}).addTo(this.map).bindPopup('txt1');
+
+            //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
+            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup('txt1');
 
 
-            console.log(longitude,'Tes -------------ly',latitude);
+            console.log(longitude, 'Tes -------------ly', latitude);
         } catch (error) {
             console.error('Error in test1:', error);
         }
     }
-        
+
 
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
@@ -2809,7 +2811,7 @@ line=temp01[1] + ' ' + temp01[0];
             const response = await fetch(url_mark);
             if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
             const json = await response.json();
-            
+
             if (json.features && json.features.length > 0) {
                 // پاک کردن نشانگرهای قبلی
                 this.map.eachLayer((layer) => {
@@ -2845,7 +2847,7 @@ line=temp01[1] + ' ' + temp01[0];
                             </div>
                         `)
                         .openPopup();
-                    
+
                     console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
                 });
 
@@ -2873,5 +2875,32 @@ line=temp01[1] + ' ' + temp01[0];
             default:
                 return this.user1_;
         }
+    }
+
+    drawTableRow(doc, config, item, y, colWidth, index) {
+        // تعریف رنگ‌های مختلف برای سطرها
+        const rowColors = [
+            [240, 240, 250],  // آبی روشن
+            [250, 240, 240],  // قرمز روشن
+            [240, 250, 240],  // سبز روشن
+            [250, 250, 240],  // زرد روشن
+            [240, 240, 250],  // بنفش روشن
+            [250, 240, 250],  // صورتی روشن
+            [240, 250, 250],  // فیروزه‌ای روشن
+            [250, 250, 250]   // سفید
+        ];
+
+        // انتخاب رنگ بر اساس index
+        const colorIndex = index % rowColors.length;
+        doc.setFillColor(...rowColors[colorIndex]);
+        doc.rect(config.marginLeft, y, config.width - config.marginLeft - config.marginRight, config.rowHeight, 'F');
+
+        // رسم خطوط جدول
+        this.drawTableBorders(doc, config, y);
+
+        // متن
+        doc.setTextColor(0, 0, 0);
+        doc.text(item.title, config.width - config.marginRight - 5, y + config.rowHeight - 3, { align: 'right' });
+        doc.text(item.count, config.marginLeft + colWidth - 5, y + config.rowHeight - 3, { align: 'right' });
     }
 } 
