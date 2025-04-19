@@ -546,7 +546,8 @@ export class GandomMap1 {
         trashButton.addEventListener('click', () => {
             // حذف تمام لایه‌های انتخاب شده
               this.clearAllMarkers();
-            this.clearMap(map);
+            this.cclearMap(this.map);
+
             // لغو انتخاب تمام چک‌باکس‌ها
             const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
             layerCheckboxes.forEach(checkbox => {
@@ -570,8 +571,11 @@ export class GandomMap1 {
         }
     }
 
-      clearMap(map) {
+      cclearMap(map) {
+     var i =0;
+     
         for (i in map._layers) {
+            console.log("problem with " , map._layers[i]._path);
     
             if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
                 var lay1 = map._layers[i];
