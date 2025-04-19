@@ -4,7 +4,7 @@ import icons from '../assets/js/icons.Js';
  * کلاس GandomMap برای مدیریت و نمایش نقشه تعاملی
  * این کلاس شامل توابع مختلف برای مدیریت لایه‌ها، مارکرها و کنترل‌های نقشه است
  */
-export class GandomMap {
+export class GandomMap1 {
     /**
      * سازنده کلاس GandomMap
      * @param {string} containerId - شناسه المان HTML که نقشه در آن رندر می‌شود
@@ -1489,51 +1489,13 @@ export class GandomMap {
         }
     }
 
-    // متد نمایش گزارش را به‌روزرسانی کنید
-    showReport(counters, layer) {
-        let report = '';
-        Object.entries(counters).forEach(([key, value]) => {
-            if (value > 0) {
-                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
-            }
-        });
 
-        // نمایش گزارش در یک پنجره popup متصل به مستطیل
-        if (report) {
-            const bounds = layer.getBounds();
-            const center = bounds.getCenter();
-
-            // اضافه کردن دکمه Export به PDF در پایین گزارش
-            const popupContent = `
-                <div class="report-popup" style="direction: rtl; text-align: right;">
-                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
-                    ${report}
-                    <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
-                        <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
-                            <i class="fas fa-file-pdf"></i>
-                            Export to PDF
-                        </button>
-                    </div>
-                </div>`;
-
-            // اضافه کردن متد exportToPDF به window
-            window.exportToPDF = (reportData) => {
-                this.exportToPDF(decodeURIComponent(reportData));
-            };
-
-            layer.bindPopup(popupContent, {
-                className: 'custom-popup',
-                offset: L.point(0, -10),
-                closeButton: true,
-                closeOnClick: true,
-                autoClose: true
-            }).openPopup();
-        }
-    }
 
     // تابع خروجی PDF
     exportToPDF(reportContent) {
         try {
+            console.log( "  -------->->->->->->", reportContent);
+
             if (typeof window.jspdf === 'undefined') {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
@@ -1557,104 +1519,137 @@ export class GandomMap {
 
             // تنظیمات صفحه
             const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
             const marginRight = 20;
             const marginLeft = 20;
+            const marginTop = 20;
             const lineHeight = 10;
-            const xPosition = pageWidth - marginRight;
-            let yPosition = 20;
+            let yPosition = marginTop;
 
-            // عنوان اصلی
-            doc.setFontSize(16);
-            doc.text("گزارش فروشگاه‌های محدوده", xPosition, yPosition, { align: 'right' });
+            // اضافه کردن لوگو
+            try {
+                const logoUrl = '/IMG/logo.png'; // مسیر لوگو
+                const logoWidth = 30; // عرض لوگو به میلی‌متر
+                const logoHeight = 15; // ارتفاع لوگو به میلی‌متر
+                doc.addImage(logoUrl, 'PNG', marginLeft, yPosition, logoWidth, logoHeight);
+                // متن اصلی را در کنار لوگو قرار می‌دهیم
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition + logoHeight / 2, { align: 'right' });
+                yPosition += logoHeight + 5;
+            } catch (error) {
+                console.error('خطا در اضافه کردن لوگو:', error);
+            }
+
             // تاریخ
-            yPosition += lineHeight + 3;
+            yPosition += lineHeight - 12;
             doc.setFontSize(12);
-            doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, xPosition, yPosition, { align: 'right' });
+            doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, pageWidth - marginRight, yPosition, { align: 'right' });
+
             // خط جداکننده
             yPosition += lineHeight;
             doc.setLineWidth(0.5);
             doc.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+
             // عنوان بخش
             yPosition += lineHeight + 3;
             doc.setFontSize(14);
-            doc.text("گزارش کلی کسب و کارها", xPosition, yPosition, { align: 'right' });
+            doc.text("گزارش کلی کسب و کارها", pageWidth - marginRight, yPosition, { align: 'right' });
 
-            // پردازش محتوا
-            yPosition += lineHeight + 3;
-            doc.setFontSize(12);
-            
-            // تعریف رنگ‌ها
-            const colors = {
-                primary: [255, 255, 255],    // سفید
-                secondary: [240, 240, 250]   // آبی بسیار کمرنگ
-            };
-            let isAlternate = false;  // متغیر برای تعیین نوبت رنگ
-            
-            // تنظیمات صفحه
-            const rowPadding = 4;  // فاصله اضافی برای پس‌زمینه
+            // تنظیمات جدول
+            yPosition += lineHeight + 5;
+            const tableTop = yPosition;
+            const colWidth = (pageWidth - marginLeft - marginRight) / 2;
+            const rowHeight = 12;
 
-            // تمیز کردن متن
-            const cleanContent = reportContent
-                .replace(/<br\/?>/g, '\n')
-                .replace(/<\/?[^>]+(>|$)/g, '')
-                .replace(/\n\s*\n/g, '\n')
-                .replace(/([\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF])\s(\d+)/g, '$1\u200D‎$2')
-                .trim();
-            // تقسیم محتوا به خطوط
-            const lines = cleanContent.split('\n')
+            // تمیز کردن و پردازش داده‌ها
+            const items = [];
+            const lines = reportContent.split('\n')
                 .filter(line => line.trim())
                 .map(line => line.trim());
-            // پردازش هر خط
-            let tempall = '', tem2 = '';
-            const FIXED_WIDTH = 65; // افزایش عرض ثابت برای فاصله بیشتر
-            
+            const rlo = '\u202E';
+            let title = '';
             lines.forEach(line => {
-                let tem1 = line.trim();
-                if (tem1.includes('مورد')) {
-                    // محاسبه تعداد فاصله مورد نیاز
-                    const currentWidth = tem2.length * 1.5;
-                    const spacesNeeded = FIXED_WIDTH - currentWidth;
-                    // اضافه کردن فاصله با دقت بیشتر
-                    const spaces = ' '.repeat(Math.max(5, spacesNeeded));
-                    tempall = tem2 + spaces + tem1;
-                }
-                tem2 = line.trim();
-                if (tempall) {
-                    // بررسی نیاز به صفحه جدید
-                    if (yPosition > 270) {
-                        doc.addPage();
-                        yPosition = 10;
-                    }
+                line = rlo + line;
+                let newStr = line.replace(/(<strong|<\/strong>|<\/td>|<td style=|padding: 3px; border-bottom: 1px solid #eee;|<td style=|<\/tr>|<tr>|<|>|"|\/table)/g, '');
+                line = rlo + newStr + rlo;
 
-                    // رنگ پس‌زمینه برای سطر فعلی
-                    const currentColor = isAlternate ? colors.secondary : colors.primary;
-                    
-                    // رسم مستطیل پس‌زمینه
-                    if (isAlternate) {
-                        doc.setFillColor(currentColor[0], currentColor[1], currentColor[2]);
-                        doc.rect(20, yPosition - rowPadding, pageWidth - 40, lineHeight + (rowPadding * 2), 'F');
+                if (line.includes('مورد')) {
+                    if (title) {
+                        title = title.replace(':', '');
+                        let temp01 = line.split(' ');
+                        line = temp01[1] + ' ' + temp01[0];
+                        items.push({
+                            title: title,
+                            count: line.trim()
+                        });
                     }
-                    
-                    // تنظیم رنگ متن به مشکی
-                    doc.setTextColor(200, 0, 0);
-                    
-                    // نمایش متن با ترازبندی راست
-                    doc.text(tempall, xPosition, yPosition, { align: 'right' });
-                    yPosition += lineHeight;
-                    tempall = '';
-                    
-                    // تغییر نوبت رنگ
-                    isAlternate = !isAlternate;
+                } else {
+                    title = line.trim();
                 }
             });
-            
-            // برگرداندن رنگ به حالت پیش‌فرض
-            doc.setTextColor(0, 0, 0);
 
-            doc.save('store-report.pdf');
-            console.log('PDF generated successfully');
+            // تعریف رنگ‌های مختلف برای سطرها
+            const rowColors = [
+                [240, 240, 250],  // آبی روشن
+                [250, 240, 240],  // قرمز روشن
+                [240, 250, 240],  // سبز روشن
+                [250, 250, 240],  // زرد روشن
+                [240, 240, 250],  // بنفش روشن
+                [250, 240, 250],  // صورتی روشن
+                [240, 250, 250],  // فیروزه‌ای روشن
+                [250, 250, 250]   // سفید
+            ];
+
+            // رسم جدول
+            doc.setFontSize(12);
+            doc.setLineWidth(0.2);
+
+            items.forEach((item, index) => {
+                // بررسی نیاز به صفحه جدید
+                if (yPosition > pageHeight - marginTop) {
+                    doc.addPage();
+                    yPosition = marginTop;
+                }
+
+                // انتخاب رنگ بر اساس index
+                const colorIndex = index % rowColors.length;
+                doc.setFillColor(...rowColors[colorIndex]);
+                doc.rect(marginLeft, yPosition, pageWidth - marginLeft - marginRight, rowHeight, 'F');
+
+                // رسم خطوط جدول
+                doc.setDrawColor(100, 100, 100);
+                doc.line(marginLeft, yPosition, pageWidth - marginRight, yPosition);
+                doc.line(marginLeft, yPosition + rowHeight, pageWidth - marginRight, yPosition + rowHeight);
+                doc.line(marginLeft, yPosition, marginLeft, yPosition + rowHeight);
+                doc.line(pageWidth - marginRight, yPosition, pageWidth - marginRight, yPosition + rowHeight);
+                doc.line(marginLeft + colWidth, yPosition, marginLeft + colWidth, yPosition + rowHeight);
+
+                // متن
+                doc.setTextColor(0, 0, 0);
+                doc.text(item.title, pageWidth - marginRight - 5, yPosition + rowHeight - 3, { align: 'right' });
+                doc.text(item.count, marginLeft + colWidth - 5, yPosition + rowHeight - 3, { align: 'right' });
+
+                yPosition += rowHeight;
+            });
+
+            // خط نهایی جدول
+            doc.line(marginLeft, tableTop, pageWidth - marginRight, tableTop);
+
+            // اضافه کردن تصویر نقشه در انتهای PDF
+            try {
+                const mapImage = this.map.getContainer().toDataURL('image/png');
+                const mapWidth = pageWidth - marginLeft - marginRight;
+                const mapHeight = 100; // ارتفاع تصویر نقشه
+                doc.addPage();
+                doc.addImage(mapImage, 'PNG', marginLeft, marginTop, mapWidth, mapHeight);
+            } catch (error) {
+                console.error('خطا در اضافه کردن تصویر نقشه:', error);
+            }
+
+            doc.save('گزارش-فروشگاه‌ها.pdf');
         } catch (error) {
-            console.error('خطا در ایجاد PDF:', error);
+            console.error('خطا در ساخت PDF:', error);
         }
     }
 
@@ -2242,6 +2237,29 @@ export class GandomMap {
         // console.log(total_khan, '-------------------', total_pop);
     }
 
+
+    async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
+        try {
+            const url_path = '/IMG/';
+
+            //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+            // const Gandomd_ = L.icon({
+            //     iconUrl: url_path + 'Gandome.png',
+            //     iconSize: [20, 30],
+            //     popupAnchor: [0, 0]
+            // });
+
+            //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
+            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup('txt1');
+
+
+            console.log(longitude, 'Tes -------------ly', latitude);
+        } catch (error) {
+            console.error('Error in test1:', error);
+        }
+    }
+
+
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
         try {
@@ -2371,6 +2389,48 @@ export class GandomMap {
 
         } catch (error) {
             console.error(`خطا در دریافت جزئیات برای ${subcategory}:`, error);
+        }
+    }
+
+    // متد نمایش گزارش را به‌روزرسانی کنید
+    showReport(counters, layer) {
+        let report = '';
+        Object.entries(counters).forEach(([key, value]) => {
+            if (value > 0) {
+                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
+            }
+        });
+
+        // نمایش گزارش در یک پنجره popup متصل به مستطیل
+        if (report) {
+            const bounds = layer.getBounds();
+            const center = bounds.getCenter();
+
+            // اضافه کردن دکمه Export به PDF در پایین گزارش
+            const popupContent = `
+                <div class="report-popup" style="direction: rtl; text-align: right;">
+                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
+                    ${report}
+                    <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                        <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
+                            <i class="fas fa-file-pdf"></i>
+                            Export to PDF
+                        </button>
+                    </div>
+                </div>`;
+
+            // اضافه کردن متد exportToPDF به window
+            window.exportToPDF = (reportData) => {
+                this.exportToPDF(decodeURIComponent(reportData));
+            };
+
+            layer.bindPopup(popupContent, {
+                className: 'custom-popup',
+                offset: L.point(0, -10),
+                closeButton: true,
+                closeOnClick: true,
+                autoClose: true
+            }).openPopup();
         }
     }
 
@@ -2746,15 +2806,126 @@ export class GandomMap {
      * پاک کردن تمام لایه‌ها از نقشه
      */
     clearMap() {
-        var i = 0;
-        for (i in this.map._layers) {
-            if ((this.map._layers[i]._path != undefined) || (this.map._layers[i]._icon != undefined)) {
-                try {
-                    this.map.removeLayer(this.map._layers[i]);
-                } catch (e) {
-                    console.log("خطا در حذف لایه:", e);
+        if (this.map) {
+            this.map.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    this.map.removeLayer(layer);
                 }
-            }
+            });
         }
+    }
+
+    async find_market(marketcode) {
+        if (!this.map) {
+            console.error('Map instance not initialized');
+            return;
+        }
+
+        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
+        const queryParams = new URLSearchParams({
+            where: `StoreCode like '%${marketcode}%'`,
+            outFields: 'Longitude,Latitude,StoreCode,StoreName,StoreStatus,GZone,ModireMantagheTXT',
+            returnGeometry: true,
+            f: 'pjson'
+        });
+        const url_mark = `${baseUrl}?${queryParams.toString()}`;
+
+        console.log('در حال جستجوی فروشگاه با کد:', marketcode);
+        try {
+            const response = await fetch(url_mark);
+            if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
+            const json = await response.json();
+
+            if (json.features && json.features.length > 0) {
+                // پاک کردن نشانگرهای قبلی
+                this.map.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        this.map.removeLayer(layer);
+                    }
+                });
+
+                json.features.forEach(feature => {
+                    const {
+                        StoreName: name,
+                        StoreCode: storid,
+                        StoreStatus: statos,
+                        GZone: mantag,
+                        ModireMantagheTXT: usename,
+                        Longitude: long1,
+                        Latitude: lat1
+                    } = feature.attributes;
+
+                    const latitude = parseFloat(lat1);
+                    const longitude = parseFloat(long1);
+                    const markerIcon = this.getIcon(statos);
+                    const latlng = L.latLng(latitude, longitude);
+
+                    L.marker(latlng, { icon: markerIcon })
+                        .addTo(this.map)
+                        .bindPopup(`
+                            <div style="direction: rtl; text-align: right;">
+                                <strong>${name}</strong><br>
+                                منطقه: ${mantag}<br>
+                                وضعیت: ${statos}<br>
+                                کد فروشگاه: ${storid}
+                            </div>
+                        `)
+                        .openPopup();
+
+                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
+                });
+
+                // تغییر دید نقشه به مرکز ایران
+                this.map.setView([32.287, 52.954], 5.5);
+            } else {
+                console.log('هیچ فروشگاهی با این کد یافت نشد');
+            }
+        } catch (error) {
+            console.error('خطا در جستجوی فروشگاه:', error);
+            return false;
+        }
+    }
+
+    getIcon(stat) {
+        switch (stat) {
+            case "باز":
+                return this.Gandom_;
+            case "بسته":
+                return this.Gandomb_;
+            case "در حال جمع آوری":
+                return this.Gandomj_;
+            case "در حال راه اندازی":
+                return this.Gandomd_;
+            default:
+                return this.user1_;
+        }
+    }
+
+    drawTableRow(doc, config, item, y, colWidth, index) {
+        // تعریف رنگ‌های مختلف برای سطرها
+        const rowColors = [
+            [240, 240, 250],  // آبی روشن
+            [250, 240, 240],  // قرمز روشن
+            [240, 250, 240],  // سبز روشن
+            [250, 250, 240],  // زرد روشن
+            [240, 240, 250],  // بنفش روشن
+            [250, 240, 250],  // صورتی روشن
+            [240, 250, 250],  // فیروزه‌ای روشن
+            [250, 250, 250]   // سفید
+        ];
+
+        // انتخاب رنگ بر اساس index
+        const colorIndex = index % rowColors.length;
+        doc.setFillColor(...rowColors[colorIndex]);
+        doc.rect(config.marginLeft, y, config.width - config.marginLeft - config.marginRight, config.rowHeight, 'F');
+
+        // رسم خطوط جدول
+        this.drawTableBorders(doc, config, y);
+
+        // متن
+        doc.setTextColor(0, 0, 0);
+        doc.text(item.title, config.width - config.marginRight - 5, y + config.rowHeight - 3, { align: 'right' });
+        doc.text(item.count, config.marginLeft + colWidth - 5, y + config.rowHeight - 3, { align: 'right' });
     }
 } 

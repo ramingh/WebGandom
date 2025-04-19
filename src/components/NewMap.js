@@ -306,7 +306,7 @@ export class GandomMap1 {
                 this.layers.set(layerId, layer);
             }
         } else {
-            GandomMap.clearAllMarkers();
+            GandomMap1.clearAllMarkers();
             // منطق حذف لایه
             const layer = this.layers.get(layerId);
             if (layer) {
@@ -516,19 +516,7 @@ export class GandomMap1 {
         L.control.layers(null, drawingLayers, { position: 'topleft', collapsed: false }).addTo(this.map);
 
     }
-    clearMap(map) {
-        var i = 0;
-        for (i in this.map._layers) {
 
-            if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
-                var lay1 = map._layers[i];
-
-                try { map.removeLayer(map._layers[i]); } catch (e) {
-                    console.log("problem with " + e + m._layers[i]);
-                }
-            }
-        }
-    }
 
 
     chech_chekbox() {
@@ -557,8 +545,8 @@ export class GandomMap1 {
         }
         trashButton.addEventListener('click', () => {
             // حذف تمام لایه‌های انتخاب شده
-            // this.clearAllMarkers();
-            this.clearMap(this.map);
+              this.clearAllMarkers();
+            this.clearMap(map);
             // لغو انتخاب تمام چک‌باکس‌ها
             const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
             layerCheckboxes.forEach(checkbox => {
@@ -569,10 +557,11 @@ export class GandomMap1 {
 
     clearAllMarkers() {
         try {
+            this.clearMap(map);
             // حذف تمام نشانگرهای gandompoint1            
             if (this.map && gandompoint1) {
                 this.map.removeLayer(gandompoint1);
-                console.log("تمام نشانگرها حذف شدند");
+                console.log(" 1 1 تمام نشانگرها حذف شدند");
             } else {
                 console.warn("نقشه یا نشانگرها موجود نیستند");
             }
@@ -580,6 +569,21 @@ export class GandomMap1 {
             console.error("خطا در حذف نشانگرها:", error);
         }
     }
+
+      clearMap(map) {
+        for (i in map._layers) {
+    
+            if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
+                var lay1 = map._layers[i];
+    
+                try { map.removeLayer(map._layers[i]); } catch (e) {
+                    console.log("problem with " + e + m._layers[i]);
+                }
+            }
+        }
+
+    }
+ 
 
 
     iconservice() {
@@ -694,7 +698,7 @@ export class GandomMap1 {
 
             onAdd: (map) => {
                 const container = L.DomUtil.create('div', 'leaflet-bar leaflet-draw-toolbar');
-
+this.clearMap(map);
                 // آیکون‌ها و عملکردهای مختلف
                 const tools = [
                     {
@@ -908,7 +912,7 @@ export class GandomMap1 {
                             markerDrawer.enable();
 
                             map.once(L.Draw.Event.CREATED, async (e) => {
-                                this.clearMap(map);
+                                // this.clearMap(map);
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
@@ -935,7 +939,7 @@ export class GandomMap1 {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            // this.clearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
@@ -950,7 +954,7 @@ export class GandomMap1 {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            // this.clearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
@@ -1309,86 +1313,6 @@ export class GandomMap1 {
         console.log('مساحت:', area);
     }
 
-    handleRectangleCreation(layer) {
-        // پاکسازی نقاط قبلی
-        this.clearAllMarkers();
-
-        const bounds = layer.getBounds();
-        const northEast = bounds.getNorthEast();
-        const southWest = bounds.getSouthWest();
-
-        // تهیه پارامترهای مورد نیاز برای سرویس
-        const buffer = `${northEast.lng},${northEast.lat},${southWest.lng},${southWest.lat}`;
-
-        const url = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/identify';
-        const params = {
-            geometryType: 'esriGeometryEnvelope',
-            layers: 'id:0',
-            tolerance: 10,
-            mapExtent: '46.5,34.2,46.6,34.1',
-            imageDisplay: '1,1,1',
-            returnGeometry: true,
-            f: 'json',
-            geometry: buffer
-        };
-
-        // تبدیل پارامترها به query string
-        const queryString = Object.keys(params)
-            .map(key => `${key}=${encodeURIComponent(params[key])}`)
-            .join('&');
-
-        const fullUrl = `${url}?${queryString}`;
-
-        // ذخیره شمارنده‌های هر نوع کسب و کار
-        const counters = {
-            gandom: 0,
-            super: 0,
-            sorena: 0,
-            refah: 0,
-            ofog: 0,
-            sepah: 0,
-            canbo: 0,
-            winmarket: 0,
-            mohsen: 0,
-            daily: 0,
-            haft: 0,
-            etka: 0,
-            family: 0,
-            shahrvand: 0,
-            hyperstar: 0,
-            amiran: 0,
-            hypermy: 0,
-            mofid: 0,
-            kousar: 0,
-            yas: 0
-        };
-
-        // درخواست به سرویس
-        fetch(fullUrl)
-            .then(response => response.json())
-            .then(json => {
-                if (!json.results || json.results.length === 0) {
-                    console.log('هیچ نتیجه‌ای یافت نشد');
-                    return;
-                }
-
-                // پردازش نتایج و نمایش نقاط
-                json.results.forEach(result => {
-                    const category = result.attributes.Category.trim();
-                    const title = result.attributes.Name;
-                    const coords = [result.geometry.y, result.geometry.x];
-
-                    // نمایش نقطه بر اساس نوع کسب و کار
-                    this.addBusinessMarker(category, title, coords, counters);
-                });
-
-                // نمایش گزارش با ارسال layer به عنوان پارامتر دوم
-                this.showReport(counters, layer);
-            })
-            .catch(error => {
-                console.error('خطا در دریافت اطلاعات:', error);
-            });
-    }
 
     // متد جدید برای اضافه کردن مارکر کسب و کارها
     addBusinessMarker(category, title, coords, counters) {
@@ -1483,7 +1407,7 @@ export class GandomMap1 {
             let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
 
 
-            L.marker(coords, { icon: icon })
+            L.marker(coords, { icon })
                 .addTo(this.map)
                 .bindPopup(categoryid2, { opacity: 0.1 });
         }
@@ -1494,8 +1418,6 @@ export class GandomMap1 {
     // تابع خروجی PDF
     exportToPDF(reportContent) {
         try {
-            console.log( "  -------->->->->->->", reportContent);
-
             if (typeof window.jspdf === 'undefined') {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
@@ -1528,21 +1450,22 @@ export class GandomMap1 {
 
             // اضافه کردن لوگو
             try {
-                const logoUrl = '/IMG/logo.png'; // مسیر لوگو
-                const logoWidth = 30; // عرض لوگو به میلی‌متر
-                const logoHeight = 15; // ارتفاع لوگو به میلی‌متر
+                const logoUrl = '/IMG/logo.png';
+                const logoWidth = 30;
+                const logoHeight = 15;
                 doc.addImage(logoUrl, 'PNG', marginLeft, yPosition, logoWidth, logoHeight);
-                // متن اصلی را در کنار لوگو قرار می‌دهیم
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition + logoHeight / 2, { align: 'right' });
-                yPosition += logoHeight + 5;
+                yPosition += logoHeight + 10;
             } catch (error) {
                 console.error('خطا در اضافه کردن لوگو:', error);
             }
 
+            // عنوان اصلی
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0);
+            doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition, { align: 'right' });
+
             // تاریخ
-            yPosition += lineHeight - 12;
+            yPosition += lineHeight + 3;
             doc.setFontSize(12);
             doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, pageWidth - marginRight, yPosition, { align: 'right' });
 
@@ -1562,31 +1485,16 @@ export class GandomMap1 {
             const colWidth = (pageWidth - marginLeft - marginRight) / 2;
             const rowHeight = 12;
 
-            // تمیز کردن و پردازش داده‌ها
-            const items = [];
-            const lines = reportContent.split('\n')
-                .filter(line => line.trim())
-                .map(line => line.trim());
-            const rlo = '\u202E';
-            let title = '';
-            lines.forEach(line => {
-                line = rlo + line;
-                let newStr = line.replace(/(<strong|<\/strong>|<\/td>|<td style=|padding: 3px; border-bottom: 1px solid #eee;|<td style=|<\/tr>|<tr>|<|>|"|\/table)/g, '');
-                line = rlo + newStr + rlo;
-
-                if (line.includes('مورد')) {
-                    if (title) {
-                        title = title.replace(':', '');
-                        let temp01 = line.split(' ');
-                        line = temp01[1] + ' ' + temp01[0];
-                        items.push({
-                            title: title,
-                            count: line.trim()
-                        });
-                    }
-                } else {
-                    title = line.trim();
-                }
+            // پردازش داده‌ها
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = reportContent;
+            const rows = tempDiv.querySelectorAll('tr');
+            const items = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return {
+                    title: cells[0].textContent.trim(),
+                    count: cells[1].textContent.trim()
+                };
             });
 
             // تعریف رنگ‌های مختلف برای سطرها
@@ -1635,17 +1543,6 @@ export class GandomMap1 {
 
             // خط نهایی جدول
             doc.line(marginLeft, tableTop, pageWidth - marginRight, tableTop);
-
-            // اضافه کردن تصویر نقشه در انتهای PDF
-            try {
-                const mapImage = this.map.getContainer().toDataURL('image/png');
-                const mapWidth = pageWidth - marginLeft - marginRight;
-                const mapHeight = 100; // ارتفاع تصویر نقشه
-                doc.addPage();
-                doc.addImage(mapImage, 'PNG', marginLeft, marginTop, mapWidth, mapHeight);
-            } catch (error) {
-                console.error('خطا در اضافه کردن تصویر نقشه:', error);
-            }
 
             doc.save('گزارش-فروشگاه‌ها.pdf');
         } catch (error) {
@@ -2392,14 +2289,100 @@ export class GandomMap1 {
         }
     }
 
-    // متد نمایش گزارش را به‌روزرسانی کنید
+        //start popup 1
+    handleRectangleCreation(layer) {
+        // پاکسازی نقاط قبلی
+        this.clearAllMarkers();
+
+        const bounds = layer.getBounds();
+        const northEast = bounds.getNorthEast();
+        const southWest = bounds.getSouthWest();
+
+        // تهیه پارامترهای مورد نیاز برای سرویس
+        const buffer = `${northEast.lng},${northEast.lat},${southWest.lng},${southWest.lat}`;
+
+        const url = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/identify';
+        const params = {
+            geometryType: 'esriGeometryEnvelope',
+            layers: 'id:0',
+            tolerance: 10,
+            mapExtent: '46.5,34.2,46.6,34.1',
+            imageDisplay: '1,1,1',
+            returnGeometry: true,
+            f: 'json',
+            geometry: buffer
+        };
+
+        // تبدیل پارامترها به query string
+        const queryString = Object.keys(params)
+            .map(key => `${key}=${encodeURIComponent(params[key])}`)
+            .join('&');
+
+        const fullUrl = `${url}?${queryString}`;
+
+        // ذخیره شمارنده‌های هر نوع کسب و کار
+        const counters = {
+            gandom: 0,
+            super: 0,
+            sorena: 0,
+            refah: 0,
+            ofog: 0,
+            sepah: 0,
+            canbo: 0,
+            winmarket: 0,
+            mohsen: 0,
+            daily: 0,
+            haft: 0,
+            etka: 0,
+            family: 0,
+            shahrvand: 0,
+            hyperstar: 0,
+            amiran: 0,
+            hypermy: 0,
+            mofid: 0,
+            kousar: 0,
+            yas: 0
+        };
+
+        // درخواست به سرویس
+        fetch(fullUrl)
+            .then(response => response.json())
+            .then(json => {
+                if (!json.results || json.results.length === 0) {
+                    console.log('هیچ نتیجه‌ای یافت نشد');
+                    return;
+                }
+
+                // پردازش نتایج و نمایش نقاط
+                json.results.forEach(result => {
+                    const category = result.attributes.Category.trim();
+                    const title = result.attributes.Name;
+                    const coords = [result.geometry.y, result.geometry.x];
+
+                    // نمایش نقطه بر اساس نوع کسب و کار
+                    this.addBusinessMarker(category, title, coords, counters);
+                });
+
+                // نمایش گزارش با ارسال layer به عنوان پارامتر دوم
+                this.showReport(counters, layer);
+            })
+            .catch(error => {
+                console.error('خطا در دریافت اطلاعات:', error);
+            });
+    }
+
     showReport(counters, layer) {
-        let report = '';
+        let report = '<table style="width: 100%; border-collapse: collapse; direction: rtl;">';
         Object.entries(counters).forEach(([key, value]) => {
             if (value > 0) {
-                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
+                report += `
+                    <tr>
+                        <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${this.getPersianName(key)}</td>
+                        <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: left;">${value} عدد</td>
+                    </tr>`;
             }
         });
+        report += '</table>';
 
         // نمایش گزارش در یک پنجره popup متصل به مستطیل
         if (report) {
@@ -2409,7 +2392,7 @@ export class GandomMap1 {
             // اضافه کردن دکمه Export به PDF در پایین گزارش
             const popupContent = `
                 <div class="report-popup" style="direction: rtl; text-align: right;">
-                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
+                    <strong>گزارش فروشگاه‌های محدوده:</strong>
                     ${report}
                     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
                         <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
@@ -2433,7 +2416,9 @@ export class GandomMap1 {
             }).openPopup();
         }
     }
+    //ent popup  1
 
+          //start popup 2
     /**
      * نمایش گزارش خلاصه از کسب و کارهای اطراف نقطه انتخابی
      * @param {number} latitude - عرض جغرافیایی
@@ -2522,7 +2507,8 @@ export class GandomMap1 {
         // نمایش مارکر موقعیت انتخاب شده با پاپ‌آپ گزارش
         this.addLocationMarker(longitude, latitude, map, reportContent);
     }
-
+      //End  popup 2
+      
     // اضافه کردن استایل‌های جدید
     addCustomStyles() {
         const style = document.createElement('style');
