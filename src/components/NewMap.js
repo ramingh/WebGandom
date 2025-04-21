@@ -573,8 +573,7 @@ export class GandomMap1 {
 
       cclearMap(map) {
      var i =0;
-     
-        for (i in map._layers) {
+             for (i in map._layers) {
             console.log("problem with " , map._layers[i]._path);
     
             if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
@@ -702,9 +701,10 @@ export class GandomMap1 {
 
             onAdd: (map) => {
                 const container = L.DomUtil.create('div', 'leaflet-bar leaflet-draw-toolbar');
-this.clearMap(map);
+
                 // آیکون‌ها و عملکردهای مختلف
                 const tools = [
+                   
                     {
                         icon: 'fas fa-square',
                         title: 'فروشگاه‌ها',
@@ -776,7 +776,7 @@ this.clearMap(map);
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                this.clearMap(map);
+                              this.cclearMap(map);
                                 // map.removeLayer(marker);
                                 // فراخوانی تابع Draw_modir با استفاده از this
                                 this.Draw_modir(latlng.lng, latlng.lat, map);
@@ -790,7 +790,7 @@ this.clearMap(map);
 
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            this.cclearMap(map);
                             map.once(L.Draw.Event.CREATED, (e) => {
 
                                 const marker = e.layer;
@@ -916,7 +916,7 @@ this.clearMap(map);
                             markerDrawer.enable();
 
                             map.once(L.Draw.Event.CREATED, async (e) => {
-                                // this.clearMap(map);
+                                this.cclearMap(map);
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
@@ -943,7 +943,7 @@ this.clearMap(map);
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            // this.clearMap(map);
+                            this.cclearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
@@ -958,7 +958,7 @@ this.clearMap(map);
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            // this.clearMap(map);
+                            this.cclearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
@@ -1037,7 +1037,7 @@ this.clearMap(map);
                 if (data.results.length == 0) {
                     return [1];
                 }
-                this.clearMap(map);
+                this.cclearMap(map);
                 // let ring = [],                    category0,                    name0;
                 let promises = []; // آرایه‌ای برای نگهداری Promiseها  
                 let allPopups = []; // آرایه‌ای برای نگهداری تمام popup1ها  
@@ -2142,7 +2142,7 @@ this.clearMap(map);
     async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
         try {
             const url_path = '/IMG/';
-
+  console.log(longitude, 'Tes -------------ly', longitude);
             //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
             // const Gandomd_ = L.icon({
             //     iconUrl: url_path + 'Gandome.png',
@@ -2154,7 +2154,7 @@ this.clearMap(map);
             L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup('txt1');
 
 
-            console.log(longitude, 'Tes -------------ly', latitude);
+          
         } catch (error) {
             console.error('Error in test1:', error);
         }

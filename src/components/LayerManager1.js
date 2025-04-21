@@ -99,37 +99,96 @@ export class LayerManager {
             <span>جستجو</span>
         `;
 
-        // Add click event
-        searchButton.addEventListener('click', () => {
+
+        // تابع مشترک که منطق جستجو را انجام می دهد  
+        const handleSearch = () => {
+          
             const searchValue = searchInput.value.trim();
             if (searchValue) {
                 if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
                     this.find_market(searchValue);
                 } else {
-                    console.log('Searching for:', searchValue);
+
+                    let temp1 = searchValue.split(',');  
+
+                    if (temp1.length === 2) {  
+                        // تبدیل بخش های آرایه به اعداد  
+                        const lat = parseFloat(temp1[0]);  
+                        const lng = parseFloat(temp1[1]);  
+
+                        var array = [parseFloat(temp1[0]), parseFloat(temp1[1])];
+                        var marker = this.L.marker(array, {
+                            draggable: true,
+                            title: "Resource location",
+                            alt: "Resource Location",
+                            riseOnHover: true
+                        }).addTo(this.map);
+
+
+                        // چک کردن که آیا تبدیل به عدد موفقیت آمیز بوده است  
+                        if (!isNaN(lat) && !isNaN(lng)) {  
+                            this.map.setView([lat, lng], 5.7);  
+                             this.L.marker([lat, lng]).addTo(this.map); 
+                        } else {  
+                            // اگر تبدیل به عدد ناموفق بود، می توانید پیامی نمایش دهید یا کار دیگری انجام دهید  
+                            console.error("Invalid coordinates:", searchValue);  
+                        }  
+                    } else {  
+                        // اگر تعداد بخش ها 2 نبود، یعنی فرمت ورودی اشتباه است  
+                        console.error("Invalid format for coordinates:", searchValue);  
+                    }  
+                    console.log(temp1, 'Searching for:', searchValue);
                 }
             } else {
+
                 this.map.setView([32.287, 52.954], 5.7);
                 this.map.clearMap();
             }
-        });
+        };
 
-        // Add keypress event for Enter key
+        // اضافه کردن event listener برای کلیک  
+        searchButton.addEventListener('click', handleSearch);
+
+        // اضافه کردن event listener برای فشردن Enter در فیلد ورودی  
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const searchValue = searchInput.value.trim();
-                if (searchValue) {
-                    if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
-                        this.find_market(searchValue);
-                    } else {
-                        console.log('Searching for:', searchValue);
-                    }
-                } else {
-                    this.map.setView([32.287, 52.954], 5.7);
-                    this.map.clearMap();
-                }
+                handleSearch(); // فراخوانی تابع مشترک  
             }
         });
+
+
+
+        // Add click event
+        // searchButton.addEventListener('click', () => {
+        //     const searchValue = searchInput.value.trim();
+        //     if (searchValue) {
+        //         if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
+        //             this.find_market(searchValue);
+        //         } else {
+        //             console.log('Searching for:', searchValue);
+        //         }
+        //     } else {
+        //         this.map.setView([32.287, 52.954], 5.7);
+        //         this.map.clearMap();
+        //     }
+        // });
+
+        // // Add keypress event for Enter key
+        // searchInput.addEventListener('keypress', (e) => {
+        //     if (e.key === 'Enter') {
+        //         const searchValue = searchInput.value.trim();
+        //         if (searchValue) {
+        //             if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
+        //                 this.find_market(searchValue);
+        //             } else {
+        //                 console.log('Searching for:', searchValue);
+        //             }
+        //         } else {
+        //             this.map.setView([32.287, 52.954], 5.7);
+        //             this.map.clearMap();
+        //         }
+        //     }
+        // });
 
         // Append elements
         searchContainer.appendChild(searchInput);
@@ -350,8 +409,14 @@ export class LayerManager {
                 return user1_;
         }
     }
-    // TODO: ================================================================================= find_market
+  
+   
+   
+    // TODO: =================================================================================  
     async find_market(marketcode) {
+
+
+
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
         const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
         const queryParams = new URLSearchParams({
@@ -400,7 +465,7 @@ export class LayerManager {
                     try {
 
                         const result = await this.map.draw_loc(
-                            latlng,markerIcon,
+                            latlng, markerIcon,
 
                             // map instance
                             'restaurant'
