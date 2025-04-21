@@ -517,8 +517,6 @@ export class GandomMap1 {
 
     }
 
-
-
     chech_chekbox() {
         const self = this;
         const checkboxes = document.querySelectorAll("[class='leaflet-control-layers-selector']");
@@ -584,11 +582,8 @@ export class GandomMap1 {
                 }
             }
         }
-
     }
  
-
-
     iconservice() {
         if (!this.map) return;
 
@@ -2137,9 +2132,22 @@ export class GandomMap1 {
         }
         // console.log(total_khan, '-------------------', total_pop);
     }
+      // TODO: =================================================================================  
+      async get_alldata(longitude) {
+        const url_path = '/IMG/';
+        console.log(longitude, 'Tes -------------ly', longitude);
+                  //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+                  const Gandomd_ = L.icon({
+                      iconUrl: url_path + 'Gandome.png',
+                      iconSize: [20, 30],
+                      popupAnchor: [0, 0]
+                  });
+        L.marker(longitude, { icon:Gandomd_ }).addTo(this.map).bindPopup('textRadius');
 
 
-    async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
+      };
+
+    async draw_loc(longitude, icon1, textRadius, map) {
         try {
             const url_path = '/IMG/';
   console.log(longitude, 'Tes -------------ly', longitude);
@@ -2151,7 +2159,7 @@ export class GandomMap1 {
             // });
 
             //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
-            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup('txt1');
+            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup(textRadius);
 
 
           
@@ -2805,7 +2813,7 @@ export class GandomMap1 {
         }
     }
 
-    async find_market(marketcode) {
+    async find_market111(marketcode) {
         if (!this.map) {
             console.error('Map instance not initialized');
             return;

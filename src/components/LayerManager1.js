@@ -102,94 +102,82 @@ export class LayerManager {
 
         // تابع مشترک که منطق جستجو را انجام می دهد  
         const handleSearch = () => {
-          
+            // فرض می‌کنیم searchInput یک عنصر ورودی معتبر است و map یک نمونه از نقشه شما است.  
+
             const searchValue = searchInput.value.trim();
+
             if (searchValue) {
-                if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
-                    this.find_market(searchValue);
+                // 1. تلاش برای تشخیص ورودی به عنوان مختصات جغرافیایی (شامل کاما)  
+                const coordinates = searchValue.split(',');
+
+                if (coordinates.length === 2) {
+                    const latStr = coordinates[0].trim();
+                    const lonStr = coordinates[1].trim();
+
+                    // بررسی اینکه آیا هر دو بخش عدد (اعشاری یا صحیح) هستند  
+                    const lat = parseFloat(latStr);
+                    const lon = parseFloat(lonStr);
+
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        // می‌توانید اختیاری بررسی کنید که آیا اعداد در محدوده معقول مختصات هستند.  
+                        // مثال: if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {  
+                        console.log(`Searching for coordinates: [${lat}, ${lon}]`);
+                        const result =    this.map.get_alldata([lat, lon]); // فرض می‌کنیم find_market یک آرایه [lat, lon] می‌پذیرد.  
+                        // } else {  
+                        //    console.warn(`Invalid geographic coordinates: "${searchValue}". Values out of range.`);  
+                        //    // پیام خطایی به کاربر نمایش دهید.  
+                        // }  
+                    } else {
+                        console.warn(`Invalid coordinate format: "${searchValue}". Both values must be numbers.`);
+                        // پیام خطایی به کاربر نمایش دهید.  
+                    }
+
                 } else {
+                    // 2. ورودی شامل کاما نیست، تلاش برای تشخیص عدد صحیح (integer)  
+                    const id = parseInt(searchValue, 10); // استفاده از parseInt برای اعداد صحیح و پایه 10  
 
-                    let temp1 = searchValue.split(',');  
-
-                    if (temp1.length === 2) {  
-                        // تبدیل بخش های آرایه به اعداد  
-                        const lat = parseFloat(temp1[0]);  
-                        const lng = parseFloat(temp1[1]);  
-
-                        var array = [parseFloat(temp1[0]), parseFloat(temp1[1])];
-                        var marker = this.L.marker(array, {
-                            draggable: true,
-                            title: "Resource location",
-                            alt: "Resource Location",
-                            riseOnHover: true
-                        }).addTo(this.map);
-
-
-                        // چک کردن که آیا تبدیل به عدد موفقیت آمیز بوده است  
-                        if (!isNaN(lat) && !isNaN(lng)) {  
-                            this.map.setView([lat, lng], 5.7);  
-                             this.L.marker([lat, lng]).addTo(this.map); 
-                        } else {  
-                            // اگر تبدیل به عدد ناموفق بود، می توانید پیامی نمایش دهید یا کار دیگری انجام دهید  
-                            console.error("Invalid coordinates:", searchValue);  
-                        }  
-                    } else {  
-                        // اگر تعداد بخش ها 2 نبود، یعنی فرمت ورودی اشتباه است  
-                        console.error("Invalid format for coordinates:", searchValue);  
-                    }  
-                    console.log(temp1, 'Searching for:', searchValue);
+                    // بررسی اینکه آیا ورودی یک عدد است و آیا بعد از تبدیل به عدد صحیح  
+                    // و سپس دوباره تبدیل به رشته، با ورودی اصلی (بدون اعشار احتمالی) یکسان است.  
+                    // این کار برای رد کردن ورودی‌هایی مانند "123.45" که parseInt آنها را به 123 تبدیل می‌کند اما صحیح نیستند، لازم است.  
+                    if (!isNaN(id) && id.toString() === searchValue) {
+                        // همچنین می‌توانید از Number.isInteger(Number(searchValue)) استفاده کنید  
+                        // اما روش بالا مطمئن‌تر است زیرا parseInt ممکن است بخش اعشاری را حذف کند.  
+                        console.log(`Searching for integer ID: ${id}`);
+                        this.find_market(id); // فرض می‌کنیم find_market یک شناسه عددی می‌پذیرد.  
+                    } else {
+                        // 3. ورودی نه مختصات معتبر است و نه عدد صحیح معتبر، آن را به عنوان متن جستجو کنید (اگر لازم است)  
+                        searchInput.value="";
+                        console.warn(`Input "${searchValue}" is neither valid coordinates nor a valid integer.`);
+                        // اگر می‌خواهید برای ورودی‌های دیگر به صورت متنی جستجو انجام دهید، خط زیر را فعال کنید:  
+                        // console.log('Searching for text:', searchValue);  
+                        // this.find_market(searchValue); // فرض می‌کنیم find_market رشته متنی نیز می‌پذیرد.  
+                        // در غیر این صورت، فقط یک پیام خطا به کاربر نمایش دهید.  
+                    }
                 }
-            } else {
 
+            } else {
+                // ورودی خالی است، نقشه را به نمای اولیه بازگردانید  
+                console.log("Search input is empty. Resetting map view.");
                 this.map.setView([32.287, 52.954], 5.7);
-                this.map.clearMap();
-            }
+                // فرض می‌کنیم clearMap یک متد معتبر برای پاک کردن لایه‌ها/نشانگرها از نقشه است.  
+                if (typeof this.map.clearMap === 'function') {
+                    this.map.clearMap();
+                } else {
+                    console.warn("map.clearMap() is not a function. Cannot clear map.");
+                    // شاید باید منطق پاک کردن نقشه را اینجا اضافه کنید.  
+                }
+            } 
+ 
         };
 
         // اضافه کردن event listener برای کلیک  
         searchButton.addEventListener('click', handleSearch);
-
         // اضافه کردن event listener برای فشردن Enter در فیلد ورودی  
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 handleSearch(); // فراخوانی تابع مشترک  
             }
-        });
-
-
-
-        // Add click event
-        // searchButton.addEventListener('click', () => {
-        //     const searchValue = searchInput.value.trim();
-        //     if (searchValue) {
-        //         if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
-        //             this.find_market(searchValue);
-        //         } else {
-        //             console.log('Searching for:', searchValue);
-        //         }
-        //     } else {
-        //         this.map.setView([32.287, 52.954], 5.7);
-        //         this.map.clearMap();
-        //     }
-        // });
-
-        // // Add keypress event for Enter key
-        // searchInput.addEventListener('keypress', (e) => {
-        //     if (e.key === 'Enter') {
-        //         const searchValue = searchInput.value.trim();
-        //         if (searchValue) {
-        //             if (!isNaN(searchValue) && Number.isInteger(Number(searchValue))) {
-        //                 this.find_market(searchValue);
-        //             } else {
-        //                 console.log('Searching for:', searchValue);
-        //             }
-        //         } else {
-        //             this.map.setView([32.287, 52.954], 5.7);
-        //             this.map.clearMap();
-        //         }
-        //     }
-        // });
-
+        }); 
         // Append elements
         searchContainer.appendChild(searchInput);
         searchContainer.appendChild(searchButton);
@@ -395,7 +383,7 @@ export class LayerManager {
     }
 
     getIcon(stat) {
-        console.log(stat, 'مخت++++++++++و ه:', stat, '-----:', stat);
+
         switch (stat) {
             case "باز":
                 return Gandom_;
@@ -409,12 +397,16 @@ export class LayerManager {
                 return user1_;
         }
     }
-  
-   
-   
+
+
+
     // TODO: =================================================================================  
+  
+
+  
     async find_market(marketcode) {
 
+        console.log(marketcode, 'مخت++++++++++و ه:', marketcode);
 
 
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
@@ -460,15 +452,21 @@ export class LayerManager {
                         .openPopup();
 
                     console.log(markerIcon, 'مخت++++++++++وشگاه:', latlng, '-----:', statos);
-
                     // فراخوانی متد count_other از NewMap
                     try {
 
                         const result = await this.map.draw_loc(
                             latlng, markerIcon,
-
+                            `
+                            <div style="direction: rtl; text-align: right;">
+                                <strong>${name}</strong><br>
+                                منطقه: ${mantag}<br>
+                                وضعیت: ${statos}<br>
+                                کد فروشگاه: ${storid}
+                            </div>
+                        `,
                             // map instance
-                            'restaurant'
+                            this.map
                         );
                         console.log('نتایج test1:', result);
                     } catch (error) {
