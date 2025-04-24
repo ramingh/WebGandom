@@ -956,8 +956,7 @@ export class GandomMap1 {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
                                 this.drawDistrict(latlng.lat, latlng.lng, map);
-
-                                //    this.Draw_abdi('316', map);
+ 
 
 
                             });

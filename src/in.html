@@ -83,6 +83,8 @@
         <img src="/IMG/clear3.png" alt="حذف">
     </button>
     <script>
+
+        let sss;
         var url_path = '/IMG/';
         const Gandomj_ = L.icon({
             iconUrl: url_path + 'Gandomj.png',
@@ -105,9 +107,18 @@
             popupAnchor: [0, 0]
         });
         var gandompoint1 = new L.layerGroup();
+        var alpo1 = new L.layerGroup();
+        //https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/0/query?where=Category+NOT+LIKE+%27%D8%B3%D9%88%D9%BE%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%27&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=Category%2Cname&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';    
 
         $(document).ready(function () {
+
+            async function po2() {
+                sss = await point_market();
+                console.log(sss);
+            }
             point_gandom();
+            po2();
+            //   this.addLayerControls(map);
             async function point_gandom() {
                 const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
                 try {
@@ -154,7 +165,7 @@
                         let txt1 = '<div style="text-align: right; direction: rtl;">' +
                             mantageh1 + '</br><b>' + storeName + '</br>کد فروشگاه: ' + maketcode +
                             ' - <span style="color:' + color1 + ';"> ' + storeStatus + '</span>' +
-                        '</div>';
+                            '</div>';
 
                         L.marker([lat, lng], { icon: icong }).bindPopup(`${txt1}`).addTo(gandompoint1);
                     }));
@@ -164,7 +175,105 @@
                     return [];
                 }
             };
+            var categoryLayers = {}; // شیء برای نگه‌داری لایه‌های دسته‌ها
 
+            async function point_market() {
+                // const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/0/query?where=Category+NOT+LIKE+%27%D8%B3%D9%88%D9%BE%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%27&outFields=Category%2CName%2CLongitude%2CLatitude&returnGeometry=true&f=pjson';
+                const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/0/query?where=Category+NOT+LIKE+%27%D8%B3%D9%88%D9%BE%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%27&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=Category%2Cname&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+
+                try {
+                    const response = await fetch(url_rest, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error fetching data: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    const features = data.features;
+                    // گروه‌بندی داده‌ها در لایه‌های جداگانه
+                    features.forEach((feature) => {
+                        const category = feature.attributes.Category;
+                        const lat = parseFloat(feature.geometry.y);
+                        const lng = parseFloat(feature.geometry.x);
+                        const storeName = feature.attributes.Name;
+                        // console.log(  lat, 'lat======= lng',    lng);
+                        // بررسی مقدار معتبر بودن مختصات جغرافیایی
+                        if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+                            // console.log(`مختصات نامعتبر برای ${storeName}: lat=${lat}, lng=${lng}`);
+                            return; // داده‌های نامعتبر پردازش نشوند
+                        }
+
+                        if (!categoryLayers[category]) {
+                            categoryLayers[category] = new L.layerGroup(); // ایجاد لایه جدید برای دسته
+                        }
+
+                        let icon = getIcon(category);
+                        let popupText = `<div style="text-align: right; direction: rtl;">
+                <b>${storeName}</b><br>
+                دسته‌بندی: <span style="color: black;">${category}</span>
+                </div>`;
+                        L.marker([lat, lng], { icon: icon })
+                            .bindPopup(popupText)
+                            .addTo(categoryLayers[category]);
+                    });
+                    return categoryLayers;
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    return {};
+                }
+            }
+            // اضافه کردن قابلیت روشن و خاموش کردن گروه‌ها در نقشه
+            function addLayerControls(map) {
+                let overlayMaps = {};
+                Object.keys(categoryLayers).forEach((category) => {
+                    overlayMaps[category] = categoryLayers[category];
+                });
+
+                L.control.layers(null, overlayMaps).addTo(map);
+            }
+            // L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+       
+
+            async function point_market00() {
+                const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/0/query?where=Category+NOT+LIKE+%27%D8%B3%D9%88%D9%BE%D8%B1%D9%85%D8%A7%D8%B1%DA%A9%D8%AA%27&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=Category%2Cname&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+                try {
+                    const response = await fetch(url_rest, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json; charset=utf-8',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error fetching data: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    const features = data.features;
+
+                    await Promise.all(features.map((feature, index) => {
+                        console.log(feature, ' = = = = = = = = = == = = = = = = = ');
+                        const lat = parseFloat(feature.geometry.y);
+                        const lng = parseFloat(feature.geometry.x);
+                        const storeName = feature.attributes.Name;
+                        const storeStatus = feature.attributes.Category;
+                        const icong = Gandomd_;//getIcon(storeStatus);
+                        let color1 = 'black';
+                        let txt1 = '<div style="text-align: right; direction: rtl;">' +
+                            '</br><b>' + storeName + '</br>کد فروشگاه: ' +
+                            ' - <span style="color:' + color1 + ';"> ' + storeStatus + '</span>' +
+                            '</div>';
+
+                        L.marker([lat, lng], { icon: icong }).bindPopup(`${txt1}`).addTo(alpo1);
+                    }));
+                    return data;
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    return [];
+                }
+            };
             function getIcon(stat) {
                 switch (stat) {
                     case "باز":
@@ -176,12 +285,14 @@
                     case "در حال راه اندازی":
                         return Gandomd_;
                     default:
-                        return user1_;
+                        return Gandomd_;
                 }
             };
+
+
         })
     </script>
 </body>
- 
+
 
 </html>

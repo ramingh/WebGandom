@@ -44,6 +44,7 @@ export class GandomMap1 {
         // راه‌اندازی دکمه حذف و استایل‌های سفارشی
         this.initTrashButton();
         this.addCustomStyles();
+     
     }
 
     /**
@@ -522,7 +523,18 @@ export class GandomMap1 {
         const checkboxes = document.querySelectorAll("[class='leaflet-control-layers-selector']");
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function (event) {
-                var df = this.parentNode.textContent; // Use textContent instead of .text()  
+                var df = this.parentNode.textContent.trim(); // Use textContent instead of .text()  
+                console.log('Trash button not=m' , df);
+                if (df == "افق کوروش") {
+                    if (this.checked) { // Use this.checked instead of .prop("checked")  
+                        console.log("3  addLayer ", df);
+                        self.map.addLayer(alpo1);
+                    } else {
+                        console.log("4   removeLayer ", df);
+                        self.map.removeLayer(alpo1);
+                    }
+                }            
+                console.log(sss  ,'====================' ,      addLayerControls(map));
                 if (df == " گندم") {
                     if (this.checked) { // Use this.checked instead of .prop("checked")  
                         console.log("3  addLayer ", df);
@@ -543,7 +555,7 @@ export class GandomMap1 {
         }
         trashButton.addEventListener('click', () => {
             // حذف تمام لایه‌های انتخاب شده
-              this.clearAllMarkers();
+            this.clearAllMarkers();
             this.cclearMap(this.map);
 
             // لغو انتخاب تمام چک‌باکس‌ها
@@ -569,21 +581,21 @@ export class GandomMap1 {
         }
     }
 
-      cclearMap(map) {
-     var i =0;
-             for (i in map._layers) {
-            console.log("problem with " , map._layers[i]._path);
-    
+    cclearMap(map) {
+        var i = 0;
+        for (i in map._layers) {
+            console.log("problem with ", map._layers[i]._path);
+
             if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
                 var lay1 = map._layers[i];
-    
+
                 try { map.removeLayer(map._layers[i]); } catch (e) {
                     console.log("problem with " + e + m._layers[i]);
                 }
             }
         }
     }
- 
+
     iconservice() {
         if (!this.map) return;
 
@@ -699,7 +711,7 @@ export class GandomMap1 {
 
                 // آیکون‌ها و عملکردهای مختلف
                 const tools = [
-                   
+
                     {
                         icon: 'fas fa-square',
                         title: 'فروشگاه‌ها',
@@ -771,7 +783,7 @@ export class GandomMap1 {
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                              this.cclearMap(map);
+                                this.cclearMap(map);
                                 // map.removeLayer(marker);
                                 // فراخوانی تابع Draw_modir با استفاده از this
                                 this.Draw_modir(latlng.lng, latlng.lat, map);
@@ -1946,6 +1958,8 @@ export class GandomMap1 {
 
     // تابع ترسیم محدوده دهستان و دریافت اطلاعات آن
     drawDistrict(latitude, longitude, map) {
+
+        console.log(latitude, '  =============  ', longitude);
         const coordinates = `${longitude},${latitude}`;
         const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/identify?geometry=${coordinates}&geometryType=esriGeometryPoint&sr=&layers=ID%3A1&tolerance=0&mapExtent=45%2C25%2C61%2C40&imageDisplay=800%2C600%2C96&returnGeometry=true&returnZ=false&returnM=false&f=pjson`;
 
@@ -2132,25 +2146,30 @@ export class GandomMap1 {
         }
         // console.log(total_khan, '-------------------', total_pop);
     }
-      // TODO: =================================================================================  
-      async get_alldata(longitude) {
+    // TODO: =================================================================================  
+    async get_alldata(longitude) {
         const url_path = '/IMG/';
-        console.log(longitude, 'Tes -------------ly', longitude);
-                  //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
-                  const Gandomd_ = L.icon({
-                      iconUrl: url_path + 'Gandome.png',
-                      iconSize: [20, 30],
-                      popupAnchor: [0, 0]
-                  });
-        L.marker(longitude, { icon:Gandomd_ }).addTo(this.map).bindPopup('textRadius');
+        // console.log(longitude, 'Tes -------------ly', longitude);
+        //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
 
+        let pnt1 = new L.LatLng(longitude[0], longitude[1]);
 
-      };
+        this.map.setView(pnt1, 10);
+        const Gandomd_ = L.icon({
+            iconUrl: url_path + 'Gandome.png',
+            iconSize: [20, 30],
+            popupAnchor: [0, 0]
+        });
+        L.marker(longitude).addTo(this.map).bindPopup('textRadius');
+
+        this.drawDistrict(longitude[0], longitude[1], this.map);
+
+    };
 
     async draw_loc(longitude, icon1, textRadius, map) {
         try {
             const url_path = '/IMG/';
-  console.log(longitude, 'Tes -------------ly', longitude);
+            console.log(longitude, 'Tes -------------ly', longitude);
             //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
             // const Gandomd_ = L.icon({
             //     iconUrl: url_path + 'Gandome.png',
@@ -2162,7 +2181,7 @@ export class GandomMap1 {
             L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup(textRadius);
 
 
-          
+
         } catch (error) {
             console.error('Error in test1:', error);
         }
@@ -2301,7 +2320,7 @@ export class GandomMap1 {
         }
     }
 
-        //start popup 1
+    //start popup 1
     handleRectangleCreation(layer) {
         // پاکسازی نقاط قبلی
         this.clearAllMarkers();
@@ -2430,7 +2449,7 @@ export class GandomMap1 {
     }
     //ent popup  1
 
-          //start popup 2
+    //start popup 2
     /**
      * نمایش گزارش خلاصه از کسب و کارهای اطراف نقطه انتخابی
      * @param {number} latitude - عرض جغرافیایی
@@ -2519,8 +2538,8 @@ export class GandomMap1 {
         // نمایش مارکر موقعیت انتخاب شده با پاپ‌آپ گزارش
         this.addLocationMarker(longitude, latitude, map, reportContent);
     }
-      //End  popup 2
-      
+    //End  popup 2
+
     // اضافه کردن استایل‌های جدید
     addCustomStyles() {
         const style = document.createElement('style');
@@ -2926,4 +2945,7 @@ export class GandomMap1 {
         doc.text(item.title, config.width - config.marginRight - 5, y + config.rowHeight - 3, { align: 'right' });
         doc.text(item.count, config.marginLeft + colWidth - 5, y + config.rowHeight - 3, { align: 'right' });
     }
+
+   
+
 } 

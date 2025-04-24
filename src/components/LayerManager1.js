@@ -121,7 +121,7 @@ export class LayerManager {
                     if (!isNaN(lat) && !isNaN(lon)) {
                         // می‌توانید اختیاری بررسی کنید که آیا اعداد در محدوده معقول مختصات هستند.  
                         // مثال: if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {  
-                        console.log(`Searching for coordinates: [${lat}, ${lon}]`);
+                        // console.log(`Searching for coordinates: [${lat}, ${lon}]`);
                         const result =    this.map.get_alldata([lat, lon]); // فرض می‌کنیم find_market یک آرایه [lat, lon] می‌پذیرد.  
                         // } else {  
                         //    console.warn(`Invalid geographic coordinates: "${searchValue}". Values out of range.`);  
