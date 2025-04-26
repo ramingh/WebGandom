@@ -1,4 +1,6 @@
-import icons from '../assets/js/icons.Js';
+// import * as L from 'leaflet';
+import icons from '../assets/js/icons.js';
+import { categoryIcons } from '../assets/js/icons.js';
 
 /**
  * کلاس GandomMap برای مدیریت و نمایش نقشه تعاملی
@@ -44,7 +46,7 @@ export class GandomMap1 {
         // راه‌اندازی دکمه حذف و استایل‌های سفارشی
         this.initTrashButton();
         this.addCustomStyles();
-     
+        this.gandompoint1 = new L.layerGroup(); // تعریف لایه گروه  
     }
 
     /**
@@ -74,6 +76,66 @@ export class GandomMap1 {
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
+        
+        // بارگذاری فروشگاه‌های گندم
+        this.loadGandomStores();
+    }
+
+    /**
+     * بارگذاری و نمایش فروشگاه‌های گندم روی نقشه
+     */
+    async loadGandomStores() {
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        
+        try {
+            const response = await fetch(url_rest, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error fetching data: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            const features = data.features;
+            
+            await Promise.all(features.map((feature) => {
+                const lat = parseFloat(feature.attributes.Latitude);
+                const lng = parseFloat(feature.attributes.Longitude);
+
+                // اعتبارسنجی مختصات - فقط نقاط داخل محدوده مجاز
+                if (lat < 23 || lat > 41 || lng < 43 || lng > 64) {
+                    return; // مختصات خارج از محدوده مجاز
+                }
+
+                const storeName = feature.attributes.StoreName;
+                const storeStatus = feature.attributes.StoreStatus;
+                const maketcode = feature.attributes.StoreCode;
+                const mantageh1 = feature.attributes.GZone;
+
+                const icong = this.getStoreIcon(storeStatus);
+                const statusConfig = this.getStoreStatusConfig(storeStatus);
+
+                let txt1 = '<div style="text-align: right; direction: rtl;">' +
+                    mantageh1 + '</br><b>' + storeName + '</br>کد فروشگاه: ' + maketcode +
+                    ' - <span style="color:' + statusConfig.color + ';"> ' + storeStatus + '</span>' +
+                    '</div>';
+
+                // اضافه کردن مارکر به لایه گروه gandompoint1
+                L.marker([lat, lng], { icon: icong }).bindPopup(`${txt1}`).addTo(this.gandompoint1);
+            }));
+            
+            // اضافه کردن لایه به نقشه با وضعیت مخفی
+            this.addLayer('gandom_stores', this.gandompoint1, { visible: false });
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching Gandom stores data:', error);
+            return [];
+        }
     }
 
     /**
@@ -298,7 +360,22 @@ export class GandomMap1 {
      */
     async toggleLayer(layerId, visible) {
         console.log(`Toggling layer: ${layerId}, Visible: ${visible}`);
-        this.map.addLayer(gandompoint1);
+        
+        if (layerId === 'gandom_stores') {
+            if (visible) {
+                // نمایش لایه فروشگاه‌های گندم
+                if (this.gandompoint1) {
+                    this.gandompoint1.addTo(this.map);
+                }
+            } else {
+                // مخفی کردن لایه فروشگاه‌های گندم
+                if (this.gandompoint1) {
+                    this.map.removeLayer(this.gandompoint1);
+                }
+            }
+            return;
+        }
+        
         if (visible) {
             // منطق اضافه کردن لایه
             const layer = this.createLayer(layerId);
@@ -307,7 +384,6 @@ export class GandomMap1 {
                 this.layers.set(layerId, layer);
             }
         } else {
-            GandomMap1.clearAllMarkers();
             // منطق حذف لایه
             const layer = this.layers.get(layerId);
             if (layer) {
@@ -445,28 +521,16 @@ export class GandomMap1 {
 
     clearAllMarkers() {
         try {
-            // حذف تمام لایه‌ها از نقشه
-            for (let i in this.map._layers) {
-                if (this.map._layers[i] instanceof L.Marker ||
-                    this.map._layers[i] instanceof L.LayerGroup) {
-                    this.map.removeLayer(this.map._layers[i]);
-                }
+            this.clearMap(map);
+            // حذف تمام نشانگرهای gandompoint1            
+            if (this.map && this.gandompoint1) {
+                this.map.removeLayer(this.gandompoint1);
+                console.log(" 1 1 تمام نشانگرها حذف شدند");
+            } else {
+                console.warn("نقشه یا نشانگرها موجود نیستند");
             }
-
-            // حذف لایه‌های خاص
-            if (window.gandompoint1) {
-                this.map.removeLayer(window.gandompoint1);
-            }
-
-            // لغو انتخاب تمام چک‌باکس‌ها
-            const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
-            layerCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-
-            console.log("تمام لایه‌ها و نشانگرها حذف شدند");
         } catch (error) {
-            console.error("خطا در حذف لایه‌ها:", error);
+            console.error("خطا در حذف نشانگرها:", error);
         }
     }
 
@@ -525,6 +589,7 @@ export class GandomMap1 {
             checkbox.addEventListener('change', function (event) {
                 var df = this.parentNode.textContent.trim(); // Use textContent instead of .text()  
                 console.log('Trash button not=m' , df);
+              
                 if (df == "افق کوروش") {
                     if (this.checked) { // Use this.checked instead of .prop("checked")  
                         console.log("3  addLayer ", df);
@@ -533,15 +598,17 @@ export class GandomMap1 {
                         console.log("4   removeLayer ", df);
                         self.map.removeLayer(alpo1);
                     }
-                }            
-                console.log(sss  ,'====================' ,      addLayerControls(map));
-                if (df == " گندم") {
+                }   
+                self.addLayer('gandom_stores', self.gandompoint1, { visible: true });       
+                // console.log('====================' ,      self.addLayerControls(self.map));
+                if (df == "گندم") {
+                 
                     if (this.checked) { // Use this.checked instead of .prop("checked")  
-                        console.log("3  addLayer ", df);
-                        self.map.addLayer(gandompoint1);
+                        console.log("3  addLayer ", df); 
+                        self.map.addLayer(self.gandompoint1);
                     } else {
                         console.log("4   removeLayer ", df);
-                        self.map.removeLayer(gandompoint1);
+                        self.map.removeLayer(self.gandompoint1);
                     }
                 }
             });
@@ -564,21 +631,6 @@ export class GandomMap1 {
                 checkbox.checked = false;
             });
         });
-    }
-
-    clearAllMarkers() {
-        try {
-            this.clearMap(map);
-            // حذف تمام نشانگرهای gandompoint1            
-            if (this.map && gandompoint1) {
-                this.map.removeLayer(gandompoint1);
-                console.log(" 1 1 تمام نشانگرها حذف شدند");
-            } else {
-                console.warn("نقشه یا نشانگرها موجود نیستند");
-            }
-        } catch (error) {
-            console.error("خطا در حذف نشانگرها:", error);
-        }
     }
 
     cclearMap(map) {
@@ -2291,7 +2343,7 @@ export class GandomMap1 {
 
                 // افزودن مارکر به نقشه
                 L.marker([lat, lng], {
-                    icon: this.geticon(subcategory)
+                    icon: this.getCategoryIcon(subcategory)
                 }).addTo(map)
                     .bindPopup(`
                     <div style="direction: rtl; text-align: right; font-family: IRANSans;">
@@ -2610,196 +2662,8 @@ export class GandomMap1 {
     }
 
     // تابع کمکی برای تعیین آیکون بر اساس دسته‌بندی
-    geticon(category) {
-        const icons = {
-            'hospital': L.divIcon({
-                html: '<i class="fas fa-hospital" style="color: #FF4444;"></i>',
-                className: 'category-marker hospital',
-                iconSize: [20, 20]
-            }),
-            'attraction': L.divIcon({
-                html: '<i class="fas fa-landmark" style="color: #FFA500;"></i>',
-                className: 'category-marker attraction',
-                iconSize: [20, 20]
-            }),
-            'bakery': L.divIcon({
-                html: '<i class="fas fa-bread-slice" style="color: #8B4513;"></i>',
-                className: 'category-marker bakery',
-                iconSize: [20, 20]
-            }),
-            'bank': L.divIcon({
-                html: '<i class="fas fa-university" style="color:rgb(168, 10, 220);"></i>',
-                className: 'category-marker bank',
-                iconSize: [20, 20]
-            }),
-            'barracks': L.divIcon({
-                html: '<i class="fas fa-shield-alt" style="color: #808080;"></i>',
-                className: 'category-marker barracks',
-                iconSize: [20, 20]
-            }),
-            'bus_line': L.divIcon({
-                html: '<i class="fas fa-route" style="color: #006400;"></i>',
-                className: 'category-marker bus-line',
-                iconSize: [20, 20]
-            }),
-            'bus_station': L.divIcon({
-                html: '<i class="fas fa-bus" style="color: #006400;"></i>',
-                className: 'category-marker bus-station',
-                iconSize: [20, 20]
-            }),
-            'bus_stop': L.divIcon({
-                html: '<i class="fas fa-stop-circle" style="color: #006400;"></i>',
-                className: 'category-marker bus-stop',
-                iconSize: [20, 20]
-            }),
-            'camp_site': L.divIcon({
-                html: '<i class="fas fa-campground" style="color: #228B22;"></i>',
-                className: 'category-marker camp-site',
-                iconSize: [20, 20]
-            }),
-            'caravan_site': L.divIcon({
-                html: '<i class="fas fa-caravan" style="color: #8B4513;"></i>',
-                className: 'category-marker caravan-site',
-                iconSize: [20, 20]
-            }),
-            'clinic': L.divIcon({
-                html: '<i class="fas fa-clinic-medical" style="color: #FF69B4;"></i>',
-                className: 'category-marker clinic',
-                iconSize: [20, 20]
-            }),
-            'elementray_school': L.divIcon({
-                html: '<i class="fas fa-chalkboard-teacher" style="color: #4169E1;"></i>',
-                className: 'category-marker elementary-school',
-                iconSize: [20, 20]
-            }),
-            'fruit_vegetable_store': L.divIcon({
-                html: '<i class="fas fa-apple-alt" style="color: #FF6347;"></i>',
-                className: 'category-marker fruit-store',
-                iconSize: [20, 20]
-            }),
-            'fuel': L.divIcon({
-                html: '<i class="fas fa-gas-pump" style="color: #FFD700;"></i>',
-                className: 'category-marker fuel',
-                iconSize: [20, 20]
-            }),
-            'high_school': L.divIcon({
-                html: '<i class="fas fa-school" style="color: #4169E1;"></i>',
-                className: 'category-marker high-school',
-                iconSize: [20, 20]
-            }),
-            'hospice': L.divIcon({
-                html: '<i class="fas fa-heartbeat" style="color: #FF69B4;"></i>',
-                className: 'category-marker hospice',
-                iconSize: [20, 20]
-            }),
-            'hotel': L.divIcon({
-                html: '<i class="fas fa-hotel" style="color: #FFD700;"></i>',
-                className: 'category-marker hotel',
-                iconSize: [20, 20]
-            }),
-            'kindergarten': L.divIcon({
-                html: '<i class="fas fa-baby" style="color: #FFB6C1;"></i>',
-                className: 'category-marker kindergarten',
-                iconSize: [20, 20]
-            }),
-            'hyper_market': L.divIcon({
-                html: '<i class="fas fa-shopping-bag" style="color: #32CD32;"></i>',
-                className: 'category-marker hyper-market',
-                iconSize: [20, 20]
-            }),
-            'laboratory': L.divIcon({
-                html: '<i class="fas fa-flask" style="color: #9370DB;"></i>',
-                className: 'category-marker laboratory',
-                iconSize: [20, 20]
-            }),
-            'marketplace': L.divIcon({
-                html: '<i class="fas fa-store" style="color: #FF8C00;"></i>',
-                className: 'category-marker marketplace',
-                iconSize: [20, 20]
-            }),
-            'mosque': L.divIcon({
-                html: '<i class="fas fa-mosque" style="color: #008080;"></i>',
-                className: 'category-marker mosque',
-                iconSize: [20, 20]
-            }),
-            'parking': L.divIcon({
-                html: '<i class="fas fa-parking" style="color: #808080;"></i>',
-                className: 'category-marker parking',
-                iconSize: [20, 20]
-            }),
-            'parking_space': L.divIcon({
-                html: '<i class="fas fa-car" style="color: #808080;"></i>',
-                className: 'category-marker parking-space',
-                iconSize: [20, 20]
-            }),
-            'police': L.divIcon({
-                html: '<i class="fas fa-shield-alt" style="color: #000080;"></i>',
-                className: 'category-marker police',
-                iconSize: [20, 20]
-            }),
-            'public_transport_building': L.divIcon({
-                html: '<i class="fas fa-building" style="color: #006400;"></i>',
-                className: 'category-marker transport-building',
-                iconSize: [20, 20]
-            }),
-            'public_transportation': L.divIcon({
-                html: '<i class="fas fa-train" style="color: #006400;"></i>',
-                className: 'category-marker public-transport',
-                iconSize: [20, 20]
-            }),
-            'school': L.divIcon({
-                html: '<i class="fas fa-graduation-cap" style="color: #4169E1;"></i>',
-                className: 'category-marker school',
-                iconSize: [20, 20]
-            }),
-            'subway': L.divIcon({
-                html: '<i class="fas fa-subway" style="color: #006400;"></i>',
-                className: 'category-marker subway',
-                iconSize: [20, 20]
-            }),
-            'subway_line': L.divIcon({
-                html: '<i class="fas fa-route" style="color: #006400;"></i>',
-                className: 'category-marker subway-line',
-                iconSize: [20, 20]
-            }),
-            'supermarket': L.divIcon({
-                html: '<i class="fas fa-shopping-cart" style="color: #32CD32;"></i>',
-                className: 'category-marker supermarket',
-                iconSize: [20, 20]
-            }),
-            'theme_park': L.divIcon({
-                html: '<i class="fas fa-theater-masks" style="color: #FF69B4;"></i>',
-                className: 'category-marker theme-park',
-                iconSize: [20, 20]
-            }),
-            'tower': L.divIcon({
-                html: '<i class="fas fa-building" style="color: #808080;"></i>',
-                className: 'category-marker tower',
-                iconSize: [20, 20]
-            }),
-            'trade_store': L.divIcon({
-                html: '<i class="fas fa-store-alt" style="color: #FF8C00;"></i>',
-                className: 'category-marker trade-store',
-                iconSize: [20, 20]
-            }),
-            'train_station': L.divIcon({
-                html: '<i class="fas fa-train" style="color: #006400;"></i>',
-                className: 'category-marker train-station',
-                iconSize: [20, 20]
-            }),
-            'university': L.divIcon({
-                html: '<i class="fas fa-university" style="color: #4169E1;"></i>',
-                className: 'category-marker university',
-                iconSize: [20, 20]
-            }),
-            'default': L.divIcon({
-                html: '<i class="fas fa-map-marker-alt" style="color: #888888;"></i>',
-                className: 'category-marker default',
-                iconSize: [20, 20]
-            })
-        };
-
-        return icons[category] || icons.default;
+    getCategoryIcon(category) {
+        return categoryIcons[category] || categoryIcons.default;
     }
 
     addLocationMarker(longitude, latitude, map, textpop) {
@@ -2832,90 +2696,19 @@ export class GandomMap1 {
         }
     }
 
-    async find_market111(marketcode) {
-        if (!this.map) {
-            console.error('Map instance not initialized');
-            return;
-        }
-
-        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
-        const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
-        const queryParams = new URLSearchParams({
-            where: `StoreCode like '%${marketcode}%'`,
-            outFields: 'Longitude,Latitude,StoreCode,StoreName,StoreStatus,GZone,ModireMantagheTXT',
-            returnGeometry: true,
-            f: 'pjson'
-        });
-        const url_mark = `${baseUrl}?${queryParams.toString()}`;
-
-        console.log('در حال جستجوی فروشگاه با کد:', marketcode);
-        try {
-            const response = await fetch(url_mark);
-            if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
-            const json = await response.json();
-
-            if (json.features && json.features.length > 0) {
-                // پاک کردن نشانگرهای قبلی
-                this.map.eachLayer((layer) => {
-                    if (layer instanceof L.Marker) {
-                        this.map.removeLayer(layer);
-                    }
-                });
-
-                json.features.forEach(feature => {
-                    const {
-                        StoreName: name,
-                        StoreCode: storid,
-                        StoreStatus: statos,
-                        GZone: mantag,
-                        ModireMantagheTXT: usename,
-                        Longitude: long1,
-                        Latitude: lat1
-                    } = feature.attributes;
-
-                    const latitude = parseFloat(lat1);
-                    const longitude = parseFloat(long1);
-                    const markerIcon = this.getIcon(statos);
-                    const latlng = L.latLng(latitude, longitude);
-
-                    L.marker(latlng, { icon: markerIcon })
-                        .addTo(this.map)
-                        .bindPopup(`
-                            <div style="direction: rtl; text-align: right;">
-                                <strong>${name}</strong><br>
-                                منطقه: ${mantag}<br>
-                                وضعیت: ${statos}<br>
-                                کد فروشگاه: ${storid}
-                            </div>
-                        `)
-                        .openPopup();
-
-                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
-                });
-
-                // تغییر دید نقشه به مرکز ایران
-                this.map.setView([32.287, 52.954], 5.5);
-            } else {
-                console.log('هیچ فروشگاهی با این کد یافت نشد');
-            }
-        } catch (error) {
-            console.error('خطا در جستجوی فروشگاه:', error);
-            return false;
-        }
-    }
-
-    getIcon(stat) {
+    
+    getStoreIcon(stat) {
         switch (stat) {
             case "باز":
-                return this.Gandom_;
+                return icons.Gandom_;
             case "بسته":
-                return this.Gandomb_;
+                return icons.Gandomb_;
             case "در حال جمع آوری":
-                return this.Gandomj_;
+                return icons.Gandomj_;
             case "در حال راه اندازی":
-                return this.Gandomd_;
+                return icons.Gandomd_;
             default:
-                return this.user1_;
+                return icons.user1_;
         }
     }
 
@@ -2946,6 +2739,26 @@ export class GandomMap1 {
         doc.text(item.count, config.marginLeft + colWidth - 5, y + config.rowHeight - 3, { align: 'right' });
     }
 
-   
+    getStoreStatusConfig(status) {
+        const STORE_STATUS_CONFIG = {
+            "باز": {
+                color: 'green',
+                icon: 'Gandom_'
+            },
+            "بسته": {
+                color: 'red',
+                icon: 'Gandomb_'
+            },
+            "در حال جمع آوری": {
+                color: 'blue',
+                icon: 'Gandomj_'
+            },
+            "در حال راه اندازی": {
+                color: 'cyan',
+                icon: 'Gandomd_'
+            }
+        };
+        return STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
+    }
 
 } 

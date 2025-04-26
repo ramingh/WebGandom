@@ -1,3 +1,24 @@
+import icons from '../assets/js/icons.js';
+
+const STORE_STATUS_CONFIG = {
+    "باز": {
+        color: 'green',
+        icon: 'Gandom_'
+    },
+    "بسته": {
+        color: 'red',
+        icon: 'Gandomb_'
+    },
+    "در حال جمع آوری": {
+        color: 'blue',
+        icon: 'Gandomj_'
+    },
+    "در حال راه اندازی": {
+        color: 'cyan',
+        icon: 'Gandomd_'
+    }
+};
+
 // Layer Manager Component
 export class LayerManager {
     constructor(containerId, map) {
@@ -9,37 +30,6 @@ export class LayerManager {
         this.initSearchBox();
         this.initToggleButton();
         // this.initTrashButton();
-
-        // تعریف آیکون‌های مختلف
-        // this.Gandom_ = this.L.icon({
-        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon.png',
-        //     iconSize: [32, 32],
-        //     iconAnchor: [16, 32]
-        // });
-
-        // this.Gandomb_ = this.L.icon({
-        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_b.png',
-        //     iconSize: [32, 32],
-        //     iconAnchor: [16, 32]
-        // });
-
-        // this.Gandomj_ = this.L.icon({
-        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_j.png',
-        //     iconSize: [32, 32],
-        //     iconAnchor: [16, 32]
-        // });
-
-        // this.Gandomd_ = this.L.icon({
-        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_d.png',
-        //     iconSize: [32, 32],
-        //     iconAnchor: [16, 32]
-        // });
-
-        // this.user1_ = this.L.icon({
-        //     iconUrl: 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/images/icon_u.png',
-        //     iconSize: [32, 32],
-        //     iconAnchor: [16, 32]
-        // });
     }
 
     initToggleButton() {
@@ -382,20 +372,9 @@ export class LayerManager {
         });
     }
 
-    getIcon(stat) {
-
-        switch (stat) {
-            case "باز":
-                return Gandom_;
-            case "بسته":
-                return Gandomb_;
-            case "در حال جمع آوری":
-                return Gandomj_;
-            case "در حال راه اندازی":
-                return Gandomd_;
-            default:
-                return user1_;
-        }
+    getStoreIcon(status) {
+        const config = STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
+        return icons[config.icon];
     }
 
 
@@ -436,7 +415,7 @@ export class LayerManager {
 
                     const latitude = parseFloat(lat1);
                     const longitude = parseFloat(long1);
-                    const markerIcon = this.getIcon(statos);
+                    const markerIcon = this.getStoreIcon(statos);
                     var latlng = this.L.latLng(latitude, longitude);
 
                     this.L.marker(latlng, { icon: markerIcon })
