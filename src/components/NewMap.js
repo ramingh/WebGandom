@@ -46,7 +46,7 @@ export class GandomMap1 {
         // راه‌اندازی دکمه حذف و استایل‌های سفارشی
         this.initTrashButton();
         this.addCustomStyles();
-        this.gandompoint1 = new L.layerGroup(); // تعریف لایه گروه  
+        this.gandompoint1 = new L.layerGroup(); // تعریف لایه گروه
     }
 
     /**
@@ -76,7 +76,7 @@ export class GandomMap1 {
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
-        
+
         // بارگذاری فروشگاه‌های گندم
         this.loadGandomStores();
     }
@@ -86,7 +86,7 @@ export class GandomMap1 {
      */
     async loadGandomStores() {
         const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
-        
+
         try {
             const response = await fetch(url_rest, {
                 method: 'POST',
@@ -98,10 +98,10 @@ export class GandomMap1 {
             if (!response.ok) {
                 throw new Error(`Error fetching data: ${response.statusText}`);
             }
-            
+
             const data = await response.json();
             const features = data.features;
-            
+
             await Promise.all(features.map((feature) => {
                 const lat = parseFloat(feature.attributes.Latitude);
                 const lng = parseFloat(feature.attributes.Longitude);
@@ -127,10 +127,10 @@ export class GandomMap1 {
                 // اضافه کردن مارکر به لایه گروه gandompoint1
                 L.marker([lat, lng], { icon: icong }).bindPopup(`${txt1}`).addTo(this.gandompoint1);
             }));
-            
+
             // اضافه کردن لایه به نقشه با وضعیت مخفی
             this.addLayer('gandom_stores', this.gandompoint1, { visible: false });
-            
+
             return data;
         } catch (error) {
             console.error('Error fetching Gandom stores data:', error);
@@ -360,7 +360,7 @@ export class GandomMap1 {
      */
     async toggleLayer(layerId, visible) {
         console.log(`Toggling layer: ${layerId}, Visible: ${visible}`);
-        
+
         if (layerId === 'gandom_stores') {
             if (visible) {
                 // نمایش لایه فروشگاه‌های گندم
@@ -375,7 +375,7 @@ export class GandomMap1 {
             }
             return;
         }
-        
+
         if (visible) {
             // منطق اضافه کردن لایه
             const layer = this.createLayer(layerId);
@@ -572,48 +572,80 @@ export class GandomMap1 {
             "کوثر": KousarEditableLayers,
             "وین مارکت": WinMarketEditableLayers,
             "مفید": MofidEditableLayers,
-            // "محسن": MohsenEditableLayers,
             "سپه": SepahEditableLayers,
         };
 
-        // this.map.addLayer(GanodmEditableLayers);
-
         L.control.layers(null, drawingLayers, { position: 'topleft', collapsed: false }).addTo(this.map);
 
+        var drawControl = new L.Control.Draw({
+            // ... rest of the drawing control configuration ...
+        });
+
+        // ... rest of the existing code ...
     }
 
     chech_chekbox() {
         const self = this;
         const checkboxes = document.querySelectorAll("[class='leaflet-control-layers-selector']");
         checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function (event) {
-                var df = this.parentNode.textContent.trim(); // Use textContent instead of .text()  
-                console.log('Trash button not=m' , df);
-              
-                if (df == "افق کوروش") {
-                    if (this.checked) { // Use this.checked instead of .prop("checked")  
-                        console.log("3  addLayer ", df);
-                        self.map.addLayer(alpo1);
-                    } else {
-                        console.log("4   removeLayer ", df);
-                        self.map.removeLayer(alpo1);
-                    }
-                }   
-                self.addLayer('gandom_stores', self.gandompoint1, { visible: true });       
-                // console.log('====================' ,      self.addLayerControls(self.map));
-                if (df == "گندم") {
-                 
-                    if (this.checked) { // Use this.checked instead of .prop("checked")  
-                        console.log("3  addLayer ", df); 
+            checkbox.addEventListener('change', async function (event) {
+                const layerName = this.parentNode.textContent.trim();
+                console.log('تغییر وضعیت لایه:', layerName, this.checked ? 'روشن' : 'خاموش');
+
+                // گندم همچنان از سرویس قبلی استفاده می‌کند
+                if (layerName === "گندم") {
+                    console.log('مدیریت لایه گندم');
+                    if (this.checked) {
                         self.map.addLayer(self.gandompoint1);
                     } else {
-                        console.log("4   removeLayer ", df);
                         self.map.removeLayer(self.gandompoint1);
                     }
+                    return;
+                }
+
+                try {
+                    // اگر گروه‌های فروشگاهی هنوز دریافت نشده‌اند
+                    if (!self.storeGroups) {
+                        console.log('دریافت گروه‌های فروشگاهی');
+                        self.storeGroups = await self.fetchAllStores();
+                        if (!self.storeGroups) {
+                            console.error('خطا در دریافت گروه‌های فروشگاهی');
+                            return;
+                        }
+                    }
+
+                    // نمایش یا مخفی کردن لایه مربوطه
+                    const group = self.storeGroups[layerName];
+                    console.log('گروه یافت شده برای', layerName, ':', group ? 'موجود' : 'ناموجود');
+
+                    if (group) {
+                        if (this.checked) {
+                            self.map.addLayer(group);
+                            console.log('لایه اضافه شد:', layerName);
+                        } else {
+                            self.map.removeLayer(group);
+                            console.log('لایه حذف شد:', layerName);
+                        }
+                    } else {
+                        console.log('گروه مورد نظر پیدا نشد:', layerName);
+                    }
+                } catch (error) {
+                    console.error('خطا در مدیریت لایه‌ها:', error);
                 }
             });
         });
     }
+
+    // تابع جدید برای پاک کردن داده‌های لایه
+    clearLayerData(layerId) {
+        // پاک کردن داده‌های لایه مربوطه
+        if (this.layers.has(layerId)) {
+            const layer = this.layers.get(layerId);
+            this.map.removeLayer(layer);
+            this.layers.delete(layerId);
+        }
+    }
+
     initTrashButton() {
         const trashButton = document.getElementById('trash-button');
         if (!trashButton) {
@@ -1377,106 +1409,6 @@ export class GandomMap1 {
     }
 
 
-    // متد جدید برای اضافه کردن مارکر کسب و کارها
-    addBusinessMarker(category, title, coords, counters) {
-        let icon;
-        switch (category) {
-            case 'گندم':
-                icon = icons.Gandom_;
-                counters.gandom++;
-                break;
-            case 'سورنا':
-                icon = icons.Sorena_;
-                counters.sorena++;
-                break;
-            case 'رفاه':
-                icon = icons.Refah_;
-                counters.refah++;
-                break;
-            case 'افق کوروش':
-                icon = icons.ofog_;
-                counters.ofog++;
-                break;
-            case 'سپه':
-                icon = icons.Sepah_;
-                counters.sepah++;
-                break;
-            case 'جانبو':
-                icon = icons.Canbo_;
-                counters.canbo++;
-                break;
-            case 'وین مارکت':
-                icon = icons.WinMarket_;
-                counters.winmarket++;
-                break;
-            case 'محسن':
-                icon = icons.Mohsen_;
-                counters.mohsen++;
-                break;
-            case 'دیلی مارکت':
-                icon = icons.Daily_;
-                counters.daily++;
-                break;
-            case 'هفت':
-                icon = icons.Haft_;
-                counters.haft++;
-                break;
-            case 'اتکا':
-                icon = icons.Etka_;
-                counters.etka++;
-                break;
-            case 'فامیلی':
-                icon = icons.Family_;
-                counters.family++;
-                break;
-            case 'شهروند':
-                icon = icons.Shahrvand_;
-                counters.shahrvand++;
-                break;
-            case 'هایپراستار':
-                icon = icons.Hayperstar_;
-                counters.hyperstar++;
-                break;
-            case 'امیران':
-                icon = icons.Amiran_;
-                counters.amiran++;
-                break;
-            case 'هایپرمی':
-                icon = icons.Haypermy_;
-                counters.hypermy++;
-                break;
-            case 'مفید':
-                icon = icons.Mofid_;
-                counters.mofid++;
-                break;
-            case 'کوثر':
-                icon = icons.Kousar_;
-                counters.kousar++;
-                break;
-            case 'یاس':
-                icon = icons.Yas_;
-                counters.yas++;
-                break;
-            case 'سوپرمارکت':
-                icon = icons.super_;
-                counters.super++;
-                break;
-            default:
-                console.log('نوع کسب و کار ناشناخته:', category);
-                break;
-        }
-
-        if (icon) {
-            let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
-
-
-            L.marker(coords, { icon })
-                .addTo(this.map)
-                .bindPopup(categoryid2, { opacity: 0.1 });
-        }
-    }
-
-
 
     // تابع خروجی PDF
     exportToPDF(reportContent) {
@@ -1639,7 +1571,7 @@ export class GandomMap1 {
             etka: 'اتکا',
             family: 'فامیلی',
             shahrvand: 'شهروند',
-            hyperstar: 'هایپراستار',
+            hyperstar: 'هایپر استار',
             amiran: 'امیران',
             hypermy: 'هایپرمی',
             mofid: 'مفید',
@@ -2198,7 +2130,8 @@ export class GandomMap1 {
         }
         // console.log(total_khan, '-------------------', total_pop);
     }
-    // TODO: =================================================================================  
+    // TODO: ===================نزدیکترین  گندم فروشگاه های گندم طلایی====================================================  
+  
     async get_alldata(longitude) {
         const url_path = '/IMG/';
         // console.log(longitude, 'Tes -------------ly', longitude);
@@ -2207,11 +2140,11 @@ export class GandomMap1 {
         let pnt1 = new L.LatLng(longitude[0], longitude[1]);
 
         this.map.setView(pnt1, 10);
-        const Gandomd_ = L.icon({
-            iconUrl: url_path + 'Gandome.png',
-            iconSize: [20, 30],
-            popupAnchor: [0, 0]
-        });
+        // const Gandomd_ = L.icon({
+        //     iconUrl: url_path + 'Gandome.png',
+        //     iconSize: [20, 30],
+        //     popupAnchor: [0, 0]   35.275,51.5144
+        // });
         L.marker(longitude).addTo(this.map).bindPopup('textRadius');
 
         this.drawDistrict(longitude[0], longitude[1], this.map);
@@ -2385,6 +2318,7 @@ export class GandomMap1 {
         const buffer = `${northEast.lng},${northEast.lat},${southWest.lng},${southWest.lat}`;
 
         const url = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/identify';
+
         const params = {
             geometryType: 'esriGeometryEnvelope',
             layers: 'id:0',
@@ -2442,6 +2376,9 @@ export class GandomMap1 {
                     const title = result.attributes.Name;
                     const coords = [result.geometry.y, result.geometry.x];
 
+                    // this.addBusinessMarker(category, title, coords, counters);
+                    // this.addBusinessMarker(category, title, coords, counters);
+                    console.log(title, 'نقطه:', category);
                     // نمایش نقطه بر اساس نوع کسب و کار
                     this.addBusinessMarker(category, title, coords, counters);
                 });
@@ -2696,22 +2633,6 @@ export class GandomMap1 {
         }
     }
 
-    
-    getStoreIcon(stat) {
-        switch (stat) {
-            case "باز":
-                return icons.Gandom_;
-            case "بسته":
-                return icons.Gandomb_;
-            case "در حال جمع آوری":
-                return icons.Gandomj_;
-            case "در حال راه اندازی":
-                return icons.Gandomd_;
-            default:
-                return icons.user1_;
-        }
-    }
-
     drawTableRow(doc, config, item, y, colWidth, index) {
         // تعریف رنگ‌های مختلف برای سطرها
         const rowColors = [
@@ -2754,11 +2675,415 @@ export class GandomMap1 {
                 icon: 'Gandomj_'
             },
             "در حال راه اندازی": {
-                color: 'cyan',
+                color: '#AA00CC',
                 icon: 'Gandomd_'
             }
         };
         return STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
+    }
+
+    getStoreIcon(status) {
+        return icons[this.getStoreStatusConfig(status).icon];
+    }
+
+    // تعریف لایه‌های فروشگاه‌های زنجیره‌ای
+    static STORE_LAYERS = {
+        "گندم": new L.FeatureGroup(),
+        "افق کوروش": new L.FeatureGroup(),
+        "جانبو": new L.FeatureGroup(),
+        "هایپر استار": new L.FeatureGroup(),
+        "اتکا": new L.FeatureGroup(),
+        "شهروند": new L.FeatureGroup(),
+        "هفت": new L.FeatureGroup(),
+        "رفاه": new L.FeatureGroup(),
+        "سورنا": new L.FeatureGroup(),
+        "هایپرمی": new L.FeatureGroup(),
+        "فامیلی": new L.FeatureGroup(),
+        "دیلی مارکت": new L.FeatureGroup(),
+        "امیران": new L.FeatureGroup(),
+        "یاس": new L.FeatureGroup(),
+        "کوثر": new L.FeatureGroup(),
+        "وین مارکت": new L.FeatureGroup(),
+        "مفید": new L.FeatureGroup(),
+        "سپه": new L.FeatureGroup()
+    };
+
+    // مدیریت لایه‌های نقشه
+    initStoreLayers() {
+        // ایجاد کنترل لایه‌ها
+        this.layerControl = L.control.layers(null, GandomMap1.STORE_LAYERS, {
+            position: 'topleft',
+            collapsed: false
+        }).addTo(this.map);
+
+        // اضافه کردن کنترل برای لایه‌های ترسیمی
+        L.control.layers(null, this.drawingLayers, {
+            position: 'topleft',
+            collapsed: false
+        }).addTo(this.map);
+
+        // بازیابی وضعیت لایه‌های ذخیره شده
+        this.loadLayerStates();
+
+        // اضافه کردن event listener برای ذخیره تغییرات
+        this.map.on('overlayadd overlayremove', (e) => {
+            this.saveLayerStates();
+        });
+    }
+
+    // ذخیره وضعیت لایه‌ها در localStorage
+    saveLayerStates() {
+        const layerStates = {};
+        // ذخیره وضعیت لایه‌های فروشگاه‌ها
+        Object.keys(GandomMap1.STORE_LAYERS).forEach(layerName => {
+            const layer = GandomMap1.STORE_LAYERS[layerName];
+            layerStates[layerName] = this.map.hasLayer(layer);
+        });
+        // ذخیره وضعیت لایه‌های ترسیمی
+        Object.keys(this.drawingLayers).forEach(layerName => {
+            const layer = this.drawingLayers[layerName];
+            layerStates[`drawing_${layerName}`] = this.map.hasLayer(layer);
+        });
+        localStorage.setItem('gandomMapLayerStates', JSON.stringify(layerStates));
+    }
+
+    // بازیابی و اعمال وضعیت لایه‌ها از localStorage
+    loadLayerStates() {
+        try {
+            const savedStates = JSON.parse(localStorage.getItem('gandomMapLayerStates'));
+            if (savedStates) {
+                // بازیابی وضعیت لایه‌های فروشگاه‌ها
+                Object.keys(GandomMap1.STORE_LAYERS).forEach(layerName => {
+                    const layer = GandomMap1.STORE_LAYERS[layerName];
+                    if (layer && savedStates[layerName] !== undefined) {
+                        if (savedStates[layerName]) {
+                            this.map.addLayer(layer);
+                        } else {
+                            this.map.removeLayer(layer);
+                        }
+                    }
+                });
+                // بازیابی وضعیت لایه‌های ترسیمی
+                Object.keys(this.drawingLayers).forEach(layerName => {
+                    const layer = this.drawingLayers[layerName];
+                    const savedState = savedStates[`drawing_${layerName}`];
+                    if (layer && savedState !== undefined) {
+                        if (savedState) {
+                            this.map.addLayer(layer);
+                        } else {
+                            this.map.removeLayer(layer);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('خطا در بازیابی وضعیت لایه‌ها:', error);
+        }
+    }
+
+    // دریافت اطلاعات همه فروشگاه‌ها
+    async fetchAllStores() {
+        try {
+            const response = await fetch('https://gis1.gandomcs.com/getdata.asmx/ReadMarket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const xmlText = await response.text();
+
+            // تبدیل XML به JSON
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const jsonString = xmlDoc.getElementsByTagName("string")[0].textContent;
+            const stores = JSON.parse(jsonString);
+            const storeGroups = {};
+
+            // ایجاد گروه‌های خالی برای همه دسته‌بندی‌های تعریف شده
+            Object.keys(GandomMap1.STORE_LAYERS).forEach(category => {
+                storeGroups[category] = new L.FeatureGroup();
+                // console.log('گروه ایجاد شده برای:', category);
+            });
+
+            // پردازش فروشگاه‌ها
+            stores.forEach(store => {
+                // console.log('پردازش فروشگاه:', store);
+                const category = store.Category;
+                // console.log('دسته‌بندی فروشگاه:', category);
+
+                // فقط اگر این دسته‌بندی در گروه‌های ما تعریف شده باشد
+                if (storeGroups[category]) {
+                    // console.log('ایجاد مارکر برای:', category);
+                    const marker = this.addAllMarker(
+                        category,
+                        category,
+                        [store.y, store.x]
+                    );
+                    if (marker) {
+                        marker.bindPopup(`
+                            <div style="text-align: right; direction: rtl;">
+                                <strong>${store.Name || category}</strong><br>
+                                ${store.Addres ? `آدرس: ${store.Addres}<br>` : ''}
+                                کد: ${store.Id}
+                            </div>
+                        `);
+
+                        storeGroups[category].addLayer(marker);
+                        // console.log('مارکر اضافه شد به گروه:', category);
+                    } else {
+                        console.log('خطا در ایجاد مارکر برای:', category);
+                    }
+                } else {
+                    console.log('دسته‌بندی تعریف نشده:', category);
+                }
+            });
+
+            // ذخیره گروه‌ها در نقشه
+            this.storeGroups = storeGroups;
+            console.log('گروه‌های نهایی:', Object.keys(storeGroups));
+            return storeGroups;
+
+        } catch (error) {
+            console.error('خطا در دریافت فروشگاه‌ها:', error);
+            return null;
+        }
+    }
+    // متد جدید برای اضافه کردن مارکر کسب و کارها
+    addBusinessMarker(category, title, coords, counters) {
+        let icon;
+        // console.log('ایجاد مارکر برای:', category);
+        // Safely increment counters if they exist
+        if (counters) {
+            switch (category) {
+                case 'گندم':
+                    icon = icons.Gandom_;
+                    counters.gandom = (counters.gandom || 0) + 1;
+                    break;
+                case 'سورنا':
+                    icon = icons.Sorena_;
+                    counters.sorena = (counters.sorena || 0) + 1;
+                    break;
+                case 'رفاه':
+                    icon = icons.Refah_;
+                    counters.refah = (counters.refah || 0) + 1;
+                    break;
+                case 'افق کوروش':
+                    icon = icons.ofog_;
+                    counters.ofog = (counters.ofog || 0) + 1;
+                    break;
+                case 'سپه':
+                    icon = icons.Sepah_;
+                    counters.sepah = (counters.sepah || 0) + 1;
+                    break;
+                case 'جانبو':
+                    icon = icons.Canbo_;
+                    counters.canbo = (counters.canbo || 0) + 1;
+                    break;
+                case 'وین مارکت':
+                    icon = icons.WinMarket_;
+                    counters.winmarket = (counters.winmarket || 0) + 1;
+                    break;
+                case 'محسن':
+                    icon = icons.Mohsen_;
+                    counters.mohsen = (counters.mohsen || 0) + 1;
+                    break;
+                case 'دیلی مارکت':
+                    icon = icons.Daily_;
+                    counters.daily = (counters.daily || 0) + 1;
+                    break;
+                case 'هفت':
+                    icon = icons.Haft_;
+                    counters.haft = (counters.haft || 0) + 1;
+                    break;
+                case 'اتکا':
+                    icon = icons.Etka_;
+                    counters.etka = (counters.etka || 0) + 1;
+                    break;
+                case 'فامیلی':
+                    icon = icons.Family_;
+                    counters.family = (counters.family || 0) + 1;
+                    break;
+                case 'شهروند':
+                    icon = icons.Shahrvand_;
+                    counters.shahrvand = (counters.shahrvand || 0) + 1;
+                    break;
+                case 'هایپر استار':
+                    icon = icons.Hayperstar_;
+                    counters.hyperstar = (counters.hyperstar || 0) + 1;
+                    break;
+                case 'امیران':
+                    icon = icons.Amiran_;
+                    counters.amiran = (counters.amiran || 0) + 1;
+                    break;
+                case 'هایپرمی':
+                    icon = icons.Haypermy_;
+                    counters.hypermy = (counters.hypermy || 0) + 1;
+                    break;
+                case 'مفید':
+                    icon = icons.Mofid_;
+                    counters.mofid = (counters.mofid || 0) + 1;
+                    break;
+                case 'کوثر':
+                    icon = icons.Kousar_;
+                    counters.kousar = (counters.kousar || 0) + 1;
+                    break;
+                case 'یاس':
+                    icon = icons.Yas_;
+                    counters.yas = (counters.yas || 0) + 1;
+                    break;
+                case 'سوپرمارکت':
+                    icon = icons.super_;
+                    counters.super = (counters.super || 0) + 1;
+                    break;
+                default:
+                    console.log('نوع کسب و کار ناشناخته:', category);
+                    icon = icons.super_; // Default icon for unknown business types
+                    counters.other = (counters.other || 0) + 1;
+                    break;
+            }
+        } else {
+            // If no counters object is provided, just set the icon without counting
+            switch (category) {
+                case 'گندم': icon = icons.Gandom_; break;
+                case 'سورنا': icon = icons.Sorena_; break;
+                case 'رفاه': icon = icons.Refah_; break;
+                case 'افق کوروش': icon = icons.ofog_; break;
+                case 'سپه': icon = icons.Sepah_; break;
+                case 'جانبو': icon = icons.Canbo_; break;
+                case 'وین مارکت': icon = icons.WinMarket_; break;
+                case 'محسن': icon = icons.Mohsen_; break;
+                case 'دیلی مارکت': icon = icons.Daily_; break;
+                case 'هفت': icon = icons.Haft_; break;
+                case 'اتکا': icon = icons.Etka_; break;
+                case 'فامیلی': icon = icons.Family_; break;
+                case 'شهروند': icon = icons.Shahrvand_; break;
+                case 'هایپر استار': icon = icons.Hayperstar_; break;
+                case 'امیران': icon = icons.Amiran_; break;
+                case 'هایپرمی': icon = icons.Haypermy_; break;
+                case 'مفید': icon = icons.Mofid_; break;
+                case 'کوثر': icon = icons.Kousar_; break;
+                case 'یاس': icon = icons.Yas_; break;
+                case 'سوپرمارکت': icon = icons.super_; break;
+                default:
+                    console.log('نوع کسب و کار ناشناخته:', category);
+                    icon = icons.super_; // Default icon for unknown business types
+                    break;
+            }
+        }
+
+        // اگر مختصات معتبر نیستند، مارکر ایجاد نکن
+        if (!coords || !coords[0] || !coords[1]) {
+            console.log('مختصات نامعتبر برای:', category, title);
+            return null;
+        }
+
+        // Always use super_ icon as fallback if no icon was set
+        if (!icon) {
+            icon = icons.super_;
+        }
+        let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
+        // Create the marker
+        // const marker = L.marker(coords, { icon });
+        // Add popup without adding to map
+        // marker.bindPopup(categoryid2, { opacity: 0.1 });
+
+
+        L.marker(coords, { icon: icon })
+        .addTo(this.map)
+        .bindPopup(categoryid2, { opacity: 0.1 });
+
+
+
+
+        // console.log(coords, '  =====//==-==//= ', marker);
+        // Return the marker object
+        // return marker;
+    }
+
+    addAllMarker(category, title, coords) {
+        let icon;
+        switch (category) {
+            case 'گندم':
+                icon = icons.Gandom_;
+                break;
+            case 'سورنا':
+                icon = icons.Sorena_;
+                break;
+            case 'رفاه':
+                icon = icons.Refah_;
+                break;
+            case 'افق کوروش':
+                icon = icons.ofog_;
+                break;
+            case 'سپه':
+                icon = icons.Sepah_;
+                break;
+            case 'جانبو':
+                icon = icons.Canbo_;
+                break;
+            case 'وین مارکت':
+                icon = icons.WinMarket_;
+                break;
+            case 'محسن':
+                icon = icons.Mohsen_;
+                break;
+            case 'دیلی مارکت':
+                icon = icons.Daily_;
+                break;
+            case 'هفت':
+                icon = icons.Haft_;
+                break;
+            case 'اتکا':
+                icon = icons.Etka_;
+                break;
+            case 'فامیلی':
+                icon = icons.Family_;
+                break;
+            case 'شهروند':
+                icon = icons.Shahrvand_;
+                break;
+            case 'هایپر استار':
+                icon = icons.Hayperstar_;
+                break;
+            case 'امیران':
+                icon = icons.Amiran_;
+                break;
+            case 'هایپرمی':
+                icon = icons.Haypermy_;
+                break;
+            case 'مفید':
+                icon = icons.Mofid_;
+                break;
+            case 'کوثر':
+                icon = icons.Kousar_;
+                break;
+            case 'یاس':
+                icon = icons.Yas_;
+                break;
+            case 'سوپرمارکت':
+                icon = icons.super_;
+                break;
+            default:
+                console.log('نوع کسب و کار ناشناخته:', category);
+                icon = icons.super_; // آیکون پیش‌فرض
+                break;
+        }
+        // اگر مختصات معتبر نیستند، مارکر ایجاد نکن
+        if (!coords || !coords[0] || !coords[1]) {
+            console.log('مختصات نامعتبر برای:', category, title);
+            return null;
+        }
+        let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
+        // ایجاد مارکر
+        const marker = L.marker(coords, { icon });
+        // اضافه کردن پاپ‌آپ
+        marker.bindPopup(categoryid2, { opacity: 0.1 });
+        return marker;
     }
 
 } 

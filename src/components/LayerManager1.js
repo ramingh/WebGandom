@@ -14,7 +14,7 @@ const STORE_STATUS_CONFIG = {
         icon: 'Gandomj_'
     },
     "در حال راه اندازی": {
-        color: 'cyan',
+        color: '#AA00CC',
         icon: 'Gandomd_'
     }
 };
@@ -372,17 +372,14 @@ export class LayerManager {
         });
     }
 
-    getStoreIcon(status) {
-        const config = STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
-        return icons[config.icon];
+    getStoreStatusConfig(status) {
+        return STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
     }
 
+    getStoreIcon(status) {
+        return icons[this.getStoreStatusConfig(status).icon];
+    }
 
-
-    // TODO: =================================================================================  
-  
-
-  
     async find_market(marketcode) {
 
         console.log(marketcode, 'مخت++++++++++و ه:', marketcode);
