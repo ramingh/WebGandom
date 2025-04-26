@@ -2131,25 +2131,90 @@ export class GandomMap1 {
         // console.log(total_khan, '-------------------', total_pop);
     }
     // TODO: ===================نزدیکترین  گندم فروشگاه های گندم طلایی====================================================  
-  
+
     async get_alldata(longitude) {
         const url_path = '/IMG/';
-        // console.log(longitude, 'Tes -------------ly', longitude);
-        //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
-
         let pnt1 = new L.LatLng(longitude[0], longitude[1]);
-
         this.map.setView(pnt1, 10);
-        // const Gandomd_ = L.icon({
-        //     iconUrl: url_path + 'Gandome.png',
-        //     iconSize: [20, 30],
-        //     popupAnchor: [0, 0]   35.275,51.5144
-        // });
-        L.marker(longitude).addTo(this.map).bindPopup('textRadius');
 
         this.drawDistrict(longitude[0], longitude[1], this.map);
 
-    };
+        // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
+        if (this.map.hasLayer(this.gandompoint1)) {
+            this.map.removeLayer(this.gandompoint1);
+        }
+
+        //35.275,51.514 --- پیدا کردن نزدیک‌ترین فروشگاه گندم از this.gandompoint1 ---
+        // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
+        if (this.map.hasLayer(this.gandompoint1)) {
+            this.map.removeLayer(this.gandompoint1);
+        }
+
+        // ابتدا نزدیک‌ترین فروشگاه باز را پیدا کن
+        let minDistOpen = Infinity;
+        let nearestOpen = null, nearestOpenLatLng = null, nearestOpenPopup = null, nearestOpenIcon = null;
+
+        // همچنین نزدیک‌ترین فروشگاه (بدون توجه به وضعیت)
+        let minDistAny = Infinity;
+        let nearestAny = null, nearestAnyLatLng = null, nearestAnyPopup = null, nearestAnyIcon = null;
+
+        this.gandompoint1.eachLayer(layer => {
+            if (layer.getLatLng) {
+                const latlng = layer.getLatLng();
+                const dist = this.map.distance([longitude[0], longitude[1]], [latlng.lat, latlng.lng]);
+                let popupContent = layer.getPopup() ? layer.getPopup().getContent() : '';
+                let regex = /<span[^>]*>([\s\S]*?)<\/span>/;
+                let match = popupContent.match(regex);
+                let word = match && match[1] ? match[1].trim() : '';
+
+                // نزدیک‌ترین فروشگاه باز
+                if (word === 'باز' && dist < minDistOpen) {
+                    minDistOpen = dist;
+                    nearestOpen = layer;
+                    nearestOpenLatLng = latlng;
+                    nearestOpenPopup = popupContent;
+                    nearestOpenIcon = layer.options.icon;
+                }
+                // نزدیک‌ترین فروشگاه (هر وضعیتی)
+                if (dist < minDistAny) {
+                    minDistAny = dist;
+                    nearestAny = layer;
+                    nearestAnyLatLng = latlng;
+                    nearestAnyPopup = popupContent;
+                    nearestAnyIcon = layer.options.icon;
+                }
+            }
+        });
+
+        // پاک کردن مارکرهای قبلی (در صورت وجود متد)
+        this.clearMarkers && this.clearMarkers();
+
+        // اگر فروشگاه باز پیدا شد، همان را نمایش بده، وگرنه نزدیک‌ترین هر وضعیتی را
+        let showLatLng = nearestOpenLatLng || nearestAnyLatLng;
+        let showPopup = nearestOpenPopup || nearestAnyPopup;
+        let showIcon = nearestOpenIcon || nearestAnyIcon;
+
+        if (showLatLng) {
+            const marker = L.marker([showLatLng.lat, showLatLng.lng], { icon: showIcon })
+                .addTo(this.map)
+                .bindPopup(showPopup)
+                .openPopup();
+
+            this.markers = [marker];
+            this.map.setView([showLatLng.lat, showLatLng.lng], 16);
+        }
+
+        minDistAny = minDistAny / 1000;
+
+        let formatted_dis_km = minDistAny.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        let popupdist = `<span style="color: red; font-size: 12px;"> میزان فاصله از فروشگاه گندم  : ${formatted_dis_km} کیلومتر</span>`;
+        L.marker(longitude).addTo(this.map).bindPopup(popupdist);
+
+    }
 
     async draw_loc(longitude, icon1, textRadius, map) {
         try {
@@ -2994,8 +3059,8 @@ export class GandomMap1 {
 
 
         L.marker(coords, { icon: icon })
-        .addTo(this.map)
-        .bindPopup(categoryid2, { opacity: 0.1 });
+            .addTo(this.map)
+            .bindPopup(categoryid2, { opacity: 0.1 });
 
 
 

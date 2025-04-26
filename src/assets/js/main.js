@@ -55,7 +55,7 @@ function addEventListeners() {
         console.log(`Route type changed to: ${type}`);
     });
 }
-
+    //35.275,51.514
 // Start application
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
