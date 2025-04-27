@@ -525,7 +525,7 @@ export class GandomMap1 {
             // حذف تمام نشانگرهای gandompoint1            
             if (this.map && this.gandompoint1) {
                 this.map.removeLayer(this.gandompoint1);
-                console.log(" 1 1 تمام نشانگرها حذف شدند");
+                // console.log(" 1 1 تمام نشانگرها حذف شدند");
             } else {
                 console.warn("نقشه یا نشانگرها موجود نیستند");
             }
@@ -668,7 +668,7 @@ export class GandomMap1 {
     cclearMap(map) {
         var i = 0;
         for (i in map._layers) {
-            console.log("problem with ", map._layers[i]._path);
+            // console.log("problem with ", map._layers[i]._path);
 
             if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
                 var lay1 = map._layers[i];
@@ -1107,12 +1107,12 @@ export class GandomMap1 {
     async Draw_buffer(l1, l2, textRadius, map) {
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
         let base_point = [];
-        base_point.push(parseFloat(l2), parseFloat(l1));
         let data = [];
-
         var buffer = this.calculateBuffer(parseFloat(l1), parseFloat(l2), textRadius);
-        var url_market = Url_domain + 'IR22/MapServer/identify?geometryType=esriGeometryPoint&' +
+        base_point.push(parseFloat(l2), parseFloat(l1));
+        var url_market = Url_domain + 'IR22/MapServer/identify?geometryType=esriGeometryEnvelope&' +
             'layers=id:0&tolerance=' + textRadius * 3 + '&mapExtent=50,40,55,33&imageDisplay=10000,10000,100&f=json&geometry=' + buffer;
+
         $.ajax({
             type: 'GET',
             url: url_market,
@@ -1128,44 +1128,42 @@ export class GandomMap1 {
                 if (data.results.length == 0) {
                     return [1];
                 }
-                this.cclearMap(map);
+                // this.cclearMap(map);
                 // let ring = [],                    category0,                    name0;
                 let promises = []; // آرایه‌ای برای نگهداری Promiseها  
                 let allPopups = []; // آرایه‌ای برای نگهداری تمام popup1ها  
                 let popup1 = []; // ایجاد popup1 بیرون از حلقه  
 
+                // L.marker(base_point ).addTo(map).bindPopup('txtp');
+                console.log(url_market, 'url_market', data.results);
                 for (let i = 0; i < data.results.length; i++) {
                     var sums123 = data.results[i].geometry;
                     let Point_mark = [];
                     Point_mark.push(sums123.y, sums123.x);
                     let name0 = data.results[i].attributes.Name;
-
                     let category0 = data.results[i].attributes.Category.trim();
-
-
-                    let icooo = category0;
+                    // let icooo = category0;
                     if (name0 == '0') {
                         name0 = '';
                     }
                     let txt = category0 + '  <br /> ' + name0;
+
+
                     if (category0 != 'سوپرمارکت') {
                         // console.log(category0, 'z z z z    =', txt, 'hhhh  = = =', name0);
                         // ایجاد Promise و اضافه کردن به آرایه  
                         let promise = this.Route_find(Point_mark, base_point, map)
                             .then(popup2 => {
                                 // به جای push کردن به popup2، مقادیر رو به یک آرایه جدید اضافه کنید  
-                                let newPopup = [category0, name0, ...popup2]; // ترکیب اطلاعات  
+                                let newPopup = [name0, category0, ...popup2]; // ترکیب اطلاعات  
                                 popup1.push(newPopup); // اضافه کردن آرایه جدید به popup1  
-
-                                console.warn('-- = ', newPopup);
-
                                 this.createPolyLine(Point_mark, newPopup, map);
                                 return popup1; // برگرداندن popup1 برای استفاده در Promise.all  
                             });
                         promises.push(promise);
                     }
                 }
-                // console.log("    tresults :", promises);
+
                 // صبر کردن تا تمام Promiseها انجام بشن  
                 Promise.all(promises)
                     .then((results) => {
@@ -1230,7 +1228,7 @@ export class GandomMap1 {
                     })
                 });
 
-                // console.log(data.routes, ' - - - + ', data.routes[0].distance);
+                  console.log(data.routes, ' - - - + ', data.routes[0].distance , '   time =   ', data.routes[0].duration);
                 this.timeall = [];
                 let Geom = location1;// data.routes[0].geometry.coordinates;
 
@@ -1268,20 +1266,7 @@ export class GandomMap1 {
 
     createPolyLine(loc1, pop0, map) {
 
-        //
-        //  L.marker(loc2, { icon: a2_ }).addTo(map);
 
-        // let dis1 = getDistance(loc1, loc2);
-
-
-        // var latlongs = [loc1, loc2];
-
-        // var polyline = new L.Polyline(latlongs, {
-        //     color: 'orange',
-        //     opacity: 1,
-        //     weight: 3,
-        //     clickable: false
-        // }).addTo(map);
         // let dis = 0;
         var er = pop0[2].dist + '&nbsp;  متر فاصله دسترسی ' + '<br />' + pop0[2].timm + '&nbsp;  دقیقه زمان دسترسی   '; //  (dis1 / 1000).toFixed(2);
         // dis += (1 / er);
@@ -1310,16 +1295,8 @@ export class GandomMap1 {
             kousar: 0,
             yas: 0
         };
+        this.addBusinessMarker(pop0[1], categoryid, loc1);
 
-        // const coords = [result.geometry.y, result.geometry.x];
-        let icoo = this.addBusinessMarker(pop0[0], categoryid, loc1, counters);
-        console.warn(pop0, icoo);
-        // var marker = L.marker(loc1, {
-        //     icon: this.geticon(pop0[0])
-        // }).addTo(map);
-        // if (marker) {
-        //     marker.bindPopup(categoryid);
-        // };
     };
 
 
@@ -1334,48 +1311,62 @@ export class GandomMap1 {
         firstpolyline.addTo(map).bindPopup(txtp);
 
     }
+
     Draw_popup(base_p, arrpop, map) {
         const numberFormatter = Intl.NumberFormat('en-US');
 
+        // حذف داده‌های تکراری و مرتب‌سازی
         const uniqueDataArray = Array.from(new Set(arrpop.map(JSON.stringify))).map(JSON.parse);
-        uniqueDataArray.sort(function (a, b) {
-            return a[0].timm - b[0].timm;
-        });
+        uniqueDataArray.sort((a, b) => a[0].timm - b[0].timm);
 
+        // ساختار HTML با استایل
+        let tar = `
+            <table class="store-table">
+                <thead>
+                    <tr>
+                        <th>نام فروشگاه</th>
+                     
+                           <th>زمان  (دقیقه)</th>
+                        <th>فاصله (متر)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
-        let tar = '<table>';
-        tar += '<thead><tr><th> &nbsp; نام فروشگاه &nbsp; </th><th>&nbsp; زمان &nbsp; </th><th>&nbsp; فاصله  &nbsp;</th></tr></thead>'; // عنوان جدول با سه ستون  
-        tar += '<tbody>'; // شروع بدنه جدول  
+        uniqueDataArray.forEach(item => {
+            const distance = numberFormatter.format(item[2].dist);
+            const time = item[2].timm ? item[2].timm : '-';
+            const storeName = item[1] || item[0] || '-';
 
-        uniqueDataArray.forEach(function (item) {
-            console.log('******= ', item);
-            const dist2 = numberFormatter.format(item[2].dist);
-
-            tar += '<tr>';
-            tar += '<td>' + item[0] + '</td>'; // ستون نام فروشگاه  
-            tar += '<td>      </td>'; // ستون نام فروشگاه  
-
-            tar += '<td>' + item[2].timm + '</td>'; // ستون زمان  
-            tar += '<td> &nbsp; ' + ' - ' + ' &nbsp;  </td>'; // ستون نام فروشگاه  
-            tar += '<td>' + dist2 + '</td>'; // ستون فاصله  
-            tar += '</tr>';
+            tar += `
+                <tr>
+                    <td>${storeName}</td>
+                    <td>${time}</td>
+                    <td>${distance}</td>
+                </tr>
+            `;
         });
 
         tar += '</tbody></table>';
 
-        // حالا tar رو به عنوان محتوای popup استفاده کنید  
-        const a2_ = L.icon({
-            iconUrl: url_path + 'Location3.png',
-            iconSize: [35, 40], // size of the icon
-            popupAnchor: [-3, -3] // point from which the popup should open relative to the iconAnchor
+        // ایجاد آیکون و نمایش پاپ‌آپ
+        const icon = L.icon({
+            iconUrl: '/IMG/marker-icon.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
         });
 
-        L.marker(base_p, { icon: a2_ }).addTo(map).bindPopup(tar);
-    };
-
-
+        L.marker(base_p, { icon })
+            .addTo(map)
+            .bindPopup(tar, {
+                maxWidth: 300,
+                maxHeight: 400,
+                className: 'custom-popup'
+            })
+            .openPopup();
+    }
     // End help code
-
     generateRandomColor() {
         var letters = '0123456789ABCDEF';
         var color = '#';

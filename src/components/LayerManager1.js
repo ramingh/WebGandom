@@ -133,15 +133,14 @@ export class LayerManager {
                         // همچنین می‌توانید از Number.isInteger(Number(searchValue)) استفاده کنید  
                         // اما روش بالا مطمئن‌تر است زیرا parseInt ممکن است بخش اعشاری را حذف کند.  
                         console.log(`Searching for integer ID: ${id}`);
-                        this.find_market(id); // فرض می‌کنیم find_market یک شناسه عددی می‌پذیرد.  
+                        this.find_market(id); // فرض می‌کنیم   یک شناسه عددی می‌پذیرد.  
                     } else {
                         // 3. ورودی نه مختصات معتبر است و نه عدد صحیح معتبر، آن را به عنوان متن جستجو کنید (اگر لازم است)  
                         searchInput.value="";
                         console.warn(`Input "${searchValue}" is neither valid coordinates nor a valid integer.`);
                         // اگر می‌خواهید برای ورودی‌های دیگر به صورت متنی جستجو انجام دهید، خط زیر را فعال کنید:  
                         // console.log('Searching for text:', searchValue);  
-                        // this.find_market(searchValue); // فرض می‌کنیم find_market رشته متنی نیز می‌پذیرد.  
-                        // در غیر این صورت، فقط یک پیام خطا به کاربر نمایش دهید.  
+                         // در غیر این صورت، فقط یک پیام خطا به کاربر نمایش دهید.  
                     }
                 }
 
@@ -379,12 +378,8 @@ export class LayerManager {
     getStoreIcon(status) {
         return icons[this.getStoreStatusConfig(status).icon];
     }
-
     async find_market(marketcode) {
-
-        console.log(marketcode, 'مخت++++++++++و ه:', marketcode);
-
-
+        
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
         const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
         const queryParams = new URLSearchParams({
