@@ -19,8 +19,6 @@
     <script src="Leaflet/JS/jquery-3.7.0.min.js"></script>
     <script src="Leaflet/JS/leaflet.js"></script>
 
- 
-
     <script src="Leaflet/JS/bootstrap.bundle.min.js"></script>
     <script src="Leaflet/JS/leaflet-ruler.js"></script>
     <script src="Leaflet/JS/leaflet.draw.js"></script>
@@ -46,7 +44,31 @@
 </head>
 
 <body>
-    <div id="app">
+    <!-- Login Form -->
+    <div id="login-container" class="container-fluid position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="card" style="width: 400px;">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">ورود به سیستم</h4>
+            </div>
+            <div class="card-body">
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">نام کاربری</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">رمز عبور</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">ورود</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" style="display: none;">
         <div id="loading" class="loading">
             <p> لطفاً کمی صبر کنید...</p>
             <div class="spinner">
@@ -84,5 +106,25 @@
     <button id="trash-button" class="trash-button">
         <img src="/IMG/clear3.png" alt="حذف">
     </button>
+
+    <script>
+        $(document).ready(function() {
+            // مدیریت فرم لاگین
+            $('#login-form').on('submit', function(e) {
+                e.preventDefault();
+                const username = $('#username').val();
+                const password = $('#password').val();
+
+                // اینجا بعداً سرویس لاگین را اضافه خواهیم کرد
+                // فعلاً برای تست، یک لاگین ساده
+                if (username && password) {
+                    $('#login-container').hide();
+                    $('#app').show();
+                } else {
+                    alert('لطفاً نام کاربری و رمز عبور را وارد کنید');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

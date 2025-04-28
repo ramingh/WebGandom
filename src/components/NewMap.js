@@ -1011,8 +1011,7 @@ export class GandomMap1 {
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
-                                // const list1 = [ 'hyper_market'];
+                                const list1 = GandomMap1.BUSINESS_CATEGORIES;
 
                                 // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
                                 const promises = list1.map(category =>
@@ -3141,5 +3140,15 @@ export class GandomMap1 {
         marker.bindPopup(categoryid2, { opacity: 0.1 });
         return marker;
     }
+
+    // تعریف لیست دسته‌بندی‌ها به صورت گلوبال
+    static BUSINESS_CATEGORIES = [
+        'hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop',
+        'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel',
+        'high_school', 'hospice', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace',
+        'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation',
+        'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store',
+        'train_station', 'university'
+    ];
 
 } 
