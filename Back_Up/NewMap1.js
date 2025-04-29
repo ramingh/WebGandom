@@ -1,4 +1,6 @@
-import icons from '../assets/js/icons.Js';
+// import * as L from 'leaflet';
+import icons from '../assets/js/icons.js';
+import { categoryIcons } from '../assets/js/icons.js';
 
 /**
  * کلاس GandomMap برای مدیریت و نمایش نقشه تعاملی
@@ -44,6 +46,7 @@ export class GandomMap1 {
         // راه‌اندازی دکمه حذف و استایل‌های سفارشی
         this.initTrashButton();
         this.addCustomStyles();
+        this.gandompoint1 = new L.layerGroup(); // تعریف لایه گروه
     }
 
     /**
@@ -73,6 +76,66 @@ export class GandomMap1 {
         this.addlayerlist();
         this.iconservice();
         this.chech_chekbox();
+
+        // بارگذاری فروشگاه‌های گندم
+        this.loadGandomStores();
+    }
+
+    /**
+     * بارگذاری و نمایش فروشگاه‌های گندم روی نقشه
+     */
+    async loadGandomStores() {
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/5/query?where=%28Longitude+is+not+null%29+and+%28Latitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreName%2CStoreStatus%2CLongitude%2CLatitude%2CGZone%2CStoreCode&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+
+        try {
+            const response = await fetch(url_rest, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error fetching data: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const features = data.features;
+
+            await Promise.all(features.map((feature) => {
+                const lat = parseFloat(feature.attributes.Latitude);
+                const lng = parseFloat(feature.attributes.Longitude);
+
+                // اعتبارسنجی مختصات - فقط نقاط داخل محدوده مجاز
+                if (lat < 23 || lat > 41 || lng < 43 || lng > 64) {
+                    return; // مختصات خارج از محدوده مجاز
+                }
+
+                const storeName = feature.attributes.StoreName;
+                const storeStatus = feature.attributes.StoreStatus;
+                const maketcode = feature.attributes.StoreCode;
+                const mantageh1 = feature.attributes.GZone;
+
+                const icong = this.getStoreIcon(storeStatus);
+                const statusConfig = this.getStoreStatusConfig(storeStatus);
+
+                let txt1 = '<div style="text-align: right; direction: rtl;">' +
+                    mantageh1 + '</br><b>' + storeName + '</br>کد فروشگاه: ' + maketcode +
+                    ' - <span style="color:' + statusConfig.color + ';"> ' + storeStatus + '</span>' +
+                    '</div>';
+
+                // اضافه کردن مارکر به لایه گروه gandompoint1
+                L.marker([lat, lng], { icon: icong }).bindPopup(`${txt1}`).addTo(this.gandompoint1);
+            }));
+
+            // اضافه کردن لایه به نقشه با وضعیت مخفی
+            this.addLayer('gandom_stores', this.gandompoint1, { visible: false });
+
+            return data;
+        } catch (error) {
+            console.error('Error fetching Gandom stores data:', error);
+            return [];
+        }
     }
 
     /**
@@ -297,7 +360,22 @@ export class GandomMap1 {
      */
     async toggleLayer(layerId, visible) {
         console.log(`Toggling layer: ${layerId}, Visible: ${visible}`);
-        this.map.addLayer(gandompoint1);
+
+        if (layerId === 'gandom_stores') {
+            if (visible) {
+                // نمایش لایه فروشگاه‌های گندم
+                if (this.gandompoint1) {
+                    this.gandompoint1.addTo(this.map);
+                }
+            } else {
+                // مخفی کردن لایه فروشگاه‌های گندم
+                if (this.gandompoint1) {
+                    this.map.removeLayer(this.gandompoint1);
+                }
+            }
+            return;
+        }
+
         if (visible) {
             // منطق اضافه کردن لایه
             const layer = this.createLayer(layerId);
@@ -306,7 +384,6 @@ export class GandomMap1 {
                 this.layers.set(layerId, layer);
             }
         } else {
-            GandomMap.clearAllMarkers();
             // منطق حذف لایه
             const layer = this.layers.get(layerId);
             if (layer) {
@@ -444,28 +521,16 @@ export class GandomMap1 {
 
     clearAllMarkers() {
         try {
-            // حذف تمام لایه‌ها از نقشه
-            for (let i in this.map._layers) {
-                if (this.map._layers[i] instanceof L.Marker ||
-                    this.map._layers[i] instanceof L.LayerGroup) {
-                    this.map.removeLayer(this.map._layers[i]);
-                }
+            this.clearMap(map);
+            // حذف تمام نشانگرهای gandompoint1            
+            if (this.map && this.gandompoint1) {
+                this.map.removeLayer(this.gandompoint1);
+                // console.log(" 1 1 تمام نشانگرها حذف شدند");
+            } else {
+                console.warn("نقشه یا نشانگرها موجود نیستند");
             }
-
-            // حذف لایه‌های خاص
-            if (window.gandompoint1) {
-                this.map.removeLayer(window.gandompoint1);
-            }
-
-            // لغو انتخاب تمام چک‌باکس‌ها
-            const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
-            layerCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-
-            console.log("تمام لایه‌ها و نشانگرها حذف شدند");
         } catch (error) {
-            console.error("خطا در حذف لایه‌ها:", error);
+            console.error("خطا در حذف نشانگرها:", error);
         }
     }
 
@@ -507,18 +572,103 @@ export class GandomMap1 {
             "کوثر": KousarEditableLayers,
             "وین مارکت": WinMarketEditableLayers,
             "مفید": MofidEditableLayers,
-            // "محسن": MohsenEditableLayers,
             "سپه": SepahEditableLayers,
         };
 
-        // this.map.addLayer(GanodmEditableLayers);
-
         L.control.layers(null, drawingLayers, { position: 'topleft', collapsed: false }).addTo(this.map);
 
+        var drawControl = new L.Control.Draw({
+            // ... rest of the drawing control configuration ...
+        });
+
+        // ... rest of the existing code ...
     }
-    clearMap(map) {
+
+    chech_chekbox() {
+        const self = this;
+        const checkboxes = document.querySelectorAll("[class='leaflet-control-layers-selector']");
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', async function (event) {
+                const layerName = this.parentNode.textContent.trim();
+                console.log('تغییر وضعیت لایه:', layerName, this.checked ? 'روشن' : 'خاموش');
+
+                // گندم همچنان از سرویس قبلی استفاده می‌کند
+                if (layerName === "گندم") {
+                    console.log('مدیریت لایه گندم');
+                    if (this.checked) {
+                        self.map.addLayer(self.gandompoint1);
+                    } else {
+                        self.map.removeLayer(self.gandompoint1);
+                    }
+                    return;
+                }
+
+                try {
+                    // اگر گروه‌های فروشگاهی هنوز دریافت نشده‌اند
+                    if (!self.storeGroups) {
+                        console.log('دریافت گروه‌های فروشگاهی');
+                        self.storeGroups = await self.fetchAllStores();
+                        if (!self.storeGroups) {
+                            console.error('خطا در دریافت گروه‌های فروشگاهی');
+                            return;
+                        }
+                    }
+
+                    // نمایش یا مخفی کردن لایه مربوطه
+                    const group = self.storeGroups[layerName];
+                    console.log('گروه یافت شده برای', layerName, ':', group ? 'موجود' : 'ناموجود');
+
+                    if (group) {
+                        if (this.checked) {
+                            self.map.addLayer(group);
+                            console.log('لایه اضافه شد:', layerName);
+                        } else {
+                            self.map.removeLayer(group);
+                            console.log('لایه حذف شد:', layerName);
+                        }
+                    } else {
+                        console.log('گروه مورد نظر پیدا نشد:', layerName);
+                    }
+                } catch (error) {
+                    console.error('خطا در مدیریت لایه‌ها:', error);
+                }
+            });
+        });
+    }
+
+    // تابع جدید برای پاک کردن داده‌های لایه
+    clearLayerData(layerId) {
+        // پاک کردن داده‌های لایه مربوطه
+        if (this.layers.has(layerId)) {
+            const layer = this.layers.get(layerId);
+            this.map.removeLayer(layer);
+            this.layers.delete(layerId);
+        }
+    }
+
+    initTrashButton() {
+        const trashButton = document.getElementById('trash-button');
+        if (!trashButton) {
+            console.error('Trash button not found');
+            return;
+        }
+        trashButton.addEventListener('click', () => {
+            // حذف تمام لایه‌های انتخاب شده
+            this.clearAllMarkers();
+            this.cclearMap(this.map);
+
+            // لغو انتخاب تمام چک‌باکس‌ها
+            const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
+            layerCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+    }
+
+    cclearMap(map) {
         var i = 0;
-        for (i in this.map._layers) {
+        for (i in map._layers) {
+            // console.log("problem with ", map._layers[i]._path);
 
             if ((map._layers[i]._path != undefined) || (map._layers[i]._icon != undefined)) {
                 var lay1 = map._layers[i];
@@ -529,58 +679,6 @@ export class GandomMap1 {
             }
         }
     }
-
-
-    chech_chekbox() {
-        const self = this;
-        const checkboxes = document.querySelectorAll("[class='leaflet-control-layers-selector']");
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function (event) {
-                var df = this.parentNode.textContent; // Use textContent instead of .text()  
-                if (df == " گندم") {
-                    if (this.checked) { // Use this.checked instead of .prop("checked")  
-                        console.log("3  addLayer ", df);
-                        self.map.addLayer(gandompoint1);
-                    } else {
-                        console.log("4   removeLayer ", df);
-                        self.map.removeLayer(gandompoint1);
-                    }
-                }
-            });
-        });
-    }
-    initTrashButton() {
-        const trashButton = document.getElementById('trash-button');
-        if (!trashButton) {
-            console.error('Trash button not found');
-            return;
-        }
-        trashButton.addEventListener('click', () => {
-            // حذف تمام لایه‌های انتخاب شده
-            // this.clearAllMarkers();
-            this.clearMap(this.map);
-            // لغو انتخاب تمام چک‌باکس‌ها
-            const layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
-            layerCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        });
-    }
-
-    clearAllMarkers() {
-        try {
-            // حذف تمام نشانگرهای gandompoint1            
-            if (this.map && gandompoint1) {
-                this.map.removeLayer(gandompoint1);
-                console.log("تمام نشانگرها حذف شدند");
-            } else {
-                console.warn("نقشه یا نشانگرها موجود نیستند");
-            }
-        } catch (error) {
-            console.error("خطا در حذف نشانگرها:", error);
-        }
-    }
-
 
     iconservice() {
         if (!this.map) return;
@@ -697,9 +795,10 @@ export class GandomMap1 {
 
                 // آیکون‌ها و عملکردهای مختلف
                 const tools = [
+
                     {
                         icon: 'fas fa-square',
-                        title: 'فروشگاه‌ها',
+                        title:  'فروشگاه ها',
                         action: () => {
 
 
@@ -741,19 +840,13 @@ export class GandomMap1 {
                                     map.removeLayer(marker);
                                     return;
                                 }
-
                                 if (radius < 0.5 || radius > 2) {
                                     alert("شعاع باید بین 0.5 تا 2 باشد");
                                     map.removeLayer(marker);
                                     return;
                                 }
-
                                 // نمایش مختصات و شعاع در کنسول
                                 this.Draw_buffer(latlng.lng, latlng.lat, radius, map);
-                                // console.log('مختصات نقطه:', latlng);
-                                // console.log('شعاع:', radius);
-
-                                // اینجا می‌توانید کد مربوط به ارسال به سرویس را اضافه کنید
                             });
                         }
                     },
@@ -768,7 +861,7 @@ export class GandomMap1 {
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                this.clearMap(map);
+                                this.cclearMap(map);
                                 // map.removeLayer(marker);
                                 // فراخوانی تابع Draw_modir با استفاده از this
                                 this.Draw_modir(latlng.lng, latlng.lat, map);
@@ -782,120 +875,13 @@ export class GandomMap1 {
 
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            this.cclearMap(map);
                             map.once(L.Draw.Event.CREATED, (e) => {
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-
-                                // محاسبه مختصات مربع 1x1 کیلومتر
-                                const degLng = 0.006; // تقریباً برابر با 1 کیلومتر در طول جغرافیایی
-                                const degLat = 0.005; // تقریباً برابر با 1 کیلومتر در عرض جغرافیایی
-                                const buffer = [
-                                    (latlng.lng - degLng).toFixed(6),
-                                    (latlng.lat - degLat).toFixed(6),
-                                    (latlng.lng + degLng).toFixed(6),
-                                    (latlng.lat + degLat).toFixed(6)
-                                ].join(',');
-
-                                const [minX, minY, maxX, maxY] = buffer.split(',').map(Number);
-
-                                // ترسیم مربع محدوده
-                                const rectangle = L.rectangle([[minY, minX], [maxY, maxX]], {
-                                    color: '#2c3e50',
-                                    weight: 2,
-                                    opacity: 0.7,
-                                    fillOpacity: 0.1
-                                }).addTo(map);
-                                const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
-                                // درخواست اطلاعات تراکم جمعیت
-                                const url = `${Url_domain}tara/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${buffer}`;
-
-                                fetch(url)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (!data.results || data.results.length === 0) {
-                                            this.showPopulationInfo(rectangle, 0, 0, 0);
-                                            return;
-                                        }
-
-                                        let totalPopulation = 0;
-                                        let totalHouseholds = 0;
-                                        let totalArea = 0;
-                                        let densities = [];
-
-                                        // پردازش نتایج
-                                        data.results.forEach(result => {
-                                            const attributes = result.attributes;
-                                            totalPopulation += parseFloat(attributes.Population || 0);
-                                            totalHouseholds += parseFloat(attributes.Khanevar || 0);
-                                            totalArea += parseFloat(attributes.Area_HT || 0);
-                                            densities.push(parseFloat(attributes.Tarakom || 0));
-
-                                            // ترسیم چندضلعی منطقه
-                                            if (result.geometry && result.geometry.rings) {
-                                                result.geometry.rings.forEach(ring => {
-                                                    const coordinates = ring.map(point => [point[1], point[0]]);
-                                                    const density = parseFloat(attributes.Tarakom || 0);
-
-                                                    // محاسبه رنگ و شفافیت بر اساس تراکم
-                                                    let polygonStyle;
-                                                    if (density === 0) {
-                                                        // مناطق بدون جمعیت
-                                                        polygonStyle = {
-                                                            color: '#ff0000',
-                                                            weight: 1,
-                                                            opacity: 0.3,
-                                                            fillOpacity: 0.1,
-                                                            fillColor: '#ff0000'
-                                                        };
-                                                    } else {
-                                                        // محاسبه شفافیت بر اساس تراکم (بین 0.1 تا 0.8)
-                                                        const normalizedDensity = (density / Math.max(...densities)) * 0.7 + 0.1;
-                                                        polygonStyle = {
-                                                            color: 'transparent',
-                                                            weight: 10,
-                                                            opacity: 0,
-                                                            fillOpacity: normalizedDensity,
-                                                            fillColor: '#AA0055'
-                                                        };
-                                                    }
-
-                                                    L.polygon(coordinates, polygonStyle).addTo(map).bindPopup(`
-                                                        <div style="direction: rtl; text-align: right; font-family: Vazir;">
-                                                            <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات منطقه</h6>
-                                                            <table style="width: 100%; border-collapse: collapse;">
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
-                                                                </tr>
-                                                            </table>
-                                                        </div>
-                                                    `);
-                                                    //   marker.bindPopup('poptext').openPopup();
-                                                });
-                                            }
-                                        });
-                                        // نمایش اطلاعات کلی
-                                        this.showPopulationInfo(marker, totalPopulation, totalHouseholds, totalArea);
-                                    })
-                                    .catch(error => {
-                                        console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
-                                        alert('خطا در دریافت اطلاعات تراکم جمعیت');
-                                    });
-
+                                this.drawPopulationDensity(latlng, map);
+ 
                             });
 
                         }
@@ -908,12 +894,11 @@ export class GandomMap1 {
                             markerDrawer.enable();
 
                             map.once(L.Draw.Event.CREATED, async (e) => {
-                                this.clearMap(map);
+                                this.cclearMap(map);
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                const list1 = ['hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop', 'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel', 'high_school', 'hospice', 'hospital', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace', 'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation', 'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store', 'train_station', 'university'];
-                                // const list1 = [ 'hyper_market'];
+                                const list1 = GandomMap1.BUSINESS_CATEGORIES;
 
                                 // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
                                 const promises = list1.map(category =>
@@ -935,7 +920,7 @@ export class GandomMap1 {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            this.cclearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
@@ -950,13 +935,14 @@ export class GandomMap1 {
                         action: () => {
                             const markerDrawer = new L.Draw.Marker(map);
                             markerDrawer.enable();
-                            this.clearMap(map);
+                            this.cclearMap(map);
 
                             map.once(L.Draw.Event.CREATED, (e) => {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
                                 this.drawDistrict(latlng.lat, latlng.lng, map);
- 
+
+                                //    this.Draw_abdi('316', map);
 
 
                             });
@@ -970,7 +956,7 @@ export class GandomMap1 {
                     toolButton.title = tool.title;
 
                     const icon = L.DomUtil.create('i', tool.icon, toolButton);
-
+                    console.log(toolButton, 'toolButton');
                     L.DomEvent.on(toolButton, 'click', (e) => {
                         L.DomEvent.preventDefault(e);
                         L.DomEvent.stopPropagation(e);
@@ -1007,12 +993,12 @@ export class GandomMap1 {
     async Draw_buffer(l1, l2, textRadius, map) {
         const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
         let base_point = [];
-        base_point.push(parseFloat(l2), parseFloat(l1));
         let data = [];
-
         var buffer = this.calculateBuffer(parseFloat(l1), parseFloat(l2), textRadius);
-        var url_market = Url_domain + 'IR22/MapServer/identify?geometryType=esriGeometryPoint&' +
+        base_point.push(parseFloat(l2), parseFloat(l1));
+        var url_market = Url_domain + 'IR22/MapServer/identify?geometryType=esriGeometryEnvelope&' +
             'layers=id:0&tolerance=' + textRadius * 3 + '&mapExtent=50,40,55,33&imageDisplay=10000,10000,100&f=json&geometry=' + buffer;
+
         $.ajax({
             type: 'GET',
             url: url_market,
@@ -1028,44 +1014,42 @@ export class GandomMap1 {
                 if (data.results.length == 0) {
                     return [1];
                 }
-                this.clearMap(map);
+                // this.cclearMap(map);
                 // let ring = [],                    category0,                    name0;
                 let promises = []; // آرایه‌ای برای نگهداری Promiseها  
                 let allPopups = []; // آرایه‌ای برای نگهداری تمام popup1ها  
                 let popup1 = []; // ایجاد popup1 بیرون از حلقه  
 
+                // L.marker(base_point ).addTo(map).bindPopup('txtp');
+                console.log(url_market, 'url_market', data.results);
                 for (let i = 0; i < data.results.length; i++) {
                     var sums123 = data.results[i].geometry;
                     let Point_mark = [];
                     Point_mark.push(sums123.y, sums123.x);
                     let name0 = data.results[i].attributes.Name;
-
                     let category0 = data.results[i].attributes.Category.trim();
-
-
-                    let icooo = category0;
+                    // let icooo = category0;
                     if (name0 == '0') {
                         name0 = '';
                     }
                     let txt = category0 + '  <br /> ' + name0;
+
+
                     if (category0 != 'سوپرمارکت') {
                         // console.log(category0, 'z z z z    =', txt, 'hhhh  = = =', name0);
                         // ایجاد Promise و اضافه کردن به آرایه  
                         let promise = this.Route_find(Point_mark, base_point, map)
                             .then(popup2 => {
                                 // به جای push کردن به popup2، مقادیر رو به یک آرایه جدید اضافه کنید  
-                                let newPopup = [category0, name0, ...popup2]; // ترکیب اطلاعات  
+                                let newPopup = [name0, category0, ...popup2]; // ترکیب اطلاعات  
                                 popup1.push(newPopup); // اضافه کردن آرایه جدید به popup1  
-
-                                console.warn('-- = ', newPopup);
-
                                 this.createPolyLine(Point_mark, newPopup, map);
                                 return popup1; // برگرداندن popup1 برای استفاده در Promise.all  
                             });
                         promises.push(promise);
                     }
                 }
-                // console.log("    tresults :", promises);
+
                 // صبر کردن تا تمام Promiseها انجام بشن  
                 Promise.all(promises)
                     .then((results) => {
@@ -1130,7 +1114,7 @@ export class GandomMap1 {
                     })
                 });
 
-                // console.log(data.routes, ' - - - + ', data.routes[0].distance);
+                console.log(data.routes, ' - - - + ', data.routes[0].distance, '   time =   ', data.routes[0].duration);
                 this.timeall = [];
                 let Geom = location1;// data.routes[0].geometry.coordinates;
 
@@ -1168,20 +1152,7 @@ export class GandomMap1 {
 
     createPolyLine(loc1, pop0, map) {
 
-        //
-        //  L.marker(loc2, { icon: a2_ }).addTo(map);
 
-        // let dis1 = getDistance(loc1, loc2);
-
-
-        // var latlongs = [loc1, loc2];
-
-        // var polyline = new L.Polyline(latlongs, {
-        //     color: 'orange',
-        //     opacity: 1,
-        //     weight: 3,
-        //     clickable: false
-        // }).addTo(map);
         // let dis = 0;
         var er = pop0[2].dist + '&nbsp;  متر فاصله دسترسی ' + '<br />' + pop0[2].timm + '&nbsp;  دقیقه زمان دسترسی   '; //  (dis1 / 1000).toFixed(2);
         // dis += (1 / er);
@@ -1210,16 +1181,8 @@ export class GandomMap1 {
             kousar: 0,
             yas: 0
         };
+        this.addBusinessMarker(pop0[1], categoryid, loc1);
 
-        // const coords = [result.geometry.y, result.geometry.x];
-        let icoo = this.addBusinessMarker(pop0[0], categoryid, loc1, counters);
-        console.warn(pop0, icoo);
-        // var marker = L.marker(loc1, {
-        //     icon: this.geticon(pop0[0])
-        // }).addTo(map);
-        // if (marker) {
-        //     marker.bindPopup(categoryid);
-        // };
     };
 
 
@@ -1234,48 +1197,62 @@ export class GandomMap1 {
         firstpolyline.addTo(map).bindPopup(txtp);
 
     }
+
     Draw_popup(base_p, arrpop, map) {
         const numberFormatter = Intl.NumberFormat('en-US');
 
+        // حذف داده‌های تکراری و مرتب‌سازی
         const uniqueDataArray = Array.from(new Set(arrpop.map(JSON.stringify))).map(JSON.parse);
-        uniqueDataArray.sort(function (a, b) {
-            return a[0].timm - b[0].timm;
-        });
+        uniqueDataArray.sort((a, b) => a[0].timm - b[0].timm);
 
+        // ساختار HTML با استایل
+        let tar = `
+            <table class="store-table">
+                <thead>
+                    <tr>
+                        <th>نام فروشگاه</th>
+                     
+                           <th>زمان  (دقیقه)</th>
+                        <th>فاصله (متر)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
-        let tar = '<table>';
-        tar += '<thead><tr><th> &nbsp; نام فروشگاه &nbsp; </th><th>&nbsp; زمان &nbsp; </th><th>&nbsp; فاصله  &nbsp;</th></tr></thead>'; // عنوان جدول با سه ستون  
-        tar += '<tbody>'; // شروع بدنه جدول  
+        uniqueDataArray.forEach(item => {
+            const distance = numberFormatter.format(item[2].dist);
+            const time = item[2].timm ? item[2].timm : '-';
+            const storeName = item[1] || item[0] || '-';
 
-        uniqueDataArray.forEach(function (item) {
-            console.log('******= ', item);
-            const dist2 = numberFormatter.format(item[2].dist);
-
-            tar += '<tr>';
-            tar += '<td>' + item[0] + '</td>'; // ستون نام فروشگاه  
-            tar += '<td>      </td>'; // ستون نام فروشگاه  
-
-            tar += '<td>' + item[2].timm + '</td>'; // ستون زمان  
-            tar += '<td> &nbsp; ' + ' - ' + ' &nbsp;  </td>'; // ستون نام فروشگاه  
-            tar += '<td>' + dist2 + '</td>'; // ستون فاصله  
-            tar += '</tr>';
+            tar += `
+                <tr>
+                    <td>${storeName}</td>
+                    <td>${time}</td>
+                    <td>${distance}</td>
+                </tr>
+            `;
         });
 
         tar += '</tbody></table>';
 
-        // حالا tar رو به عنوان محتوای popup استفاده کنید  
-        const a2_ = L.icon({
-            iconUrl: url_path + 'Location3.png',
-            iconSize: [35, 40], // size of the icon
-            popupAnchor: [-3, -3] // point from which the popup should open relative to the iconAnchor
+        // ایجاد آیکون و نمایش پاپ‌آپ
+        const icon = L.icon({
+            iconUrl: '/IMG/marker-icon.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
         });
 
-        L.marker(base_p, { icon: a2_ }).addTo(map).bindPopup(tar);
-    };
-
-
+        L.marker(base_p, { icon })
+            .addTo(map)
+            .bindPopup(tar, {
+                maxWidth: 300,
+                maxHeight: 400,
+                className: 'custom-popup'
+            })
+            .openPopup();
+    }
     // End help code
-
     generateRandomColor() {
         var letters = '0123456789ABCDEF';
         var color = '#';
@@ -1308,193 +1285,11 @@ export class GandomMap1 {
         console.log('مساحت:', area);
     }
 
-    handleRectangleCreation(layer) {
-        // پاکسازی نقاط قبلی
-        this.clearAllMarkers();
-
-        const bounds = layer.getBounds();
-        const northEast = bounds.getNorthEast();
-        const southWest = bounds.getSouthWest();
-
-        // تهیه پارامترهای مورد نیاز برای سرویس
-        const buffer = `${northEast.lng},${northEast.lat},${southWest.lng},${southWest.lat}`;
-
-        const url = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/identify';
-        const params = {
-            geometryType: 'esriGeometryEnvelope',
-            layers: 'id:0',
-            tolerance: 10,
-            mapExtent: '46.5,34.2,46.6,34.1',
-            imageDisplay: '1,1,1',
-            returnGeometry: true,
-            f: 'json',
-            geometry: buffer
-        };
-
-        // تبدیل پارامترها به query string
-        const queryString = Object.keys(params)
-            .map(key => `${key}=${encodeURIComponent(params[key])}`)
-            .join('&');
-
-        const fullUrl = `${url}?${queryString}`;
-
-        // ذخیره شمارنده‌های هر نوع کسب و کار
-        const counters = {
-            gandom: 0,
-            super: 0,
-            sorena: 0,
-            refah: 0,
-            ofog: 0,
-            sepah: 0,
-            canbo: 0,
-            winmarket: 0,
-            mohsen: 0,
-            daily: 0,
-            haft: 0,
-            etka: 0,
-            family: 0,
-            shahrvand: 0,
-            hyperstar: 0,
-            amiran: 0,
-            hypermy: 0,
-            mofid: 0,
-            kousar: 0,
-            yas: 0
-        };
-
-        // درخواست به سرویس
-        fetch(fullUrl)
-            .then(response => response.json())
-            .then(json => {
-                if (!json.results || json.results.length === 0) {
-                    console.log('هیچ نتیجه‌ای یافت نشد');
-                    return;
-                }
-
-                // پردازش نتایج و نمایش نقاط
-                json.results.forEach(result => {
-                    const category = result.attributes.Category.trim();
-                    const title = result.attributes.Name;
-                    const coords = [result.geometry.y, result.geometry.x];
-
-                    // نمایش نقطه بر اساس نوع کسب و کار
-                    this.addBusinessMarker(category, title, coords, counters);
-                });
-
-                // نمایش گزارش با ارسال layer به عنوان پارامتر دوم
-                this.showReport(counters, layer);
-            })
-            .catch(error => {
-                console.error('خطا در دریافت اطلاعات:', error);
-            });
-    }
-
-    // متد جدید برای اضافه کردن مارکر کسب و کارها
-    addBusinessMarker(category, title, coords, counters) {
-        let icon;
-        switch (category) {
-            case 'گندم':
-                icon = icons.Gandom_;
-                counters.gandom++;
-                break;
-            case 'سورنا':
-                icon = icons.Sorena_;
-                counters.sorena++;
-                break;
-            case 'رفاه':
-                icon = icons.Refah_;
-                counters.refah++;
-                break;
-            case 'افق کوروش':
-                icon = icons.ofog_;
-                counters.ofog++;
-                break;
-            case 'سپه':
-                icon = icons.Sepah_;
-                counters.sepah++;
-                break;
-            case 'جانبو':
-                icon = icons.Canbo_;
-                counters.canbo++;
-                break;
-            case 'وین مارکت':
-                icon = icons.WinMarket_;
-                counters.winmarket++;
-                break;
-            case 'محسن':
-                icon = icons.Mohsen_;
-                counters.mohsen++;
-                break;
-            case 'دیلی مارکت':
-                icon = icons.Daily_;
-                counters.daily++;
-                break;
-            case 'هفت':
-                icon = icons.Haft_;
-                counters.haft++;
-                break;
-            case 'اتکا':
-                icon = icons.Etka_;
-                counters.etka++;
-                break;
-            case 'فامیلی':
-                icon = icons.Family_;
-                counters.family++;
-                break;
-            case 'شهروند':
-                icon = icons.Shahrvand_;
-                counters.shahrvand++;
-                break;
-            case 'هایپراستار':
-                icon = icons.Hayperstar_;
-                counters.hyperstar++;
-                break;
-            case 'امیران':
-                icon = icons.Amiran_;
-                counters.amiran++;
-                break;
-            case 'هایپرمی':
-                icon = icons.Haypermy_;
-                counters.hypermy++;
-                break;
-            case 'مفید':
-                icon = icons.Mofid_;
-                counters.mofid++;
-                break;
-            case 'کوثر':
-                icon = icons.Kousar_;
-                counters.kousar++;
-                break;
-            case 'یاس':
-                icon = icons.Yas_;
-                counters.yas++;
-                break;
-            case 'سوپرمارکت':
-                icon = icons.super_;
-                counters.super++;
-                break;
-            default:
-                console.log('نوع کسب و کار ناشناخته:', category);
-                break;
-        }
-
-        if (icon) {
-            let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
-
-
-            L.marker(coords, { icon: icon })
-                .addTo(this.map)
-                .bindPopup(categoryid2, { opacity: 0.1 });
-        }
-    }
-
 
 
     // تابع خروجی PDF
     exportToPDF(reportContent) {
         try {
-            console.log( "  -------->->->->->->", reportContent);
-
             if (typeof window.jspdf === 'undefined') {
                 console.error('کتابخانه jsPDF لود نشده است');
                 return;
@@ -1527,21 +1322,22 @@ export class GandomMap1 {
 
             // اضافه کردن لوگو
             try {
-                const logoUrl = '/IMG/logo.png'; // مسیر لوگو
-                const logoWidth = 30; // عرض لوگو به میلی‌متر
-                const logoHeight = 15; // ارتفاع لوگو به میلی‌متر
+                const logoUrl = '/IMG/logo.png';
+                const logoWidth = 30;
+                const logoHeight = 15;
                 doc.addImage(logoUrl, 'PNG', marginLeft, yPosition, logoWidth, logoHeight);
-                // متن اصلی را در کنار لوگو قرار می‌دهیم
-                doc.setFontSize(16);
-                doc.setTextColor(0, 0, 0);
-                doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition + logoHeight / 2, { align: 'right' });
-                yPosition += logoHeight + 5;
+                yPosition += logoHeight + 10;
             } catch (error) {
                 console.error('خطا در اضافه کردن لوگو:', error);
             }
 
+            // عنوان اصلی
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0);
+            doc.text("گزارش فروشگاه‌های محدوده", pageWidth - marginRight, yPosition, { align: 'right' });
+
             // تاریخ
-            yPosition += lineHeight - 12;
+            yPosition += lineHeight + 3;
             doc.setFontSize(12);
             doc.text(`تاریخ: ${new Date().toLocaleDateString('fa-IR')}`, pageWidth - marginRight, yPosition, { align: 'right' });
 
@@ -1561,31 +1357,16 @@ export class GandomMap1 {
             const colWidth = (pageWidth - marginLeft - marginRight) / 2;
             const rowHeight = 12;
 
-            // تمیز کردن و پردازش داده‌ها
-            const items = [];
-            const lines = reportContent.split('\n')
-                .filter(line => line.trim())
-                .map(line => line.trim());
-            const rlo = '\u202E';
-            let title = '';
-            lines.forEach(line => {
-                line = rlo + line;
-                let newStr = line.replace(/(<strong|<\/strong>|<\/td>|<td style=|padding: 3px; border-bottom: 1px solid #eee;|<td style=|<\/tr>|<tr>|<|>|"|\/table)/g, '');
-                line = rlo + newStr + rlo;
-
-                if (line.includes('مورد')) {
-                    if (title) {
-                        title = title.replace(':', '');
-                        let temp01 = line.split(' ');
-                        line = temp01[1] + ' ' + temp01[0];
-                        items.push({
-                            title: title,
-                            count: line.trim()
-                        });
-                    }
-                } else {
-                    title = line.trim();
-                }
+            // پردازش داده‌ها
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = reportContent;
+            const rows = tempDiv.querySelectorAll('tr');
+            const items = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return {
+                    title: cells[0].textContent.trim(),
+                    count: cells[1].textContent.trim()
+                };
             });
 
             // تعریف رنگ‌های مختلف برای سطرها
@@ -1635,17 +1416,6 @@ export class GandomMap1 {
             // خط نهایی جدول
             doc.line(marginLeft, tableTop, pageWidth - marginRight, tableTop);
 
-            // اضافه کردن تصویر نقشه در انتهای PDF
-            try {
-                const mapImage = this.map.getContainer().toDataURL('image/png');
-                const mapWidth = pageWidth - marginLeft - marginRight;
-                const mapHeight = 100; // ارتفاع تصویر نقشه
-                doc.addPage();
-                doc.addImage(mapImage, 'PNG', marginLeft, marginTop, mapWidth, mapHeight);
-            } catch (error) {
-                console.error('خطا در اضافه کردن تصویر نقشه:', error);
-            }
-
             doc.save('گزارش-فروشگاه‌ها.pdf');
         } catch (error) {
             console.error('خطا در ساخت PDF:', error);
@@ -1678,7 +1448,7 @@ export class GandomMap1 {
             etka: 'اتکا',
             family: 'فامیلی',
             shahrvand: 'شهروند',
-            hyperstar: 'هایپراستار',
+            hyperstar: 'هایپر استار',
             amiran: 'امیران',
             hypermy: 'هایپرمی',
             mofid: 'مفید',
@@ -2049,6 +1819,8 @@ export class GandomMap1 {
 
     // تابع ترسیم محدوده دهستان و دریافت اطلاعات آن
     drawDistrict(latitude, longitude, map) {
+
+        console.log(latitude, '  =============  ', longitude);
         const coordinates = `${longitude},${latitude}`;
         const baseUrl = `https://gis.gandomcs.com/arcgis/rest/services/deh/MapServer/identify?geometry=${coordinates}&geometryType=esriGeometryPoint&sr=&layers=ID%3A1&tolerance=0&mapExtent=45%2C25%2C61%2C40&imageDisplay=800%2C600%2C96&returnGeometry=true&returnZ=false&returnM=false&f=pjson`;
 
@@ -2235,12 +2007,101 @@ export class GandomMap1 {
         }
         // console.log(total_khan, '-------------------', total_pop);
     }
+    // TODO: ===================نزدیکترین  گندم فروشگاه های گندم طلایی====================================================  
 
+    async get_alldata(longitude) {
+        const url_path = '/IMG/';
+        let pnt1 = new L.LatLng(longitude[0], longitude[1]);
+        
+        let data1 =  await this.drawPopulationDensity(pnt1, this.map);
 
-    async draw_loc(longitude, icon1, textRadius, map, subcategory, radius) {
+        console.log(data1, '= = data1');
+
+        this.map.setView(pnt1, 10);
+
+        this.drawDistrict(longitude[0], longitude[1], this.map);
+
+        // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
+        if (this.map.hasLayer(this.gandompoint1)) {
+            this.map.removeLayer(this.gandompoint1);
+        }
+
+        //35.275,51.514 --- پیدا کردن نزدیک‌ترین فروشگاه گندم از this.gandompoint1 ---
+        // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
+        if (this.map.hasLayer(this.gandompoint1)) {
+            this.map.removeLayer(this.gandompoint1);
+        }
+
+        // ابتدا نزدیک‌ترین فروشگاه باز را پیدا کن
+        let minDistOpen = Infinity;
+        let nearestOpen = null, nearestOpenLatLng = null, nearestOpenPopup = null, nearestOpenIcon = null;
+
+        // همچنین نزدیک‌ترین فروشگاه (بدون توجه به وضعیت)
+        let minDistAny = Infinity;
+        let nearestAny = null, nearestAnyLatLng = null, nearestAnyPopup = null, nearestAnyIcon = null;
+
+        this.gandompoint1.eachLayer(layer => {
+            if (layer.getLatLng) {
+                const latlng = layer.getLatLng();
+                const dist = this.map.distance([longitude[0], longitude[1]], [latlng.lat, latlng.lng]);
+                let popupContent = layer.getPopup() ? layer.getPopup().getContent() : '';
+                let regex = /<span[^>]*>([\s\S]*?)<\/span>/;
+                let match = popupContent.match(regex);
+                let word = match && match[1] ? match[1].trim() : '';
+
+                // نزدیک‌ترین فروشگاه باز
+                if (word === 'باز' && dist < minDistOpen) {
+                    minDistOpen = dist;
+                    nearestOpen = layer;
+                    nearestOpenLatLng = latlng;
+                    nearestOpenPopup = popupContent;
+                    nearestOpenIcon = layer.options.icon;
+                }
+                // نزدیک‌ترین فروشگاه (هر وضعیتی)
+                if (dist < minDistAny) {
+                    minDistAny = dist;
+                    nearestAny = layer;
+                    nearestAnyLatLng = latlng;
+                    nearestAnyPopup = popupContent;
+                    nearestAnyIcon = layer.options.icon;
+                }
+            }
+        });
+
+        // پاک کردن مارکرهای قبلی (در صورت وجود متد)
+        this.clearMarkers && this.clearMarkers();
+
+        // اگر فروشگاه باز پیدا شد، همان را نمایش بده، وگرنه نزدیک‌ترین هر وضعیتی را
+        let showLatLng = nearestOpenLatLng || nearestAnyLatLng;
+        let showPopup = nearestOpenPopup || nearestAnyPopup;
+        let showIcon = nearestOpenIcon || nearestAnyIcon;
+
+        if (showLatLng) {
+            const marker = L.marker([showLatLng.lat, showLatLng.lng], { icon: showIcon })
+                .addTo(this.map)
+                .bindPopup(showPopup)
+                .openPopup();
+
+            this.markers = [marker];
+            this.map.setView([showLatLng.lat, showLatLng.lng], 16);
+        }
+
+        minDistAny = minDistAny / 1000;
+
+        let formatted_dis_km = minDistAny.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        let popupdist = `<span style="color: red; font-size: 12px;"> میزان فاصله از فروشگاه گندم  : ${formatted_dis_km} کیلومتر</span>`;
+        L.marker(longitude).addTo(this.map).bindPopup(popupdist);
+
+    }
+
+    async draw_loc(longitude, icon1, textRadius, map) {
         try {
             const url_path = '/IMG/';
-
+            console.log(longitude, 'Tes -------------ly', longitude);
             //  var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
             // const Gandomd_ = L.icon({
             //     iconUrl: url_path + 'Gandome.png',
@@ -2249,10 +2110,10 @@ export class GandomMap1 {
             // });
 
             //   L.marker([32.287, 52.954], { super_}).addTo(this.map);
-            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup('txt1');
+            L.marker(longitude, { icon: icon1 }).addTo(this.map).bindPopup(textRadius);
 
 
-            console.log(longitude, 'Tes -------------ly', latitude);
+
         } catch (error) {
             console.error('Error in test1:', error);
         }
@@ -2362,7 +2223,7 @@ export class GandomMap1 {
 
                 // افزودن مارکر به نقشه
                 L.marker([lat, lng], {
-                    icon: this.geticon(subcategory)
+                    icon: this.getCategoryIcon(subcategory)
                 }).addTo(map)
                     .bindPopup(`
                     <div style="direction: rtl; text-align: right; font-family: IRANSans;">
@@ -2391,14 +2252,83 @@ export class GandomMap1 {
         }
     }
 
-    // متد نمایش گزارش را به‌روزرسانی کنید
+    //start popup 1
+    handleRectangleCreation(layer) {
+        // پاکسازی نقاط قبلی
+        this.clearAllMarkers();
+
+        const bounds = layer.getBounds();
+        const northEast = bounds.getNorthEast();
+        const southWest = bounds.getSouthWest();
+
+        // تهیه پارامترهای مورد نیاز برای سرویس
+        const url = `${this.Url_domain}IR22/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.results || data.results.length === 0) {
+                    console.log('هیچ داده‌ای یافت نشد');
+                    return;
+                }
+
+                // پردازش نتایج
+                data.results.forEach(result => {
+                    const attributes = result.attributes;
+                    const geometry = result.geometry;
+
+                    if (geometry && geometry.rings) {
+                        geometry.rings.forEach(ring => {
+                            const coordinates = ring.map(point => [point[1], point[0]]);
+                            L.polygon(coordinates, {
+                                color: '#2c3e50',
+                                weight: 2,
+                                opacity: 0.7,
+                                fillOpacity: 0.1
+                            }).addTo(this.map).bindPopup(`
+                                <div style="direction: rtl; text-align: right; font-family: Vazir;">
+                                    <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات بلوک شهری</h6>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            `);
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('خطا در دریافت اطلاعات:', error);
+            });
+    }
+
     showReport(counters, layer) {
-        let report = '';
+        let report = '<table style="width: 100%; border-collapse: collapse; direction: rtl;">';
         Object.entries(counters).forEach(([key, value]) => {
             if (value > 0) {
-                report += `${this.getPersianName(key)}: ${value} عدد<br/>`;
+                report += `
+                    <tr>
+                        <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${this.getPersianName(key)}</td>
+                        <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: left;">${value} عدد</td>
+                    </tr>`;
             }
         });
+        report += '</table>';
 
         // نمایش گزارش در یک پنجره popup متصل به مستطیل
         if (report) {
@@ -2408,7 +2338,7 @@ export class GandomMap1 {
             // اضافه کردن دکمه Export به PDF در پایین گزارش
             const popupContent = `
                 <div class="report-popup" style="direction: rtl; text-align: right;">
-                <br/>    <strong>گزارش فروشگاه‌های محدوده:</strong>
+                    <strong>گزارش فروشگاه‌های محدوده:</strong>
                     ${report}
                     <div style="text-align: center; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
                         <button onclick="window.exportToPDF('${encodeURIComponent(report)}')" class="export-pdf-btn">
@@ -2432,7 +2362,9 @@ export class GandomMap1 {
             }).openPopup();
         }
     }
+    //ent popup  1
 
+    //start popup 2
     /**
      * نمایش گزارش خلاصه از کسب و کارهای اطراف نقطه انتخابی
      * @param {number} latitude - عرض جغرافیایی
@@ -2521,6 +2453,7 @@ export class GandomMap1 {
         // نمایش مارکر موقعیت انتخاب شده با پاپ‌آپ گزارش
         this.addLocationMarker(longitude, latitude, map, reportContent);
     }
+    //End  popup 2
 
     // اضافه کردن استایل‌های جدید
     addCustomStyles() {
@@ -2592,196 +2525,8 @@ export class GandomMap1 {
     }
 
     // تابع کمکی برای تعیین آیکون بر اساس دسته‌بندی
-    geticon(category) {
-        const icons = {
-            'hospital': L.divIcon({
-                html: '<i class="fas fa-hospital" style="color: #FF4444;"></i>',
-                className: 'category-marker hospital',
-                iconSize: [20, 20]
-            }),
-            'attraction': L.divIcon({
-                html: '<i class="fas fa-landmark" style="color: #FFA500;"></i>',
-                className: 'category-marker attraction',
-                iconSize: [20, 20]
-            }),
-            'bakery': L.divIcon({
-                html: '<i class="fas fa-bread-slice" style="color: #8B4513;"></i>',
-                className: 'category-marker bakery',
-                iconSize: [20, 20]
-            }),
-            'bank': L.divIcon({
-                html: '<i class="fas fa-university" style="color:rgb(168, 10, 220);"></i>',
-                className: 'category-marker bank',
-                iconSize: [20, 20]
-            }),
-            'barracks': L.divIcon({
-                html: '<i class="fas fa-shield-alt" style="color: #808080;"></i>',
-                className: 'category-marker barracks',
-                iconSize: [20, 20]
-            }),
-            'bus_line': L.divIcon({
-                html: '<i class="fas fa-route" style="color: #006400;"></i>',
-                className: 'category-marker bus-line',
-                iconSize: [20, 20]
-            }),
-            'bus_station': L.divIcon({
-                html: '<i class="fas fa-bus" style="color: #006400;"></i>',
-                className: 'category-marker bus-station',
-                iconSize: [20, 20]
-            }),
-            'bus_stop': L.divIcon({
-                html: '<i class="fas fa-stop-circle" style="color: #006400;"></i>',
-                className: 'category-marker bus-stop',
-                iconSize: [20, 20]
-            }),
-            'camp_site': L.divIcon({
-                html: '<i class="fas fa-campground" style="color: #228B22;"></i>',
-                className: 'category-marker camp-site',
-                iconSize: [20, 20]
-            }),
-            'caravan_site': L.divIcon({
-                html: '<i class="fas fa-caravan" style="color: #8B4513;"></i>',
-                className: 'category-marker caravan-site',
-                iconSize: [20, 20]
-            }),
-            'clinic': L.divIcon({
-                html: '<i class="fas fa-clinic-medical" style="color: #FF69B4;"></i>',
-                className: 'category-marker clinic',
-                iconSize: [20, 20]
-            }),
-            'elementray_school': L.divIcon({
-                html: '<i class="fas fa-chalkboard-teacher" style="color: #4169E1;"></i>',
-                className: 'category-marker elementary-school',
-                iconSize: [20, 20]
-            }),
-            'fruit_vegetable_store': L.divIcon({
-                html: '<i class="fas fa-apple-alt" style="color: #FF6347;"></i>',
-                className: 'category-marker fruit-store',
-                iconSize: [20, 20]
-            }),
-            'fuel': L.divIcon({
-                html: '<i class="fas fa-gas-pump" style="color: #FFD700;"></i>',
-                className: 'category-marker fuel',
-                iconSize: [20, 20]
-            }),
-            'high_school': L.divIcon({
-                html: '<i class="fas fa-school" style="color: #4169E1;"></i>',
-                className: 'category-marker high-school',
-                iconSize: [20, 20]
-            }),
-            'hospice': L.divIcon({
-                html: '<i class="fas fa-heartbeat" style="color: #FF69B4;"></i>',
-                className: 'category-marker hospice',
-                iconSize: [20, 20]
-            }),
-            'hotel': L.divIcon({
-                html: '<i class="fas fa-hotel" style="color: #FFD700;"></i>',
-                className: 'category-marker hotel',
-                iconSize: [20, 20]
-            }),
-            'kindergarten': L.divIcon({
-                html: '<i class="fas fa-baby" style="color: #FFB6C1;"></i>',
-                className: 'category-marker kindergarten',
-                iconSize: [20, 20]
-            }),
-            'hyper_market': L.divIcon({
-                html: '<i class="fas fa-shopping-bag" style="color: #32CD32;"></i>',
-                className: 'category-marker hyper-market',
-                iconSize: [20, 20]
-            }),
-            'laboratory': L.divIcon({
-                html: '<i class="fas fa-flask" style="color: #9370DB;"></i>',
-                className: 'category-marker laboratory',
-                iconSize: [20, 20]
-            }),
-            'marketplace': L.divIcon({
-                html: '<i class="fas fa-store" style="color: #FF8C00;"></i>',
-                className: 'category-marker marketplace',
-                iconSize: [20, 20]
-            }),
-            'mosque': L.divIcon({
-                html: '<i class="fas fa-mosque" style="color: #008080;"></i>',
-                className: 'category-marker mosque',
-                iconSize: [20, 20]
-            }),
-            'parking': L.divIcon({
-                html: '<i class="fas fa-parking" style="color: #808080;"></i>',
-                className: 'category-marker parking',
-                iconSize: [20, 20]
-            }),
-            'parking_space': L.divIcon({
-                html: '<i class="fas fa-car" style="color: #808080;"></i>',
-                className: 'category-marker parking-space',
-                iconSize: [20, 20]
-            }),
-            'police': L.divIcon({
-                html: '<i class="fas fa-shield-alt" style="color: #000080;"></i>',
-                className: 'category-marker police',
-                iconSize: [20, 20]
-            }),
-            'public_transport_building': L.divIcon({
-                html: '<i class="fas fa-building" style="color: #006400;"></i>',
-                className: 'category-marker transport-building',
-                iconSize: [20, 20]
-            }),
-            'public_transportation': L.divIcon({
-                html: '<i class="fas fa-train" style="color: #006400;"></i>',
-                className: 'category-marker public-transport',
-                iconSize: [20, 20]
-            }),
-            'school': L.divIcon({
-                html: '<i class="fas fa-graduation-cap" style="color: #4169E1;"></i>',
-                className: 'category-marker school',
-                iconSize: [20, 20]
-            }),
-            'subway': L.divIcon({
-                html: '<i class="fas fa-subway" style="color: #006400;"></i>',
-                className: 'category-marker subway',
-                iconSize: [20, 20]
-            }),
-            'subway_line': L.divIcon({
-                html: '<i class="fas fa-route" style="color: #006400;"></i>',
-                className: 'category-marker subway-line',
-                iconSize: [20, 20]
-            }),
-            'supermarket': L.divIcon({
-                html: '<i class="fas fa-shopping-cart" style="color: #32CD32;"></i>',
-                className: 'category-marker supermarket',
-                iconSize: [20, 20]
-            }),
-            'theme_park': L.divIcon({
-                html: '<i class="fas fa-theater-masks" style="color: #FF69B4;"></i>',
-                className: 'category-marker theme-park',
-                iconSize: [20, 20]
-            }),
-            'tower': L.divIcon({
-                html: '<i class="fas fa-building" style="color: #808080;"></i>',
-                className: 'category-marker tower',
-                iconSize: [20, 20]
-            }),
-            'trade_store': L.divIcon({
-                html: '<i class="fas fa-store-alt" style="color: #FF8C00;"></i>',
-                className: 'category-marker trade-store',
-                iconSize: [20, 20]
-            }),
-            'train_station': L.divIcon({
-                html: '<i class="fas fa-train" style="color: #006400;"></i>',
-                className: 'category-marker train-station',
-                iconSize: [20, 20]
-            }),
-            'university': L.divIcon({
-                html: '<i class="fas fa-university" style="color: #4169E1;"></i>',
-                className: 'category-marker university',
-                iconSize: [20, 20]
-            }),
-            'default': L.divIcon({
-                html: '<i class="fas fa-map-marker-alt" style="color: #888888;"></i>',
-                className: 'category-marker default',
-                iconSize: [20, 20]
-            })
-        };
-
-        return icons[category] || icons.default;
+    getCategoryIcon(category) {
+        return categoryIcons[category] || categoryIcons.default;
     }
 
     addLocationMarker(longitude, latitude, map, textpop) {
@@ -2814,93 +2559,6 @@ export class GandomMap1 {
         }
     }
 
-    async find_market(marketcode) {
-        if (!this.map) {
-            console.error('Map instance not initialized');
-            return;
-        }
-
-        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
-        const baseUrl = `${Url_domain}IR22/MapServer/5/query`;
-        const queryParams = new URLSearchParams({
-            where: `StoreCode like '%${marketcode}%'`,
-            outFields: 'Longitude,Latitude,StoreCode,StoreName,StoreStatus,GZone,ModireMantagheTXT',
-            returnGeometry: true,
-            f: 'pjson'
-        });
-        const url_mark = `${baseUrl}?${queryParams.toString()}`;
-
-        console.log('در حال جستجوی فروشگاه با کد:', marketcode);
-        try {
-            const response = await fetch(url_mark);
-            if (!response.ok) throw new Error('پاسخ شبکه مناسب نبود');
-            const json = await response.json();
-
-            if (json.features && json.features.length > 0) {
-                // پاک کردن نشانگرهای قبلی
-                this.map.eachLayer((layer) => {
-                    if (layer instanceof L.Marker) {
-                        this.map.removeLayer(layer);
-                    }
-                });
-
-                json.features.forEach(feature => {
-                    const {
-                        StoreName: name,
-                        StoreCode: storid,
-                        StoreStatus: statos,
-                        GZone: mantag,
-                        ModireMantagheTXT: usename,
-                        Longitude: long1,
-                        Latitude: lat1
-                    } = feature.attributes;
-
-                    const latitude = parseFloat(lat1);
-                    const longitude = parseFloat(long1);
-                    const markerIcon = this.getIcon(statos);
-                    const latlng = L.latLng(latitude, longitude);
-
-                    L.marker(latlng, { icon: markerIcon })
-                        .addTo(this.map)
-                        .bindPopup(`
-                            <div style="direction: rtl; text-align: right;">
-                                <strong>${name}</strong><br>
-                                منطقه: ${mantag}<br>
-                                وضعیت: ${statos}<br>
-                                کد فروشگاه: ${storid}
-                            </div>
-                        `)
-                        .openPopup();
-
-                    console.log('مختصات فروشگاه:', latlng, 'وضعیت:', statos);
-                });
-
-                // تغییر دید نقشه به مرکز ایران
-                this.map.setView([32.287, 52.954], 5.5);
-            } else {
-                console.log('هیچ فروشگاهی با این کد یافت نشد');
-            }
-        } catch (error) {
-            console.error('خطا در جستجوی فروشگاه:', error);
-            return false;
-        }
-    }
-
-    getIcon(stat) {
-        switch (stat) {
-            case "باز":
-                return this.Gandom_;
-            case "بسته":
-                return this.Gandomb_;
-            case "در حال جمع آوری":
-                return this.Gandomj_;
-            case "در حال راه اندازی":
-                return this.Gandomd_;
-            default:
-                return this.user1_;
-        }
-    }
-
     drawTableRow(doc, config, item, y, colWidth, index) {
         // تعریف رنگ‌های مختلف برای سطرها
         const rowColors = [
@@ -2926,5 +2584,545 @@ export class GandomMap1 {
         doc.setTextColor(0, 0, 0);
         doc.text(item.title, config.width - config.marginRight - 5, y + config.rowHeight - 3, { align: 'right' });
         doc.text(item.count, config.marginLeft + colWidth - 5, y + config.rowHeight - 3, { align: 'right' });
+    }
+
+    getStoreStatusConfig(status) {
+        const STORE_STATUS_CONFIG = {
+            "باز": {
+                color: 'green',
+                icon: 'Gandom_'
+            },
+            "بسته": {
+                color: 'red',
+                icon: 'Gandomb_'
+            },
+            "در حال جمع آوری": {
+                color: 'blue',
+                icon: 'Gandomj_'
+            },
+            "در حال راه اندازی": {
+                color: '#AA00CC',
+                icon: 'Gandomd_'
+            }
+        };
+        return STORE_STATUS_CONFIG[status] || { color: 'grey', icon: 'user1_' };
+    }
+
+    getStoreIcon(status) {
+        return icons[this.getStoreStatusConfig(status).icon];
+    }
+
+    // تعریف لایه‌های فروشگاه‌های زنجیره‌ای
+    static STORE_LAYERS = {
+        "گندم": new L.FeatureGroup(),
+        "افق کوروش": new L.FeatureGroup(),
+        "جانبو": new L.FeatureGroup(),
+        "هایپر استار": new L.FeatureGroup(),
+        "اتکا": new L.FeatureGroup(),
+        "شهروند": new L.FeatureGroup(),
+        "هفت": new L.FeatureGroup(),
+        "رفاه": new L.FeatureGroup(),
+        "سورنا": new L.FeatureGroup(),
+        "هایپرمی": new L.FeatureGroup(),
+        "فامیلی": new L.FeatureGroup(),
+        "دیلی مارکت": new L.FeatureGroup(),
+        "امیران": new L.FeatureGroup(),
+        "یاس": new L.FeatureGroup(),
+        "کوثر": new L.FeatureGroup(),
+        "وین مارکت": new L.FeatureGroup(),
+        "مفید": new L.FeatureGroup(),
+        "سپه": new L.FeatureGroup()
+    };
+
+    // مدیریت لایه‌های نقشه
+    initStoreLayers() {
+        // ایجاد کنترل لایه‌ها
+        this.layerControl = L.control.layers(null, GandomMap1.STORE_LAYERS, {
+            position: 'topleft',
+            collapsed: false
+        }).addTo(this.map);
+
+        // اضافه کردن کنترل برای لایه‌های ترسیمی
+        L.control.layers(null, this.drawingLayers, {
+            position: 'topleft',
+            collapsed: false
+        }).addTo(this.map);
+
+        // بازیابی وضعیت لایه‌های ذخیره شده
+        this.loadLayerStates();
+
+        // اضافه کردن event listener برای ذخیره تغییرات
+        this.map.on('overlayadd overlayremove', (e) => {
+            this.saveLayerStates();
+        });
+    }
+
+    // ذخیره وضعیت لایه‌ها در localStorage
+    saveLayerStates() {
+        const layerStates = {};
+        // ذخیره وضعیت لایه‌های فروشگاه‌ها
+        Object.keys(GandomMap1.STORE_LAYERS).forEach(layerName => {
+            const layer = GandomMap1.STORE_LAYERS[layerName];
+            layerStates[layerName] = this.map.hasLayer(layer);
+        });
+        // ذخیره وضعیت لایه‌های ترسیمی
+        Object.keys(this.drawingLayers).forEach(layerName => {
+            const layer = this.drawingLayers[layerName];
+            layerStates[`drawing_${layerName}`] = this.map.hasLayer(layer);
+        });
+        localStorage.setItem('gandomMapLayerStates', JSON.stringify(layerStates));
+    }
+
+    // بازیابی و اعمال وضعیت لایه‌ها از localStorage
+    loadLayerStates() {
+        try {
+            const savedStates = JSON.parse(localStorage.getItem('gandomMapLayerStates'));
+            if (savedStates) {
+                // بازیابی وضعیت لایه‌های فروشگاه‌ها
+                Object.keys(GandomMap1.STORE_LAYERS).forEach(layerName => {
+                    const layer = GandomMap1.STORE_LAYERS[layerName];
+                    if (layer && savedStates[layerName] !== undefined) {
+                        if (savedStates[layerName]) {
+                            this.map.addLayer(layer);
+                        } else {
+                            this.map.removeLayer(layer);
+                        }
+                    }
+                });
+                // بازیابی وضعیت لایه‌های ترسیمی
+                Object.keys(this.drawingLayers).forEach(layerName => {
+                    const layer = this.drawingLayers[layerName];
+                    const savedState = savedStates[`drawing_${layerName}`];
+                    if (layer && savedState !== undefined) {
+                        if (savedState) {
+                            this.map.addLayer(layer);
+                        } else {
+                            this.map.removeLayer(layer);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('خطا در بازیابی وضعیت لایه‌ها:', error);
+        }
+    }
+
+    // دریافت اطلاعات همه فروشگاه‌ها
+    async fetchAllStores() {
+        try {
+            const response = await fetch('https://gis1.gandomcs.com/getdata.asmx/ReadMarket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const xmlText = await response.text();
+
+            // تبدیل XML به JSON
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const jsonString = xmlDoc.getElementsByTagName("string")[0].textContent;
+            const stores = JSON.parse(jsonString);
+            const storeGroups = {};
+
+            // ایجاد گروه‌های خالی برای همه دسته‌بندی‌های تعریف شده
+            Object.keys(GandomMap1.STORE_LAYERS).forEach(category => {
+                storeGroups[category] = new L.FeatureGroup();
+                // console.log('گروه ایجاد شده برای:', category);
+            });
+
+            // پردازش فروشگاه‌ها
+            stores.forEach(store => {
+                // console.log('پردازش فروشگاه:', store);
+                const category = store.Category;
+                // console.log('دسته‌بندی فروشگاه:', category);
+
+                // فقط اگر این دسته‌بندی در گروه‌های ما تعریف شده باشد
+                if (storeGroups[category]) {
+                    // console.log('ایجاد مارکر برای:', category);
+                    const marker = this.addAllMarker(
+                        category,
+                        category,
+                        [store.y, store.x]
+                    );
+                    if (marker) {
+                        marker.bindPopup(`
+                            <div style="text-align: right; direction: rtl;">
+                                <strong>${store.Name || category}</strong><br>
+                                ${store.Addres ? `آدرس: ${store.Addres}<br>` : ''}
+                                کد: ${store.Id}
+                            </div>
+                        `);
+
+                        storeGroups[category].addLayer(marker);
+                        // console.log('مارکر اضافه شد به گروه:', category);
+                    } else {
+                        console.log('خطا در ایجاد مارکر برای:', category);
+                    }
+                } else {
+                    console.log('دسته‌بندی تعریف نشده:', category);
+                }
+            });
+
+            // ذخیره گروه‌ها در نقشه
+            this.storeGroups = storeGroups;
+            console.log('گروه‌های نهایی:', Object.keys(storeGroups));
+            return storeGroups;
+
+        } catch (error) {
+            console.error('خطا در دریافت فروشگاه‌ها:', error);
+            return null;
+        }
+    }
+    // متد جدید برای اضافه کردن مارکر کسب و کارها
+    addBusinessMarker(category, title, coords, counters) {
+        let icon;
+        // console.log('ایجاد مارکر برای:', category);
+        // Safely increment counters if they exist
+        if (counters) {
+            switch (category) {
+                case 'گندم':
+                    icon = icons.Gandom_;
+                    counters.gandom = (counters.gandom || 0) + 1;
+                    break;
+                case 'سورنا':
+                    icon = icons.Sorena_;
+                    counters.sorena = (counters.sorena || 0) + 1;
+                    break;
+                case 'رفاه':
+                    icon = icons.Refah_;
+                    counters.refah = (counters.refah || 0) + 1;
+                    break;
+                case 'افق کوروش':
+                    icon = icons.ofog_;
+                    counters.ofog = (counters.ofog || 0) + 1;
+                    break;
+                case 'سپه':
+                    icon = icons.Sepah_;
+                    counters.sepah = (counters.sepah || 0) + 1;
+                    break;
+                case 'جانبو':
+                    icon = icons.Canbo_;
+                    counters.canbo = (counters.canbo || 0) + 1;
+                    break;
+                case 'وین مارکت':
+                    icon = icons.WinMarket_;
+                    counters.winmarket = (counters.winmarket || 0) + 1;
+                    break;
+                case 'محسن':
+                    icon = icons.Mohsen_;
+                    counters.mohsen = (counters.mohsen || 0) + 1;
+                    break;
+                case 'دیلی مارکت':
+                    icon = icons.Daily_;
+                    counters.daily = (counters.daily || 0) + 1;
+                    break;
+                case 'هفت':
+                    icon = icons.Haft_;
+                    counters.haft = (counters.haft || 0) + 1;
+                    break;
+                case 'اتکا':
+                    icon = icons.Etka_;
+                    counters.etka = (counters.etka || 0) + 1;
+                    break;
+                case 'فامیلی':
+                    icon = icons.Family_;
+                    counters.family = (counters.family || 0) + 1;
+                    break;
+                case 'شهروند':
+                    icon = icons.Shahrvand_;
+                    counters.shahrvand = (counters.shahrvand || 0) + 1;
+                    break;
+                case 'هایپر استار':
+                    icon = icons.Hayperstar_;
+                    counters.hyperstar = (counters.hyperstar || 0) + 1;
+                    break;
+                case 'امیران':
+                    icon = icons.Amiran_;
+                    counters.amiran = (counters.amiran || 0) + 1;
+                    break;
+                case 'هایپرمی':
+                    icon = icons.Haypermy_;
+                    counters.hypermy = (counters.hypermy || 0) + 1;
+                    break;
+                case 'مفید':
+                    icon = icons.Mofid_;
+                    counters.mofid = (counters.mofid || 0) + 1;
+                    break;
+                case 'کوثر':
+                    icon = icons.Kousar_;
+                    counters.kousar = (counters.kousar || 0) + 1;
+                    break;
+                case 'یاس':
+                    icon = icons.Yas_;
+                    counters.yas = (counters.yas || 0) + 1;
+                    break;
+                case 'سوپرمارکت':
+                    icon = icons.super_;
+                    counters.super = (counters.super || 0) + 1;
+                    break;
+                default:
+                    console.log('نوع کسب و کار ناشناخته:', category);
+                    icon = icons.super_; // Default icon for unknown business types
+                    counters.other = (counters.other || 0) + 1;
+                    break;
+            }
+        } else {
+            // If no counters object is provided, just set the icon without counting
+            switch (category) {
+                case 'گندم': icon = icons.Gandom_; break;
+                case 'سورنا': icon = icons.Sorena_; break;
+                case 'رفاه': icon = icons.Refah_; break;
+                case 'افق کوروش': icon = icons.ofog_; break;
+                case 'سپه': icon = icons.Sepah_; break;
+                case 'جانبو': icon = icons.Canbo_; break;
+                case 'وین مارکت': icon = icons.WinMarket_; break;
+                case 'محسن': icon = icons.Mohsen_; break;
+                case 'دیلی مارکت': icon = icons.Daily_; break;
+                case 'هفت': icon = icons.Haft_; break;
+                case 'اتکا': icon = icons.Etka_; break;
+                case 'فامیلی': icon = icons.Family_; break;
+                case 'شهروند': icon = icons.Shahrvand_; break;
+                case 'هایپر استار': icon = icons.Hayperstar_; break;
+                case 'امیران': icon = icons.Amiran_; break;
+                case 'هایپرمی': icon = icons.Haypermy_; break;
+                case 'مفید': icon = icons.Mofid_; break;
+                case 'کوثر': icon = icons.Kousar_; break;
+                case 'یاس': icon = icons.Yas_; break;
+                case 'سوپرمارکت': icon = icons.super_; break;
+                default:
+                    console.log('نوع کسب و کار ناشناخته:', category);
+                    icon = icons.super_; // Default icon for unknown business types
+                    break;
+            }
+        }
+
+        // اگر مختصات معتبر نیستند، مارکر ایجاد نکن
+        if (!coords || !coords[0] || !coords[1]) {
+            console.log('مختصات نامعتبر برای:', category, title);
+            return null;
+        }
+
+        // Always use super_ icon as fallback if no icon was set
+        if (!icon) {
+            icon = icons.super_;
+        }
+        let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
+        // Create the marker
+        // const marker = L.marker(coords, { icon });
+        // Add popup without adding to map
+        // marker.bindPopup(categoryid2, { opacity: 0.1 });
+
+
+        L.marker(coords, { icon: icon })
+            .addTo(this.map)
+            .bindPopup(categoryid2, { opacity: 0.1 });
+
+
+
+
+        // console.log(coords, '  =====//==-==//= ', marker);
+        // Return the marker object
+        // return marker;
+    }
+
+    addAllMarker(category, title, coords) {
+        let icon;
+        switch (category) {
+            case 'گندم':
+                icon = icons.Gandom_;
+                break;
+            case 'سورنا':
+                icon = icons.Sorena_;
+                break;
+            case 'رفاه':
+                icon = icons.Refah_;
+                break;
+            case 'افق کوروش':
+                icon = icons.ofog_;
+                break;
+            case 'سپه':
+                icon = icons.Sepah_;
+                break;
+            case 'جانبو':
+                icon = icons.Canbo_;
+                break;
+            case 'وین مارکت':
+                icon = icons.WinMarket_;
+                break;
+            case 'محسن':
+                icon = icons.Mohsen_;
+                break;
+            case 'دیلی مارکت':
+                icon = icons.Daily_;
+                break;
+            case 'هفت':
+                icon = icons.Haft_;
+                break;
+            case 'اتکا':
+                icon = icons.Etka_;
+                break;
+            case 'فامیلی':
+                icon = icons.Family_;
+                break;
+            case 'شهروند':
+                icon = icons.Shahrvand_;
+                break;
+            case 'هایپر استار':
+                icon = icons.Hayperstar_;
+                break;
+            case 'امیران':
+                icon = icons.Amiran_;
+                break;
+            case 'هایپرمی':
+                icon = icons.Haypermy_;
+                break;
+            case 'مفید':
+                icon = icons.Mofid_;
+                break;
+            case 'کوثر':
+                icon = icons.Kousar_;
+                break;
+            case 'یاس':
+                icon = icons.Yas_;
+                break;
+            case 'سوپرمارکت':
+                icon = icons.super_;
+                break;
+            default:
+                console.log('نوع کسب و کار ناشناخته:', category);
+                icon = icons.super_; // آیکون پیش‌فرض
+                break;
+        }
+        // اگر مختصات معتبر نیستند، مارکر ایجاد نکن
+        if (!coords || !coords[0] || !coords[1]) {
+            console.log('مختصات نامعتبر برای:', category, title);
+            return null;
+        }
+        let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
+        // ایجاد مارکر
+        const marker = L.marker(coords, { icon });
+        // اضافه کردن پاپ‌آپ
+        marker.bindPopup(categoryid2, { opacity: 0.1 });
+        return marker;
+    }
+
+    // تعریف لیست دسته‌بندی‌ها به صورت گلوبال
+    static BUSINESS_CATEGORIES = [
+        'hospital', 'attraction', 'bakery', 'bank', 'barracks', 'bus_line', 'bus_station', 'bus_stop',
+        'camp_site', 'caravan_site', 'clinic', 'elementray_school', 'fruit_vegetable_store', 'fuel',
+        'high_school', 'hospice', 'hotel', 'kindergarten', 'hyper_market', 'laboratory', 'marketplace',
+        'mosque', 'parking', 'parking_space', 'police', 'public_transport_building', 'public_transportation',
+        'school', 'subway', 'subway_line', 'supermarket', 'theme_park', 'tower', 'trade_store',
+        'train_station', 'university'
+    ];
+
+    async drawPopulationDensity(latlng, map) {
+        // محاسبه مختصات مربع 1x1 کیلومتر
+        const degLng = 0.006; // تقریباً برابر با 1 کیلومتر در طول جغرافیایی
+        const degLat = 0.005; // تقریباً برابر با 1 کیلومتر در عرض جغرافیایی
+        const buffer = [
+            (latlng.lng - degLng).toFixed(6),
+            (latlng.lat - degLat).toFixed(6),
+            (latlng.lng + degLng).toFixed(6),
+            (latlng.lat + degLat).toFixed(6)
+        ].join(',');
+        const [minX, minY, maxX, maxY] = buffer.split(',').map(Number);
+        // ترسیم مربعمحدوده
+        const rectangle = L.rectangle([[minY, minX], [maxY, maxX]], {
+            color: '#2c3e50',
+            weight: 2,
+            opacity: 0.7,
+            fillOpacity: 0.1
+        }).addTo(map);
+        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        // درخواست اطلاعات تراکم جمعیت
+        const url = `${Url_domain}tara/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${buffer}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.results || data.results.length === 0) {
+                this.showPopulationInfo(rectangle, 0, 0, 0);
+                return;
+            }
+            let totalPopulation = 0;
+            let totalHouseholds = 0;
+            let totalArea = 0;
+            let densities = [];
+            // پردازش نتایج
+            data.results.forEach(result => {
+                const attributes = result.attributes;
+                totalPopulation += parseFloat(attributes.Population || 0);
+                totalHouseholds += parseFloat(attributes.Khanevar || 0);
+                totalArea += parseFloat(attributes.Area_HT || 0);
+                densities.push(parseFloat(attributes.Tarakom || 0));
+                // ترسیم چندضلعی منطقه
+                if (result.geometry && result.geometry.rings) {
+                    result.geometry.rings.forEach(ring => {
+                        const coordinates = ring.map(point => [point[1], point[0]]);
+                        const density = parseFloat(attributes.Tarakom || 0);
+
+                        // محاسبه رنگ و شفافیت بر اساس تراکم
+                        let polygonStyle;
+                        if (density === 0) {
+                            // مناطق بدون جمعیت
+                            polygonStyle = {
+                                color: '#ff0000',
+                                weight: 1,
+                                opacity: 0.3,
+                                fillOpacity: 0.1,
+                                fillColor: '#ff0000'
+                            };
+                        } else {
+                            // محاسبه شفافیت بر اساس تراکم (بین 0.1 تا 0.8)
+                            const normalizedDensity = (density / Math.max(...densities)) * 0.7 + 0.1;
+                            polygonStyle = {
+                                color: 'transparent',
+                                weight: 10,
+                                opacity: 0,
+                                fillOpacity: normalizedDensity,
+                                fillColor: '#AA0055'
+                            };
+                        }
+
+                        L.polygon(coordinates, polygonStyle).addTo(map).bindPopup(`
+                            <div style="direction: rtl; text-align: right; font-family: Vazir;">
+                                <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات بلوک شهری</h6>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        `);
+                    });
+                }
+            });
+            // نمایش اطلاعات کلی
+            this.showPopulationInfo(rectangle, totalPopulation, totalHouseholds, totalArea);
+     let outputdata=totalPopulation+','+ totalHouseholds+','+ totalArea;
+     return totalPopulation ;
+        } catch (error) {
+            console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
+            alert('خطا در دریافت اطلاعات تراکم جمعیت');
+        }
     }
 } 

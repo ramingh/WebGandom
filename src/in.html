@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGandom - سیستم GIS فروشگاه‌های زنجیره‌ای گندم</title>
-    
+
     <!-- Core CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="Leaflet/CSS/leaflet.css" rel="stylesheet">
@@ -13,7 +13,7 @@
     <link href="Leaflet/CSS/Control.Geocoder.css" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css" />
 
     <!-- Core JavaScript -->
     <script src="Leaflet/JS/jquery-3.7.0.min.js"></script>
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+
     <!-- Import maps for module resolution -->
     <script type="importmap">
     {
@@ -39,26 +39,32 @@
         }
     }
     </script>
-    
+
     <script type="module" src="./assets/js/main.js"></script>
 </head>
 
 <body>
     <!-- Login Form -->
-    <div id="login-container" class="container-fluid position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+    <div id="login-container"
+        class="container-fluid position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+        style="background-color: rgba(200, 166, 4, 0.795); z-index: 9999;">
         <div class="card" style="width: 400px;">
             <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">ورود به سیستم</h4>
+                <img src="/IMG/logo2.png" alt="گندم"
+                    style="max-width: 160px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
+                <h4 class="mb-0">ورود به سامانه اطلاعات مکانی </h4>
             </div>
             <div class="card-body">
                 <form id="login-form">
                     <div class="mb-3">
                         <label for="username" class="form-label">نام کاربری</label>
-                        <input type="text" class="form-control" id="username" required>
+                        <input type="text" class="form-control" id="username">
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">رمز عبور</label>
-                        <input type="password" class="form-control" id="password" required>
+                        <input type="password" class="form-control" id="password">
+                    </div>
+                    <div id="login-error" class="alert alert-danger py-2 px-3 mb-3 d-none" style="font-size: 0.95em;">
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">ورود</button>
@@ -68,9 +74,9 @@
         </div>
     </div>
 
-    <div id="app" style="display: none;">
+    <div id="app">
         <div id="loading" class="loading">
-            <p> لطفاً کمی صبر کنید...</p>
+            <p>لطفاً کمی صبر کنید...</p>
             <div class="spinner">
             </div>
         </div>
@@ -78,10 +84,18 @@
             <div id="map">
             </div>
             <div id="sidebar">
+                <button class="toggle-layers">
+                    <i class="fas fa-layer-group">
+                    </i> انتخاب لایه
+                </button>
+                <div class="layer-container hidden">
+                    <div class="layer-list">
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
     <!-- Base Map Toggle Button -->
     <button class="basemap-toggle">
         <i class="fas fa-layer-group"></i>نقشه پایه
@@ -108,23 +122,77 @@
     </button>
 
     <script>
-        $(document).ready(function() {
+
+        $(document).ready(function () {
             // مدیریت فرم لاگین
-            $('#login-form').on('submit', function(e) {
+            $('#login-form').on('submit', function (e) {
                 e.preventDefault();
                 const username = $('#username').val();
                 const password = $('#password').val();
+                const $error = $('#login-error');
+                $error.addClass('d-none').text('');
 
-                // اینجا بعداً سرویس لاگین را اضافه خواهیم کرد
-                // فعلاً برای تست، یک لاگین ساده
-                if (username && password) {
-                    $('#login-container').hide();
-                    $('#app').show();
-                } else {
-                    alert('لطفاً نام کاربری و رمز عبور را وارد کنید');
+                // اول اعتبارسنجی خالی نبودن فیلدها
+                if (!username || !password) {
+                    $error.text('لطفاً نام کاربری و رمز عبور را وارد کنید').removeClass('d-none');
+                    return;
                 }
+
+                // بعد تست رمز عبور آزمایشی
+                if (password === '110110') {
+                    $('#login-container').fadeOut(200, function () { $(this).remove(); });
+                    $('#app').show();
+                    return;
+                }
+
+                // ارسال درخواست به سرویس
+                $.ajax({
+                    url: 'https://gis1.gandomcs.com/getdata.asmx/readexcel',
+                    type: 'POST',
+                    data: JSON.stringify({ sqlstr: username }),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        if (response === 'error') {
+                            $error.text('نام کاربری یا رمز عبور اشتباه است').removeClass('d-none');
+                            return;
+                        } 
+                        // پردازش پاسخ
+                        const dataString = response.d;
+                                              // جدا کردن بخش‌ها با #
+                        const sections = dataString.split('#');
+                         let isValid = false;
+
+                        for (let section of sections) {
+                            if (!section) continue;
+                            console.log('بخش فعلی:', section);
+                            
+                            // جدا کردن فیلدها با !
+                            const fields = section.split('!');
+                            console.log('فیلدها:', fields);
+                            
+                            // بررسی نام کاربری و وضعیت رمز عبور
+                            if (fields[4] === username && fields[5] === 'True') {
+                                isValid = true;
+                                break;
+                            }
+                        }
+
+                        if (isValid) {
+                            $('#login-container').fadeOut(200, function () { $(this).remove(); });
+                            $('#app').show();
+                        } else {
+                            $error.text('نام کاربری یا رمز عبور اشتباه است').removeClass('d-none');
+                        }
+                    },
+                    error: function () {
+                        $error.text('خطا در ارتباط با سرور').removeClass('d-none');
+                    }
+                });
             });
         });
+
+
     </script>
 </body>
+
 </html>

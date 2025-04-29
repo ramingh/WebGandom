@@ -10,6 +10,7 @@
           "script[type=importmap]"
         ]
       }
-    ]
+    ],
+    "no-inline-styles": "off"
   }
 }

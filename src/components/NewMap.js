@@ -798,7 +798,7 @@ export class GandomMap1 {
 
                     {
                         icon: 'fas fa-square',
-                        title: 'فروشگاه‌ها',
+                        title:  'فروشگاه ها',
                         action: () => {
 
 
@@ -840,19 +840,13 @@ export class GandomMap1 {
                                     map.removeLayer(marker);
                                     return;
                                 }
-
                                 if (radius < 0.5 || radius > 2) {
                                     alert("شعاع باید بین 0.5 تا 2 باشد");
                                     map.removeLayer(marker);
                                     return;
                                 }
-
                                 // نمایش مختصات و شعاع در کنسول
                                 this.Draw_buffer(latlng.lng, latlng.lat, radius, map);
-                                // console.log('مختصات نقطه:', latlng);
-                                // console.log('شعاع:', radius);
-
-                                // اینجا می‌توانید کد مربوط به ارسال به سرویس را اضافه کنید
                             });
                         }
                     },
@@ -886,114 +880,12 @@ export class GandomMap1 {
 
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
+                                // this.drawPopulationDensity(latlng, map);
+        
+                                let data1 =    this.drawPopulationDensity(latlng, this.map);
 
-                                // محاسبه مختصات مربع 1x1 کیلومتر
-                                const degLng = 0.006; // تقریباً برابر با 1 کیلومتر در طول جغرافیایی
-                                const degLat = 0.005; // تقریباً برابر با 1 کیلومتر در عرض جغرافیایی
-                                const buffer = [
-                                    (latlng.lng - degLng).toFixed(6),
-                                    (latlng.lat - degLat).toFixed(6),
-                                    (latlng.lng + degLng).toFixed(6),
-                                    (latlng.lat + degLat).toFixed(6)
-                                ].join(',');
+                                console.log(data1, '= = ظظظظظ');
 
-                                const [minX, minY, maxX, maxY] = buffer.split(',').map(Number);
-
-                                // ترسیم مربع محدوده
-                                const rectangle = L.rectangle([[minY, minX], [maxY, maxX]], {
-                                    color: '#2c3e50',
-                                    weight: 2,
-                                    opacity: 0.7,
-                                    fillOpacity: 0.1
-                                }).addTo(map);
-                                const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
-                                // درخواست اطلاعات تراکم جمعیت
-                                const url = `${Url_domain}tara/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${buffer}`;
-
-                                fetch(url)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (!data.results || data.results.length === 0) {
-                                            this.showPopulationInfo(rectangle, 0, 0, 0);
-                                            return;
-                                        }
-
-                                        let totalPopulation = 0;
-                                        let totalHouseholds = 0;
-                                        let totalArea = 0;
-                                        let densities = [];
-
-                                        // پردازش نتایج
-                                        data.results.forEach(result => {
-                                            const attributes = result.attributes;
-                                            totalPopulation += parseFloat(attributes.Population || 0);
-                                            totalHouseholds += parseFloat(attributes.Khanevar || 0);
-                                            totalArea += parseFloat(attributes.Area_HT || 0);
-                                            densities.push(parseFloat(attributes.Tarakom || 0));
-
-                                            // ترسیم چندضلعی منطقه
-                                            if (result.geometry && result.geometry.rings) {
-                                                result.geometry.rings.forEach(ring => {
-                                                    const coordinates = ring.map(point => [point[1], point[0]]);
-                                                    const density = parseFloat(attributes.Tarakom || 0);
-
-                                                    // محاسبه رنگ و شفافیت بر اساس تراکم
-                                                    let polygonStyle;
-                                                    if (density === 0) {
-                                                        // مناطق بدون جمعیت
-                                                        polygonStyle = {
-                                                            color: '#ff0000',
-                                                            weight: 1,
-                                                            opacity: 0.3,
-                                                            fillOpacity: 0.1,
-                                                            fillColor: '#ff0000'
-                                                        };
-                                                    } else {
-                                                        // محاسبه شفافیت بر اساس تراکم (بین 0.1 تا 0.8)
-                                                        const normalizedDensity = (density / Math.max(...densities)) * 0.7 + 0.1;
-                                                        polygonStyle = {
-                                                            color: 'transparent',
-                                                            weight: 10,
-                                                            opacity: 0,
-                                                            fillOpacity: normalizedDensity,
-                                                            fillColor: '#AA0055'
-                                                        };
-                                                    }
-
-                                                    L.polygon(coordinates, polygonStyle).addTo(map).bindPopup(`
-                                                        <div style="direction: rtl; text-align: right; font-family: Vazir;">
-                                                            <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات منطقه</h6>
-                                                            <table style="width: 100%; border-collapse: collapse;">
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
-                                                                    <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
-                                                                </tr>
-                                                            </table>
-                                                        </div>
-                                                    `);
-                                                    //   marker.bindPopup('poptext').openPopup();
-                                                });
-                                            }
-                                        });
-                                        // نمایش اطلاعات کلی
-                                        this.showPopulationInfo(marker, totalPopulation, totalHouseholds, totalArea);
-                                    })
-                                    .catch(error => {
-                                        console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
-                                        alert('خطا در دریافت اطلاعات تراکم جمعیت');
-                                    });
 
                             });
 
@@ -1069,7 +961,7 @@ export class GandomMap1 {
                     toolButton.title = tool.title;
 
                     const icon = L.DomUtil.create('i', tool.icon, toolButton);
-
+                    console.log(toolButton, 'toolButton');
                     L.DomEvent.on(toolButton, 'click', (e) => {
                         L.DomEvent.preventDefault(e);
                         L.DomEvent.stopPropagation(e);
@@ -1227,7 +1119,7 @@ export class GandomMap1 {
                     })
                 });
 
-                  console.log(data.routes, ' - - - + ', data.routes[0].distance , '   time =   ', data.routes[0].duration);
+                console.log(data.routes, ' - - - + ', data.routes[0].distance, '   time =   ', data.routes[0].duration);
                 this.timeall = [];
                 let Geom = location1;// data.routes[0].geometry.coordinates;
 
@@ -2125,6 +2017,11 @@ export class GandomMap1 {
     async get_alldata(longitude) {
         const url_path = '/IMG/';
         let pnt1 = new L.LatLng(longitude[0], longitude[1]);
+        
+        let data1 =  await this.drawPopulationDensity(pnt1, this.map);
+
+        console.log(data1, '= = data1');
+
         this.map.setView(pnt1, 10);
 
         this.drawDistrict(longitude[0], longitude[1], this.map);
@@ -2370,76 +2267,55 @@ export class GandomMap1 {
         const southWest = bounds.getSouthWest();
 
         // تهیه پارامترهای مورد نیاز برای سرویس
-        const buffer = `${northEast.lng},${northEast.lat},${southWest.lng},${southWest.lat}`;
+        const url = `${this.Url_domain}IR22/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`;
 
-        const url = 'https://gis.gandomcs.com/arcgis/rest/services/IR22/MapServer/identify';
-
-        const params = {
-            geometryType: 'esriGeometryEnvelope',
-            layers: 'id:0',
-            tolerance: 10,
-            mapExtent: '46.5,34.2,46.6,34.1',
-            imageDisplay: '1,1,1',
-            returnGeometry: true,
-            f: 'json',
-            geometry: buffer
-        };
-
-        // تبدیل پارامترها به query string
-        const queryString = Object.keys(params)
-            .map(key => `${key}=${encodeURIComponent(params[key])}`)
-            .join('&');
-
-        const fullUrl = `${url}?${queryString}`;
-
-        // ذخیره شمارنده‌های هر نوع کسب و کار
-        const counters = {
-            gandom: 0,
-            super: 0,
-            sorena: 0,
-            refah: 0,
-            ofog: 0,
-            sepah: 0,
-            canbo: 0,
-            winmarket: 0,
-            mohsen: 0,
-            daily: 0,
-            haft: 0,
-            etka: 0,
-            family: 0,
-            shahrvand: 0,
-            hyperstar: 0,
-            amiran: 0,
-            hypermy: 0,
-            mofid: 0,
-            kousar: 0,
-            yas: 0
-        };
-
-        // درخواست به سرویس
-        fetch(fullUrl)
+        fetch(url)
             .then(response => response.json())
-            .then(json => {
-                if (!json.results || json.results.length === 0) {
-                    console.log('هیچ نتیجه‌ای یافت نشد');
+            .then(data => {
+                if (!data.results || data.results.length === 0) {
+                    console.log('هیچ داده‌ای یافت نشد');
                     return;
                 }
 
-                // پردازش نتایج و نمایش نقاط
-                json.results.forEach(result => {
-                    const category = result.attributes.Category.trim();
-                    const title = result.attributes.Name;
-                    const coords = [result.geometry.y, result.geometry.x];
+                // پردازش نتایج
+                data.results.forEach(result => {
+                    const attributes = result.attributes;
+                    const geometry = result.geometry;
 
-                    // this.addBusinessMarker(category, title, coords, counters);
-                    // this.addBusinessMarker(category, title, coords, counters);
-                    console.log(title, 'نقطه:', category);
-                    // نمایش نقطه بر اساس نوع کسب و کار
-                    this.addBusinessMarker(category, title, coords, counters);
+                    if (geometry && geometry.rings) {
+                        geometry.rings.forEach(ring => {
+                            const coordinates = ring.map(point => [point[1], point[0]]);
+                            L.polygon(coordinates, {
+                                color: '#2c3e50',
+                                weight: 2,
+                                opacity: 0.7,
+                                fillOpacity: 0.1
+                            }).addTo(this.map).bindPopup(`
+                                <div style="direction: rtl; text-align: right; font-family: Vazir;">
+                                    <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات بلوک شهری</h6>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
+                                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            `);
+                        });
+                    }
                 });
-
-                // نمایش گزارش با ارسال layer به عنوان پارامتر دوم
-                this.showReport(counters, layer);
             })
             .catch(error => {
                 console.error('خطا در دریافت اطلاعات:', error);
@@ -3151,4 +3027,107 @@ export class GandomMap1 {
         'train_station', 'university'
     ];
 
+    async drawPopulationDensity(latlng, map) {
+        // محاسبه مختصات مربع 1x1 کیلومتر
+        const degLng = 0.006; // تقریباً برابر با 1 کیلومتر در طول جغرافیایی
+        const degLat = 0.005; // تقریباً برابر با 1 کیلومتر در عرض جغرافیایی
+        const buffer = [
+            (latlng.lng - degLng).toFixed(6),
+            (latlng.lat - degLat).toFixed(6),
+            (latlng.lng + degLng).toFixed(6),
+            (latlng.lat + degLat).toFixed(6)
+        ].join(',');
+        const [minX, minY, maxX, maxY] = buffer.split(',').map(Number);
+        // ترسیم مربعمحدوده
+        const rectangle = L.rectangle([[minY, minX], [maxY, maxX]], {
+            color: '#2c3e50',
+            weight: 2,
+            opacity: 0.7,
+            fillOpacity: 0.1
+        }).addTo(map);
+        const Url_domain = 'https://gis.gandomcs.com/arcgis/rest/services/';
+        // درخواست اطلاعات تراکم جمعیت
+        const url = `${Url_domain}tara/MapServer/identify?geometryType=esriGeometryEnvelope&layers=id:0&tolerance=1&mapExtent=46.5,34.2,46.6,34.1&imageDisplay=1,1,1&f=json&geometry=${buffer}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.results || data.results.length === 0) {
+                this.showPopulationInfo(rectangle, 0, 0, 0);
+                return;
+            }
+            let totalPopulation = 0;
+            let totalHouseholds = 0;
+            let totalArea = 0;
+            let densities = [];
+            // پردازش نتایج
+            data.results.forEach(result => {
+                const attributes = result.attributes;
+                totalPopulation += parseFloat(attributes.Population || 0);
+                totalHouseholds += parseFloat(attributes.Khanevar || 0);
+                totalArea += parseFloat(attributes.Area_HT || 0);
+                densities.push(parseFloat(attributes.Tarakom || 0));
+                // ترسیم چندضلعی منطقه
+                if (result.geometry && result.geometry.rings) {
+                    result.geometry.rings.forEach(ring => {
+                        const coordinates = ring.map(point => [point[1], point[0]]);
+                        const density = parseFloat(attributes.Tarakom || 0);
+
+                        // محاسبه رنگ و شفافیت بر اساس تراکم
+                        let polygonStyle;
+                        if (density === 0) {
+                            // مناطق بدون جمعیت
+                            polygonStyle = {
+                                color: '#ff0000',
+                                weight: 1,
+                                opacity: 0.3,
+                                fillOpacity: 0.1,
+                                fillColor: '#ff0000'
+                            };
+                        } else {
+                            // محاسبه شفافیت بر اساس تراکم (بین 0.1 تا 0.8)
+                            const normalizedDensity = (density / Math.max(...densities)) * 0.7 + 0.1;
+                            polygonStyle = {
+                                color: 'transparent',
+                                weight: 10,
+                                opacity: 0,
+                                fillOpacity: normalizedDensity,
+                                fillColor: '#AA0055'
+                            };
+                        }
+
+                        L.polygon(coordinates, polygonStyle).addTo(map).bindPopup(`
+                            <div style="direction: rtl; text-align: right; font-family: Vazir;">
+                                <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات بلوک شهری</h6>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Population || 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تعداد خانوار:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Khanevar || 0)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>تراکم جمعیت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Tarakom || 0)} نفر/هکتار  </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت:</strong></td>
+                                        <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(attributes.Area_HT || 0)} هکتار</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        `);
+                    });
+                }
+            });
+            // نمایش اطلاعات کلی
+            this.showPopulationInfo(rectangle, totalPopulation, totalHouseholds, totalArea);
+     let outputdata=totalPopulation+','+ totalHouseholds+','+ totalArea;
+     return outputdata ;
+        } catch (error) {
+            console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
+            alert('خطا در دریافت اطلاعات تراکم جمعیت');
+        }
+    }
 } 
