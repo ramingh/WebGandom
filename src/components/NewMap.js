@@ -798,7 +798,7 @@ export class GandomMap1 {
 
                     {
                         icon: 'fas fa-square',
-                        title:  'فروشگاه ها',
+                        title: 'فروشگاه ها',
                         action: () => {
 
 
@@ -881,8 +881,8 @@ export class GandomMap1 {
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
                                 // this.drawPopulationDensity(latlng, map);
-        
-                                let data1 =    this.drawPopulationDensity(latlng, this.map);
+
+                                let data1 = this.drawPopulationDensity(latlng, this.map);
 
                                 console.log(data1, '= = ظظظظظ');
 
@@ -900,22 +900,10 @@ export class GandomMap1 {
 
                             map.once(L.Draw.Event.CREATED, async (e) => {
                                 this.cclearMap(map);
-
                                 const marker = e.layer;
                                 const latlng = marker.getLatLng();
-                                const list1 = GandomMap1.BUSINESS_CATEGORIES;
-
-                                // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
-                                const promises = list1.map(category =>
-                                    this.count_other(latlng.lng, latlng.lat, 1, map, category, 1)
-                                );
-
-                                try {
-                                    await Promise.all(promises);
-                                    console.log('تمام دسته‌بندی‌ها با موفقیت پردازش شدند');
-                                } catch (error) {
-                                    console.error('خطا در پردازش دسته‌بندی‌ها:', error);
-                                }
+                                let temp1 = await this.allbisinespoint(latlng);
+                                console.log('  temp1 = ', temp1);
                             });
                         }
                     },
@@ -961,7 +949,7 @@ export class GandomMap1 {
                     toolButton.title = tool.title;
 
                     const icon = L.DomUtil.create('i', tool.icon, toolButton);
-                    console.log(toolButton, 'toolButton');
+                    // console.log(toolButton, 'toolButton');
                     L.DomEvent.on(toolButton, 'click', (e) => {
                         L.DomEvent.preventDefault(e);
                         L.DomEvent.stopPropagation(e);
@@ -1190,7 +1178,39 @@ export class GandomMap1 {
 
     };
 
+    /**
+     * نمایش تمام کسب و کارها در یک نقطه مشخص
+     * @param {Object} latlng - موقعیت جغرافیایی {lat: number, lng: number}
+     * @returns {Promise<Array>} آرایه‌ای از اطلاعات کسب و کارها برای ساخت PDF
+     */
+    async allbisinespoint(latlng) {
 
+        const list1 = GandomMap1.BUSINESS_CATEGORIES;
+        let allBusinessData = [];
+        // اجرای همزمان درخواست‌ها برای همه دسته‌بندی‌ها
+        const promises = list1.map(async category => {
+            try {
+                const businessData = await this.count_other(latlng.lng, latlng.lat, 1, this.map, category, 1);
+                if (businessData && businessData.length > 0) {
+                    allBusinessData = allBusinessData.concat(businessData);
+                    console.log('  pointdata1 = ', businessData);
+                }
+
+            } catch (error) {
+                console.error(`خطا در دریافت اطلاعات ${category}:`, error);
+            }
+        });
+
+        try {
+            await Promise.all(promises);
+            console.log('تمام دسته‌بندی‌ها با موفقیت پردازش شدند');
+            return allBusinessData;
+        } catch (error) {
+            console.error('خطا در پردازش دسته‌بندی‌ها:', error);
+            return [];
+        }
+
+    }
 
     Draw_line(lipoint, txtp, map) {
         var firstpolyline = new L.Polyline(lipoint, {
@@ -2017,26 +2037,27 @@ export class GandomMap1 {
     async get_alldata(longitude) {
         const url_path = '/IMG/';
         let pnt1 = new L.LatLng(longitude[0], longitude[1]);
-        
-        let data1 =  await this.drawPopulationDensity(pnt1, this.map);
 
-        console.log(data1, '= = data1');
+        let databisines = await this.allbisinespoint(pnt1);
+
+        console.log('  pointdata1 = ', databisines);
 
         this.map.setView(pnt1, 10);
 
-        this.drawDistrict(longitude[0], longitude[1], this.map);
-
-        // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
-        if (this.map.hasLayer(this.gandompoint1)) {
-            this.map.removeLayer(this.gandompoint1);
+        let datadensity = await this.drawPopulationDensity(pnt1, this.map);
+        console.log(datadensity, '= = datadensity');
+        if (datadensity) {
+            let datadistrict = await this.drawDistrict(longitude[0], longitude[1], this.map);
+            console.log(datadistrict, '= = datadistrict');
         }
+
 
         //35.275,51.514 --- پیدا کردن نزدیک‌ترین فروشگاه گندم از this.gandompoint1 ---
         // حذف لایه گروهی گندم از نقشه (اگر وجود دارد)
-        if (this.map.hasLayer(this.gandompoint1)) {
-            this.map.removeLayer(this.gandompoint1);
-        }
-
+        // if (this.map.hasLayer(this.gandompoint1)) {
+        //     this.map.removeLayer(this.gandompoint1);
+        // }
+        //   return;
         // ابتدا نزدیک‌ترین فروشگاه باز را پیدا کن
         let minDistOpen = Infinity;
         let nearestOpen = null, nearestOpenLatLng = null, nearestOpenPopup = null, nearestOpenIcon = null;
@@ -2100,6 +2121,15 @@ export class GandomMap1 {
 
         let popupdist = `<span style="color: red; font-size: 12px;"> میزان فاصله از فروشگاه گندم  : ${formatted_dis_km} کیلومتر</span>`;
         L.marker(longitude).addTo(this.map).bindPopup(popupdist);
+        //اینجا باید تمام اطلاعات دریافت شده با هم یکی ش.د
+        let all_data = {
+            databisines,
+            datadensity,
+            datadistrict,
+            popupdist
+        }
+        console.log('all_data ====== ',  all_data );
+        return all_data;
 
     }
 
@@ -2126,10 +2156,8 @@ export class GandomMap1 {
 
 
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
-    async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
+    async __count_other(longitude, latitude, textRadius, map, subcategory, radius) {
         try {
-
-
             // ساخت URL درخواست
             const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
 
@@ -2181,9 +2209,67 @@ export class GandomMap1 {
             }
         }
     }
+    async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
+        try {
+            // ساخت URL درخواست
+            const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
 
+            // انجام درخواست با استفاده از jQuery
+            const response = await $.ajax({
+                type: 'GET',
+                url: url,
+                headers: {
+                    'x-api-key': this.API_KEY,
+                    'content-type': 'application/json'
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status === 401) {
+                        console.error(`خطای اعتبارسنجی برای ${subcategory}:`, error);
+                        return;
+                    }
+                    if (xhr.status === 500) {
+                        console.error(`خطای سرور برای ${subcategory}:`, error);
+                        return;
+                    }
+                    // console.log(`خطای ناشناخته برای ${subcategory}:`, error);
+                }
+            });
+
+            if (!response?.data?.count) {
+                console.log(`هیچ نتیجه‌ای برای ${subcategory} یافت نشد`);
+                return [];
+            }
+
+            // دریافت تعداد کل نتایج
+            const totalCount = response.data.count;
+            window.locationCounts = {};
+            // دریافت نتایج به صورت صفحه‌بندی شده
+            const batchSize = 20;
+            let allLocations = [];
+            for (let offset = 0; offset < totalCount; offset += batchSize) {
+                const locations = await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius);
+                if (locations && locations.length > 0) {
+                    allLocations = allLocations.concat(locations);
+                }
+            }
+
+            // console.log(`تمام ${totalCount} مکان برای دسته ${subcategory} با موفقیت نمایش داده شد`);
+            return allLocations;
+
+        } catch (error) {
+            // مدیریت خطاها به صورت جداگانه
+            if (error.status === 401) {
+                console.error('خطای اعتبارسنجی - لطفا API key را بررسی401 کنید');
+            } else if (error.status === 500) {
+                // console.error('خطای سرور - 500لطفا بعداً تلاش کنید      500 ');
+            } else {
+                // console.log('خطا در دریافت اطلاعات مکان‌ها:', error);
+            }
+            return [];
+        }
+    }
     // تابع کمکی برای دریافت جزئیات مکان‌ها
-    async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius) {
+    async __fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius) {
         try {
             const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
 
@@ -2256,7 +2342,98 @@ export class GandomMap1 {
             console.error(`خطا در دریافت جزئیات برای ${subcategory}:`, error);
         }
     }
+    async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius) {
+        try {
+            const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
 
+            const response = await $.ajax({
+                type: 'GET',
+                url: url,
+                headers: {
+                    'x-api-key': this.API_KEY,
+                    'content-type': 'application/json'
+                }
+            });
+
+            if (!response?.value) return [];
+
+            // ایجاد یا به‌روزرسانی شمارنده‌های جهانی اگر وجود ندارند
+            if (!window.locationCounts) {
+                window.locationCounts = {};
+            }
+
+            // افزایش شمارنده برای این دسته‌بندی
+            if (!window.locationCounts[subcategory]) {
+                window.locationCounts[subcategory] = 0;
+            }
+            window.locationCounts[subcategory] += response.value.length;
+
+            let locations = [];
+            // پردازش و نمایش نتایج
+            Object.values(response.value).forEach(location => {
+                if (!location?.location?.coordinates) return;
+
+                const [lng, lat] = location.location.coordinates;
+                const name = location.name || subcategory;
+                const address = location.address || 'آدرس موجود نیست';
+                const distance = location.distance?.amount ? `${Math.round(location.distance.amount)} متر` : 'نامشخص';
+                const province = location.province || '';
+                const county = location.county || '';
+                const district = location.district || '';
+                const city = location.city || '';
+                const region = location.region || '';
+                const neighborhood = location.neighborhood || '';
+                const village = location.village || '';
+
+                // ذخیره اطلاعات برای PDF
+                locations.push({
+                    name,
+                    address,
+                    distance,
+                    province,
+                    county,
+                    district,
+                    city,
+                    region,
+                    neighborhood,
+                    village,
+                    category: subcategory,
+                    coordinates: { lat, lng }
+                });
+
+                // افزودن مارکر به نقشه
+                L.marker([lat, lng], {
+                    icon: this.getCategoryIcon(subcategory)
+                }).addTo(map)
+                    .bindPopup(`
+                    <div style="direction: rtl; text-align: right; font-family: IRANSans;">
+                        <h5 style="color: #2c3e50; margin-bottom: 10px;">${name}</h5>
+                        <div style="border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px;">
+                            <strong>آدرس:</strong> ${address}
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <strong>منطقه:</strong> ${region || 'نامشخص'}
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <strong>محله:</strong> ${neighborhood || 'نامشخص'}
+                        </div>
+                        <div style="color: #27ae60;">
+                            <strong>فاصله:</strong> ${distance}
+                        </div>
+                    </div>
+                `);
+            });
+
+            // نمایش گزارش کلی پس از اتمام همه درخواست‌ها
+            this.showSummaryReport(latitude, longitude, map);
+
+            return locations;
+
+        } catch (error) {
+            console.error(`خطا در دریافت جزئیات برای ${subcategory}:`, error);
+            return [];
+        }
+    }
     //start popup 1
     handleRectangleCreation(layer) {
         // پاکسازی نقاط قبلی
@@ -3123,8 +3300,8 @@ export class GandomMap1 {
             });
             // نمایش اطلاعات کلی
             this.showPopulationInfo(rectangle, totalPopulation, totalHouseholds, totalArea);
-     let outputdata=totalPopulation+','+ totalHouseholds+','+ totalArea;
-     return outputdata ;
+            let outputdata = totalPopulation + ',' + totalHouseholds + ',' + totalArea;
+            return outputdata;
         } catch (error) {
             console.error('خطا در دریافت اطلاعات تراکم جمعیت:', error);
             alert('خطا در دریافت اطلاعات تراکم جمعیت');

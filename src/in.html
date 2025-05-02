@@ -47,12 +47,12 @@
     <!-- Login Form -->
     <div id="login-container"
         class="container-fluid position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-        style="background-color: rgba(200, 166, 4, 0.795); z-index: 9999;">
+        style="background-color: rgba(200, 167, 4, 0.607); z-index: 9999;">
         <div class="card" style="width: 400px;">
-            <div class="card-header bg-primary text-white text-center">
+            <div class="card-header text-white text-center" style="background-color: #60119adf;">
                 <img src="/IMG/logo2.png" alt="گندم"
                     style="max-width: 160px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
-                <h4 class="mb-0">ورود به سامانه اطلاعات مکانی </h4>
+                <h4 class="mb-0"> سامانه چشم عقاب </h4>
             </div>
             <div class="card-body">
                 <form id="login-form">
@@ -67,7 +67,8 @@
                     <div id="login-error" class="alert alert-danger py-2 px-3 mb-3 d-none" style="font-size: 0.95em;">
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">ورود</button>
+                        <button type="submit" class="btn" style="background-color: #60119adf; color: white;">ورود</button>
+                <span style="margin-top: 8px;  font-size: 13px; color: #60119adf;">   تیم توسعه ICT گندم</span>
                     </div>
                 </form>
             </div>
@@ -124,6 +125,14 @@
     <script>
 
         $(document).ready(function () {
+
+
+             // بعد تست رمز عبور آزمایشی
+                // if (password === '110110') {
+                    $('#login-container').fadeOut(200, function () { $(this).remove(); });
+                    $('#app').show();
+                    return;
+                // }
             // مدیریت فرم لاگین
             $('#login-form').on('submit', function (e) {
                 e.preventDefault();
@@ -131,19 +140,14 @@
                 const password = $('#password').val();
                 const $error = $('#login-error');
                 $error.addClass('d-none').text('');
-
+    
                 // اول اعتبارسنجی خالی نبودن فیلدها
                 if (!username || !password) {
                     $error.text('لطفاً نام کاربری و رمز عبور را وارد کنید').removeClass('d-none');
                     return;
                 }
 
-                // بعد تست رمز عبور آزمایشی
-                if (password === '110110') {
-                    $('#login-container').fadeOut(200, function () { $(this).remove(); });
-                    $('#app').show();
-                    return;
-                }
+           
 
                 // ارسال درخواست به سرویس
                 $.ajax({

@@ -118,6 +118,7 @@ export class LayerManager {
                         //    // پیام خطایی به کاربر نمایش دهید.  
                         // }  
                     } else {
+                        searchInput.value="";
                         console.warn(`Invalid coordinate format: "${searchValue}". Both values must be numbers.`);
                         // پیام خطایی به کاربر نمایش دهید.  
                     }
