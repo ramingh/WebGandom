@@ -113,6 +113,7 @@ export class LayerManager {
                         // مثال: if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {  
                         // console.log(`Searching for coordinates: [${lat}, ${lon}]`);
                         const result =    this.map.get_alldata([lat, lon]); // فرض می‌کنیم find_market یک آرایه [lat, lon] می‌پذیرد.  
+                        // console.log(result, 'result -------------ly');
                         // } else {  
                         //    console.warn(`Invalid geographic coordinates: "${searchValue}". Values out of range.`);  
                         //    // پیام خطایی به کاربر نمایش دهید.  
@@ -270,7 +271,7 @@ export class LayerManager {
         // Create layers section title
         const layersTitle = document.createElement('div');
         layersTitle.className = 'layers-title';
-        layersTitle.textContent = 'نمایش لایه ها';
+        // layersTitle.textContent = 'نمایش لایه ها';
 
         // Create layers grid container
         const gridContainer = document.createElement('div');
@@ -289,7 +290,7 @@ export class LayerManager {
                     <span>${name}</span>
                 </label>
             `;
-            gridContainer.appendChild(item);
+            // gridContainer.appendChild(item);
         });
 
         // Append all elements

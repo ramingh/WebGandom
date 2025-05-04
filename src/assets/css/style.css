@@ -207,13 +207,14 @@ body {
 }
 
 .layers-title {
-    background-color: #f0f0f0;
-    padding: 5px 9px;
+    background-color: #22c051cd;
+    padding: 5px -9px;
     font-weight: bold;
     color: #1e3fd6;
     font-size: 11px;
     border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
+    height: 0px;
 }
 
 .layers-grid {

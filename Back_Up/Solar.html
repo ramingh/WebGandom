@@ -9,6 +9,15 @@
     <!-- CSS -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
     <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/leaflet.css">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"> -->
+
+    <script src="/src/Leaflet/JS/jquery-3.7.0.min.js"></script>
+
+    <script src="/src/Leaflet/JS/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+    <!-- <script src="Leaflet/JS/bootstrap.bundle.min.js"></script> -->
 
     <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/markercluster.css">
     <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/MarkerCluster.Default.css">
@@ -20,24 +29,40 @@
 
 
     <style>
-        .popup-body p {
-            margin: 2px 0;
-            /* کاهش فاصله بین پاراگراف‌ها */
-            line-height: 2;
-            /* کاهش ارتفاع خطوط */
-            font-size: 12px;
-            /* کوچکتر کردن متن برای نظم بیشتر */
-            text-align: center;
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
         }
 
+        #MapSection,
+        .container {
+            height: 100vh !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        .popup-body p {
+            margin: 1px 0;
+            /* کاهش فاصله بین پاراگراف‌ها */
+            line-height: 1.5;
+            /* کاهش ارتفاع خطوط */
+            font-size: 10px;
+            /* کوچکتر کردن متن برای نظم بیشتر */
+            text-align: center;
+
+        }
 
         .leaflet-popup {
-            background: #22374b;
+            background: #562d6f7c;
             border: 2px solid #272d25;
             border-radius: 10px;
-            /* margin-top: -20; */
-            /* width: 250px; line-height: 1; */
+
         }
 
         .popup-header {
@@ -46,11 +71,6 @@
             text-align: center;
             font-weight: bold;
         }
-
-        /* .leaflet-popup p {
-      font-size: 10px;
-      margin: 5px 0;
-    } */
 
         .node-up {
             color: green;
@@ -63,35 +83,12 @@
 
         form {
             overflow: hidden;
-            margin-top: -160px;
+
             margin-left: 10px;
             margin-right: 0px;
-            background: rgba(226, 236, 215, 0.79);
+            background: rgba(60, 108, 10, 0.79);
             overflow: hidden;
             z-index: 2;
-        }
-
-        /* .leaflet-popup {
-      background: #22374b;
-      border: 3px solid #272d25;
-      border-radius: 9px;
-      margin-top: -20px;
-      width: 200px;
-    }
-
-    .leaflet-popup h2 {
-      font-size: 12px;
-      margin: 20px;
-      color: green;
-      background-color: #a1df81;
-    } */
-
-        .container {
-            height: 90vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #bedca090;
         }
 
         .closebtn {
@@ -101,40 +98,66 @@
         }
 
         .popup-footer {
-            text-align: right;
-            padding: 8px;
+            text-align: center;
+            padding: 0 8px 8px 8px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 8px;
-            direction: rtl;
+            margin-top: 5px;
         }
 
-        .continue-btn {
-            background-color: #c4da214a;
-            color: rgb(0, 0, 0);
-            padding: 4px 12px;
+        .update-button {
+            position: absolute;
+            top: 20px;
+            right: 230px;
+            /* کنار جدول وضعیت */
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
-            font-family: Vazir, Courier, monospace;
-            margin-top: -85px;
+            font-family: Vazir, Tahoma;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .update-button:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .continue-btn {
+            background-color: inherit;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma;
+            font-size: 11px;
             text-decoration: none;
             display: inline-block;
-            height: 22px;
+            margin: -5px 0 5px 0;
+            position: relative;
+            text-align: center;
+            width: 90%;
+            transition: all 0.3s ease;
         }
 
         .continue-btn:hover {
-            background-color: #abd8e9d8;
-            font-size: 10px;
+            opacity: 0.9;
+            transform: translateY(-2px);
         }
 
         .continue-btn::after {
-            content: ' ←';
-            display: inline-block;
-            margin-right: 50px;
+            content: '←';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
             color: white;
-            font-size: 17px;
-            height: 12px;
+            font-size: 14px;
         }
 
         /* استایل فرم وضعیت فروشگاه */
@@ -209,63 +232,330 @@
             color: #ff0000;
         }
 
-        .update-button {
-            background-color: rgba(59, 158, 13, 0.537);
-            height: 30px;
-            width: 85px;
-            color: rgb(33, 14, 14);
-            font-size: 11px;
-            text-align: center;
-            border: none;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
         /* اضافه کردن استایل جدول وضعیت */
         .status-table {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
+            top: 10px;
+            right: 10px;
+            background: rgb(255, 255, 255);
+            border-radius: 10px;
             padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             direction: rtl;
+            min-width: 150px;
+            font-size: 14px;
+            font-weight: bolder;
+
         }
-        
+
+        .status-table:hover {
+            background: rgb(255, 255, 255);
+        }
+
         .status-table table {
             border-collapse: collapse;
-            width: 200px;
+            width: 100%;
         }
-        
-        .status-table th, .status-table td {
+
+        .status-table th,
+        .status-table td {
             padding: 8px;
             text-align: center;
             border: 1px solid #ddd;
         }
-        
+
         .status-table th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        
+
+        .status-table tr:first-child th {
+            border-bottom: 2px solid #ddd;
+        }
+
         .status-1 {
-            background-color: rgba(0, 255, 0, 0.2); /* سبز روشن */
-            color: #006400; /* سبز تیره */
+            background-color: rgba(0, 255, 0, 0.1);
+            color: #006400;
         }
-        
+
         .status-2 {
-            background-color: rgba(255, 0, 0, 0.2); /* قرمز روشن */
-            color: #8B0000; /* قرمز تیره */
+            background-color: rgba(255, 0, 0, 0.589);
+            color: #8B0000;
         }
-        
-        .status-9 {
-            background-color: rgba(0, 0, 255, 0.2); /* آبی روشن */
-            color: #00008B; /* آبی تیره */
+
+        .update-cell {
+            background-color: #339836c4 !important;
+            color: white !important;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none !important;
+            font-family: Vazir, Tahoma;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+
         }
+
+        .update-cell:hover {
+            background-color: #506cd19c !important;
+        }
+
+        .notification {
+            visibility: hidden;
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background-color: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: Vazir, Tahoma;
+            min-width: 300px;
+        }
+
+        .notification.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: white;
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .notification-message {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .notification-close {
+            cursor: pointer;
+            padding: 5px;
+            font-size: 18px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .notification-progress-bar {
+            height: 100%;
+            width: 100%;
+            background-color: white;
+            transform-origin: left;
+            animation: progress 5s linear;
+        }
+
+        @keyframes progress {
+            from {
+                transform: scaleX(1);
+            }
+
+            to {
+                transform: scaleX(0);
+            }
+        }
+
+        /* اضافه کردن استایل فرم تنظیمات */
+        .settings-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #4a90e2;
+            color: white;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 32px;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            /* ... سایر استایل‌ها ... */
+            line-height: 32px;
+
+        }
+
+        .settings-button:hover {
+            transform: rotate(30deg);
+            background-color: #357abd;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 12px 10px 10px 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+            z-index: 1002;
+            width: 220px;
+            direction: rtl;
+            border: 1px solid #e0e6ed;
+        }
+
+        .settings-modal h3 {
+
+            margin: 0 0 10px 0;
+            color: #222;
+            font-family: Vazir, Tahoma;
+            font-size: 12px;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 0px;
+            background: #ffffff88;
+        }
+
+        .settings-form .input-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .settings-form label {
+            font-size: 11px;
+            color: #444;
+            font-family: Vazir, Tahoma;
+            font-weight: 500;
+            min-width: 80px;
+            margin-bottom: 0;
+        }
+
+        .settings-form input {
+            padding: 3px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 13px;
+            background: #abc7aba0;
+            width: 60px;
+            text-align: center;
+            transition: border 0.2s;
+            outline: none;
+            margin-bottom: 0;
+            box-sizing: border-box;
+        }
+
+        .settings-form input:focus {
+            border: 1px solid #4a90e2;
+            background: #f0f6ff;
+        }
+
+        .settings-form button {
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            padding: 6px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 6px;
+            box-shadow: none;
+            transition: background 0.2s;
+        }
+
+        .settings-form button:hover {
+            background: #08e34ad0;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+        .inactive-stores-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.inactive-stores-link {
+    color: #c6d46b;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.inactive-stores-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    min-width: 250px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.inactive-stores-content.show {
+    display: block;
+}
+
+.inactive-store-item {
+    padding: 6px 8px;
+    font-size: 11px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+    background-color: #fff3f3;
+}
+
+.inactive-store-item:hover {
+    background-color: #ffe6e6;
+}
+
     </style>
 </head>
 
@@ -288,17 +578,17 @@
 
     <div id="MapSection" class="container">
     </div>
-    <!-- <input type="button" onclick="clearMap(map) " value=" به روز رسانی"    style="  background-color: rgba(23, 216, 100, 0.579);height: 25px; color: rgb(62, 12, 240); " /> -->
-
-    <input type="button" onclick="clearMap(map)" value="به روز رسانی   ." class="update-button" />
     <span class="closebtn">&times;</span>
 
 
     <script>
-        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreCode%2CLongitude%2CLatitude%2CStoreName%2CGZone&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
-        const url_rest1 = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreId%2CStoreStatus%2CGZone%2CStoreCode%2CStoreName%2CAddress%2CLongitude%2CLatitude&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
-        var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+        // تعریف متغیر global_status و refresh_interval در ابتدای اسکریپت
+        let global_status = parseInt(localStorage.getItem('globalStatus')) || 10; // مقدار پیش‌فرض 10
+        let refresh_interval = parseInt(localStorage.getItem('refreshInterval')) || 60; // مقدار پیش‌فرض 60 ثانیه
+        let refreshTimer = null;
 
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreCode%2CLongitude%2CLatitude%2CStoreName%2CGZone&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
         let array2 = [];
         let aray1 = [];
         const state1_ = L.icon({
@@ -349,7 +639,7 @@
                 });
 
                 // نمایش تمام مقادیر قبل از فیلتر شدن
-                // console.log("📌 تمام داده‌های قبل از فیلتر:", resultArray);
+                //    console.log("📌 تمام داده‌های قبل از فیلتر:", resultArray);
 
                 // شمارش تعداد هر وضعیت
                 const statusCounts = {
@@ -358,17 +648,29 @@
                     status9: 0
                 };
 
+                const inactiveStores = [];
+
                 resultArray.forEach(item => {
                     const statusNum = Number(item.Status);
                     if (statusNum === 1) statusCounts.status1++;
-                    else if (statusNum === 2) statusCounts.status2++;
+                    else if (statusNum === 2) {
+                        statusCounts.status2++;
+                        inactiveStores.push(item.Caption); // ذخیره Caption فروشگاه‌های غیرفعال
+                    }
                     else if (statusNum === 9) statusCounts.status9++;
                 });
+                // console.log('لیست فروشگاه‌های غیرفعال:', inactiveStores);
 
-                console.log('تعداد وضعیت 1:', statusCounts.status1);
-                console.log('تعداد وضعیت 2:', statusCounts.status2);
-                console.log('تعداد وضعیت 9:', statusCounts.status9);
+                // console.log('تعداد وضعیت 1:', statusCounts.status1);
+                // console.log('تعداد وضعیت 2:', statusCounts.status2);
+                // console.log('تعداد وضعیت 9:', statusCounts.status9);
 
+                console.log(statusCounts.status2, ' == 2 ==', global_status);
+
+                if (statusCounts.status2 > global_status) {
+                    showNotification(`تعداد ${statusCounts.status2} فروشگاه غیرفعال از حد مجاز (${global_status}) بیشتر است!`);
+                    console.log('تعداد وضعیت 2 بیشتر از 10 است');
+                }
                 // اعمال فیلتر برای حذف فقط Status=9
                 array2 = resultArray.filter(item => {
                     const statusNum = Number(item.Status);
@@ -377,28 +679,68 @@
 
                 // نمایش مقادیر نهایی بعد از فیلتر شدن
                 console.log(statusCounts);
-                
+
                 // به‌روزرسانی جدول وضعیت
                 const statusTable = document.getElementById('status-counts');
-                statusTable.innerHTML = `
-                    <tr class="status-1">
-                        <td>فروشگاه های فعال  </td>
-                        <td>${statusCounts.status1}</td>
-                    </tr>
-                    <tr class="status-2">
-                          <td>فروشگاه های غیرفعال  </td>
-                       
-                        <td>${statusCounts.status2}</td>
-                    </tr>
-                  
-                `;
+ // در تابع get_solar، جایی که جدول را به‌روز می‌کنید
+let tableHTML = `
+    <tr class="status-1">
+        <td>فروشگاه‌های فعال</td>
+        <td>${statusCounts.status1}</td>
+    </tr>
+    <tr class="status-2">
+        <td>فروشگاه‌های غیرفعال</td>
+        <td>
+            <div class="inactive-stores-dropdown">
+                <a class="inactive-stores-link" onclick="toggleInactiveStores(event)">
+                    ${statusCounts.status2} (مشاهده لیست)
+                </a>
+                <div class="inactive-stores-content" id="inactiveStoresList">`;
 
+// اضافه کردن فروشگاه‌های غیرفعال به لیست
+inactiveStores.forEach(store => {
+    tableHTML += `
+        <div class="inactive-store-item">${store}</div>`;
+});
+
+tableHTML += `
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" class="update-cell" onclick="clearMap(map)">به ‌روز رسانی</td>
+    </tr>`;
+
+statusTable.innerHTML = tableHTML;
             } catch (error) {
                 console.error('⚠ خطا در دریافت اطلاعات سولار:', error);
             }
         }
 
+        function toggleInactiveStores(event) {
+    event.stopPropagation(); // جلوگیری از انتشار رویداد کلیک
+    const dropdown = document.getElementById('inactiveStoresList');
+    dropdown.classList.toggle('show');
 
+    // بستن dropdown با کلیک خارج از آن
+    document.addEventListener('click', function closeDropdown(e) {
+        if (!e.target.matches('.inactive-stores-link')) {
+            dropdown.classList.remove('show');
+            document.removeEventListener('click', closeDropdown);
+        }
+    });
+}
+
+// بستن dropdown با کلید ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const dropdown = document.getElementById('inactiveStoresList');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
         async function get_gandom() {
             try {
                 const response = await fetch(url_rest);
@@ -484,7 +826,7 @@
                         </p>
                     </div>
                     <div class="popup-footer">
-                        <button onclick="checkStore(${feature.StoreCode})" class="continue-btn">... ادامه</button>
+                        <button onclick="checkStore(${feature.StoreCode})" class="continue-btn" style="background-color: ${parseInt(feature.Status) === 1 ? 'green' : 'red'}">مشاهده جزئیات</button>
                     </div>
                 </div>
             `;
@@ -515,7 +857,7 @@
         async function clearMap(map) {
             Object.keys(map._layers).forEach(key => {
                 const layer = map._layers[key];
-                if (layer._path || layer._icon) {
+                if (layer && (layer._path || layer._icon)) {
                     try { map.removeLayer(layer); } catch (e) { console.log("خطا در حذف لایه:", e); }
                 }
             });
@@ -537,7 +879,7 @@
 
         init();
 
-        var map = L.map('MapSection').setView([32.287, 52.954], 5.7);
+        var map = L.map('MapSection').setView([32.287, 52.954], 5.5);
         L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Gandom',
             scrollWheelZoom: false
@@ -603,6 +945,18 @@
         </div>
     </div>
 
+    <div id="notification" class="notification">
+        <div class="notification-icon">⚠️</div>
+        <div class="notification-content">
+            <div class="notification-title">هشدار وضعیت فروشگاه‌ها</div>
+            <div class="notification-message"></div>
+        </div>
+        <div class="notification-close" onclick="closeNotification()">×</div>
+        <div class="notification-progress">
+            <div class="notification-progress-bar"></div>
+        </div>
+    </div>
+
     <script>
         // const url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';  
 
@@ -660,10 +1014,12 @@
 
         // -------------------------------------------------------------------------------------------
 
-        // http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=10453
 
         function checkStore(storeCode) {
-            fetch(`http://gis1.gandomcs.com:3000/proxy/check-store?storeCode=${storeCode}`)
+            const url1 = "https://gis1.gandomcs.com/proxy.ashx?storeCode=" + encodeURIComponent(storeCode);
+
+
+            fetch(url1)
                 .then(response => response.json())
                 .then(data => {
                     console.log('نتیجه دریافت‌شده:', data);
@@ -709,6 +1065,7 @@
 
         // اضافه کردن event listener برای بستن فرم
         document.addEventListener('keydown', function (event) {
+            console.log(event);
             if (event.key === 'Escape') {
                 document.getElementById('store-status-form').style.display = 'none';
             }
@@ -731,7 +1088,130 @@
             document.getElementById('store-status-form').style.display = 'none';
         };
         document.getElementById('store-status-form').appendChild(closeButton);
+
+        // بستن فرم با کلیک خارج از آن
+        window.addEventListener('click', function (e) {
+            const modal = document.getElementById('store-status-form');
+            if (modal.style.display === 'block' && !modal.contains(e.target)) {
+                modal.style.display = 'none';
+            }
+        });
+
+        function showNotification(message, duration = 5000) {
+            const notification = document.getElementById('notification');
+            const messageElement = notification.querySelector('.notification-message');
+            messageElement.textContent = message;
+            notification.classList.add('show');
+            // پخش صدای هشدار
+            try {
+                const audio = document.getElementById('alarm-audio');
+                audio.currentTime = 0;
+                audio.play();
+            } catch (e) { /* اگر مرورگر اجازه نداد، خطا را نادیده بگیر */ }
+            // تنظیم مجدد انیمیشن progress bar
+            const progressBar = notification.querySelector('.notification-progress-bar');
+            progressBar.style.animation = 'none';
+            progressBar.offsetHeight; // trigger reflow
+            progressBar.style.animation = `progress ${duration}ms linear`;
+            setTimeout(() => {
+                closeNotification();
+            }, duration);
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+
     </script>
+
+    <!-- اضافه کردن HTML فرم تنظیمات -->
+    <div class="settings-button" onclick="openSettings()">⚙️</div>
+
+    <div class="modal-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+
+    <div class="settings-modal" id="settingsModal">
+        <h3>تنظیمات هشدار</h3>
+        <form class="settings-form" onsubmit="saveSettings(event)">
+            <div class="input-row">
+                <label for="globalStatus">حد مجاز تعداد فروشگاه‌های غیرفعال:</label>
+                <input type="number" id="globalStatus" min="1" required>
+            </div>
+            <div class="input-row">
+                <label for="refreshInterval">بازه زمانی به‌روزرسانی خودکار (ثانیه):</label>
+                <input type="number" id="refreshInterval" min="5" required>
+            </div>
+            <button type="submit">ذخیره تنظیمات</button>
+        </form>
+    </div>
+
+    <!-- اضافه کردن اسکریپت‌های مدیریت تنظیمات -->
+    <script>
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+            document.getElementById('settingsOverlay').style.display = 'block';
+            document.getElementById('globalStatus').value = global_status;
+            document.getElementById('refreshInterval').value = refresh_interval;
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+            document.getElementById('settingsOverlay').style.display = 'none';
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            const newValue = parseInt(document.getElementById('globalStatus').value);
+            const newInterval = parseInt(document.getElementById('refreshInterval').value);
+            if (newValue > 0 && newInterval >= 5) {
+                if (newValue !== global_status || newInterval !== refresh_interval) {
+                    global_status = newValue;
+                    refresh_interval = newInterval;
+                    localStorage.setItem('globalStatus', newValue);
+                    localStorage.setItem('refreshInterval', newInterval);
+                    // showNotification('تنظیمات با موفقیت ذخیره شد', 5000);
+
+                } else {
+                    closeSettings();
+                    return;
+                }
+                get_solar().then(() => {
+                    closeSettings();
+                    setupAutoRefresh();
+                });
+
+                // closeSettings();
+                // clearMap(map);
+                // setupAutoRefresh();
+            }
+        }
+
+        // تابع راه‌اندازی تایمر به‌روزرسانی خودکار
+        function setupAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                clearMap(map);
+            }, refresh_interval * 1000);
+        }
+
+        // راه‌اندازی اولیه تایمر پس از بارگذاری صفحه
+        setupAutoRefresh();
+
+        // اضافه کردن کلید Escape برای بستن مودال
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeSettings();
+            }
+        });
+
+        // جلوگیری از بستن مودال با کلیک روی خود فرم
+        document.querySelector('.settings-modal').addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+    </script>
+
+    <!-- اضافه کردن تگ صوتی مخفی برای هشدار -->
+    <audio id="alarm-audio" src="https://gis1.gandomcs.com/img/Alarm1.wav" preload="auto"></audio>
 </body>
 
 </html>
