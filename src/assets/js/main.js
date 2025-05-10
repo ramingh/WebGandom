@@ -1,6 +1,6 @@
 import { GandomMap1 } from '../../components/NewMap.js';
 // import { LayerManager } from '../../components/LayerManager.js';
-import { LayerManager } from '../../components/LayerManager1.js';
+import { LayerManager } from '../../components/LayerManager.js';
 
 // Initialize components
 const map = new GandomMap1('map'); 

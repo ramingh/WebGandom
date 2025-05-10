@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نمایش مکان‌ها با آیکون و ترجمه</title>
+    <script src="/src/Leaflet/JS/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script type="module" src="categoryIcons.js"></script>
+   <style>
+        #map {
+            height: 100vh;
+        }
+ 
+        .default-icon {
+            /* استایل‌های خاص فقط برای آیکون پیش‌فرض */
+            font-size: 50px;
+            /* font-weight: 100; */
+            /* یا هر اندازه دیگری که می‌خواهید */
+        }
+
+        /* اگر نیاز دارید که المان والد (div) بزرگتر باشد تا آیکون بزرگتر جا شود: */
+        /* .category-marker که توسط Leaflet ایجاد می شود */
+        .category-marker {
+            width: 50px !important;
+            /* مطابق با iconSize در L.divIcon */
+            height: 40px !important;
+            /* مطابق با iconSize در L.divIcon */
+        }
+
+        .summary-popup {
+            background-color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 9px;
+            color: black;
+            font-family: "Tahoma", "IRANSans", sans-serif;
+            text-align: right;
+            direction: rtl;
+            min-width: 220px;
+            max-width: 110px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.8;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+   
+    <script type="module">
+        import { categoryIcons } from './categoryIcons.js';
+        // استفاده از categoryIcons...
+        // const icon = categoryIcons[subcat] || categoryIcons['default'];
+      </script>
+      
+   <script>
+    
+// بعد داخل map.on("click") از categoryIcons استفاده کن:
+
+
+      const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q';
+        const buffer = 100;
+        const pageSize = 20;
+        const translationsURL = "translations.json";
+    
+        let translationDict = {};
+        let map = L.map('map').setView([35.6892, 51.3890], 14);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        let markersLayer = L.layerGroup().addTo(map);
+
+        fetch(translationsURL)
+            .then(res => res.json())
+            .then(dict => { translationDict = dict; });
+
+        function translateCategory(key) {
+            return translationDict[key] || key;
+        }
+
+        async function fetchCount(lat, lon) {
+            const url = `https://map.ir/places/count?$filter=lat eq ${lat} and lon eq ${lon} and buffer eq ${buffer} and sort eq true`;
+            try {
+                const res = await $.ajax({
+                    type: 'GET',
+                    url: url,
+                    headers: { 'x-api-key': API_KEY, 'content-type': 'application/json' }
+                });
+                return res.data?.count || 0;
+            } catch (err) {
+                console.error("خطا در دریافت تعداد:", err);
+                return 0;
+            }
+        }
+
+        async function fetchPlaces(lat, lon, skip) {
+            const url = `https://map.ir/places/list?$top=${pageSize}&$skip=${skip}&$filter=lat eq ${lat} and lon eq ${lon} and buffer eq ${buffer} and sort eq true`;
+            try {
+                const response = await $.ajax({
+                    type: 'GET',
+                    url: url,
+                    headers: { 'x-api-key': API_KEY, 'content-type': 'application/json' }
+                });
+                return response.value || [];
+            } catch (err) {
+                console.error("خطا در دریافت مکان‌ها:", err);
+                return [];
+            }
+        }
+
+        map.on("click", async function (e) {
+            markersLayer.clearLayers();
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+
+            const total = await fetchCount(lat, lon);
+            const pages = Math.ceil(total / pageSize);
+            let allPlaces = [];
+            console.log(' total === ', total);
+            for (let i = 0; i < pages; i++) {
+                const places = await fetchPlaces(lat, lon, i * pageSize);
+                allPlaces = allPlaces.concat(places);
+            }
+
+            let summary = {};
+            for (let place of allPlaces) {
+                if (!place.location || !place.location.coordinates) continue;
+                const coords = place.location.coordinates;
+                const name = place.name || "نامشخص";
+                const address = place.address || "آدرس نامشخص";
+                const subcat = place.subcategory || "نامشخص";
+                const translated = translateCategory(subcat);
+                // const icon = categoryIcons[subcat] || categoryIcons['default'];
+
+    const icon = categoryIcons[subcat] || categoryIcons['default'];
+
+
+                summary[translated] = (summary[translated] || 0) + 1;
+
+                console.log( icon, '  pointdata1 = ' , subcat);
+
+                L.marker([coords[1], coords[0]], { icon })
+                    .addTo(markersLayer)
+                    .bindPopup(`<strong>${name}</strong><br>${address}<br><em>${translated}</em>`);
+            }
+
+            const summaryText = Object.entries(summary).length
+                ? Object.entries(summary).map(([key, val]) => `${val} ${key}`).join("<br>")
+                : "هیچ مکانی یافت نشد.";
+
+            L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: '',
+                    html: `<div class="summary-popup"><b>${summaryText}</b></div>`,
+                    iconSize: [250, 100]
+                })
+            }).addTo(markersLayer);
+        });
+    </script>
+</body>
+
+</html>

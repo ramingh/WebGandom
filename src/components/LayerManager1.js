@@ -267,7 +267,7 @@ export class LayerManager {
                 </label>
             </div>
         `;
-
+ 
         // Create layers section title
         const layersTitle = document.createElement('div');
         layersTitle.className = 'layers-title';

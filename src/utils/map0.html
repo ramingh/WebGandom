@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>جستجوی نقاط اطراف با Map.ir</title>
+    <script src="/src/Leaflet/JS/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+   
+   <style>
+        #map {
+            height: 100vh;
+        }
+
+        .summary-popup {
+            background-color: white;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 9px;
+            color: black;
+            font-family: "Tahoma", "IRANSans", sans-serif;
+            text-align: right;
+            direction: rtl;
+            /* min-width: 220px;*/
+            max-width: 110px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.8;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIn0.eyJhdWQiOiIxNTQ3MCIsImp0aSI6IjU4MzE0NjhkZjVkNmFiYTJlNGU5ZDI4OGNiMTNjMTE0ODFiZWE0OGIyMWNkOTk2YTIzYjZiMmVmNzMwNmI5Zjk1ZDhkNWJkNGI2ZmM5YzBlIiwiaWF0IjoxNjM1NjcwODk3LCJuYmYiOjE2MzU2NzA4OTcsImV4cCI6MTYzNjk2Njg5Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.A0QqpSc1tEdQvS2ns5hdgMUhri9-6zXShhrlqOtE4Ve5gSQ4xk0z-nu1N0bFzfvDhW5LTn6scKf5YVbZ6MeUqSOuc8K7vm2xlH6ywJP4XJrMK4U3NlAT3WG3FL_IieEoetckxtjSEDt_qjkN0iX5GkEEka6EeZuSCJcroYB5VETGAkw14KziZK52zJ9CGHMOaoLUGschBvyHa916o7pDJx96KQrvmH-fHRJqbdz6EUJXkwjO9hS-GXl2acIi_nqCFRoU4iIPoZELVhUnts8qi8Tb9DiO4k0KCitbc9l5A3xTzUikhz8bJtMep24btIgutLS0DQz-nkVvlAc-PPnt1Q';
+
+        const buffer = 100;
+        const pageSize = 20;
+        const translationsURL = "translations.json";
+        let map = L.map('map').setView([35.6892, 51.3890], 14);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 21,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let markersLayer = L.layerGroup().addTo(map);
+        let translationDict = {};
+
+        fetch(translationsURL)
+            .then(res => res.json())
+            .then(dict => {
+                translationDict = dict;
+            });
+
+        function translateCategory(key) {
+            return translationDict[key] || key;
+        }
+
+        async function fetchCount(lat, lon) {
+            const url = `https://map.ir/places/count?$filter=lat eq ${lat} and lon eq ${lon} and buffer eq ${buffer} and sort eq true`;
+            try {
+                const res = await $.ajax({
+                    type: 'GET',
+                    url: url,
+                    headers: {
+                        'x-api-key': API_KEY,
+                        'content-type': 'application/json'
+                    }
+                });
+                return res.data?.count || 0;
+            } catch (err) {
+                console.error("خطا در دریافت تعداد:", err);
+                return 0;
+            }
+        }
+
+        async function fetchPlaces(lat, lon, skip) {
+            const url = `https://map.ir/places/list?$top=${pageSize}&$skip=${skip}&$filter=lat eq ${lat} and lon eq ${lon} and buffer eq ${buffer} and sort eq true`;
+            try {
+                const response = await $.ajax({
+                    type: 'GET',
+                    url: url,
+                    headers: {
+                        'x-api-key': API_KEY,
+                        'content-type': 'application/json'
+                    }
+                });
+                return response.value || [];
+            } catch (err) {
+                console.error("خطا در دریافت مکان‌ها:", err);
+                return [];
+            }
+        }
+
+        map.on("click", async function (e) {
+            markersLayer.clearLayers();
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+
+            const total = await fetchCount(lat, lon);
+            const pages = Math.ceil(total / pageSize);
+            let allPlaces = [];
+
+            for (let i = 0; i < pages; i++) {
+                const places = await fetchPlaces(lat, lon, i * pageSize);
+                allPlaces = allPlaces.concat(places);
+            }
+
+            let summary = {};
+            for (let place of allPlaces) {
+                if (!place.location || !place.location.coordinates) continue;
+                const coords = place.location.coordinates;
+                const name = place.name || "نامشخص";
+                const address = place.address || "آدرس نامشخص";
+                const subcat = place.subcategory || "نامشخص";
+                const translated = translateCategory(subcat);
+
+                summary[translated] = (summary[translated] || 0) + 1;
+
+                // L.marker([coords[1], coords[0]])
+                //     .addTo(markersLayer)
+                //     .bindPopup(`<strong>${name}</strong><br>${address}<br><em>${translated}</em>`);
+
+                if (categoryData[subcat] && categoryData[subcat].icon) {
+                    var iconOptions =await  {
+                        html: '<i class="' + categoryData[subcat].icon + '" style="color: #AA1188;"></i>',
+                        className: 'category-marker',
+                        iconSize: [50, 40]
+                    };
+console.log('iconOptions === ',iconOptions);
+                    var customIcon = L.divIcon(iconOptions);
+                    var marker = L.marker([coords[1], coords[0]], { icon: customIcon }).addTo(map);
+                    marker.  bindPopup(`<strong>${name}</strong><br>${address}<br><em>${translated}</em>`);
+                } else {
+                    // Optional: Handle the case where the subcat is not found or icon is missing
+                    console.log("Category key '" + subcat + "' or its icon is not found in categoryData.");
+                    // You might want to use a default icon here
+                }
+
+                // فرض کنید categoryData همان object بالاست
+                // var iconOptions = {
+                //     html: '<i class="' + categoryData[subcat].icon + '" style="color: #AA1188;"></i>', // استفاده از کلاس آیکون
+                //     className: 'category-marker',
+                //     iconSize: [50, 40]
+                // };
+
+                // var customIcon = L.divIcon(iconOptions);
+
+                // var marker = L.marker([coords[1], coords[0]], { icon: customIcon }).addTo(map);
+                // marker.bindPopup(categoryData[subcat].translation); // نمایش ترجمه در Popup
+
+
+            }
+
+            const summaryText = Object.entries(summary).length
+                ? Object.entries(summary).map(([key, val]) => `${val} ${key}`).join("<br>")
+                : "هیچ مکانی یافت نشد.";
+            L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: '',
+                    html: `<div class="summary-popup"><b>${summaryText}</b></div>`,
+                    iconSize: [250, 100]
+                })
+            }).addTo(markersLayer);
+        });
+
+
+
+
+        const categoryData = {
+            "clothes_store": {
+                "translation": "فروشگاه پوشاک",
+                "icon": "fas fa-tshirt" // یا fas fa-shopping-bag
+            },
+            "bank": {
+                "translation": "بانک",
+                "icon": "fas fa-university" // یا fas fa-money-check-alt
+            },
+            "school": {
+                "translation": "مدرسه",
+                "icon": "fas fa-school"
+            },
+            "restaurant": {
+                "translation": "رستوران",
+                "icon": "fas fa-utensils"
+            },
+            "supermarket": {
+                "translation": "سوپرمارکت",
+                "icon": "fas fa-shopping-cart" // یا fas fa-store
+            },
+            "pharmacy": {
+                "translation": "داروخانه",
+                "icon": "fas fa-first-aid" // یا fas fa-prescription-bottle-alt
+            },
+            "gas_station": {
+                "translation": "پمپ بنزین",
+                "icon": "fas fa-gas-pump"
+            },
+            "cafe": {
+                "translation": "کافه",
+                "icon": "fas fa-coffee" // یا fas fa-mug-hot
+            },
+            "hospital": {
+                "translation": "بیمارستان",
+                "icon": "fas fa-hospital"
+            },
+            "bakery": {
+                "translation": "نانوایی",
+                "icon": "fas fa-bread-slice"
+            },
+            "car_repair": {
+                "translation": "تعمیرگاه خودرو",
+                "icon": "fas fa-car-mechanic" // ممکن است نیاز به نسخه pro داشته باشد. جایگزین: fas fa-wrench
+            },
+            "car_store": {
+                "translation": "فروشگاه خودرو",
+                "icon": "fas fa-car"
+            },
+            "carpet_store": {
+                "translation": "فرش فروشی",
+                "icon": "fas fa-gem" // یا یک آیکون مرتبط با home/decor
+            },
+            "building": {
+                "translation": "ساختمان",
+                "icon": "fas fa-building"
+            },
+            "residential_landuse": {
+                "translation": "کاربری مسکونی",
+                "icon": "fas fa-home"
+            },
+            "helipad": {
+                "translation": "پد بالگرد",
+                "icon": "fas fa-helicopter"
+            },
+            "pitch": {
+                "translation": "زمین بازی",
+                "icon": "fas fa-futbol" // برای زمین فوتبال. یا fas fa-volleyball-ball
+            },
+            "tree": {
+                "translation": "درخت",
+                "icon": "fas fa-tree"
+            },
+            "community_centre": {
+                "translation": "سرای محله",
+                "icon": "fas fa-users" // یا fas fa-handshake
+            },
+            "hyper_market": {
+                "translation": "هایپرمارکت",
+                "icon": "fas fa-shopping-basket" // یا fas fa-store-alt
+            },
+            "shop": {
+                "translation": "مغازه",
+                "icon": "fas fa-store"
+            },
+            "furniture_store": {
+                "translation": "فروشگاه مبلمان",
+                "icon": "fas fa-couch" // یا fas fa-chair
+            },
+            "hotel": {
+                "translation": "هتل",
+                "icon": "fas fa-hotel"
+            },
+            "parking": {
+                "translation": "پارکینگ",
+                "icon": "fas fa-parking" // یا یک حرف P در یک مربع
+            },
+            "marketplace": {
+                "translation": "بازار",
+                "icon": "fas fa-store" // یا fas fa-shopping-basket
+            },
+            "museum": {
+                "translation": "موزه",
+                "icon": "fas fa-museum" // یا fas fa-landmark
+            },
+            "pedestrian_crossing": {
+                "translation": "گذرگاه عابر پیاده",
+                "icon": "fas fa-walk" // یا fas fa-running
+            },
+            "electrical_store": {
+                "translation": "الکتریکی",
+                "icon": "fas fa-lightbulb" // یا fas fa-plug
+            },
+            "newspaper_store": {
+                "translation": "دکه روزنامه",
+                "icon": "fas fa-newspaper"
+            },
+            "doityourself_hardware": {
+                "translation": "فروشگاه ابزار",
+                "icon": "fas fa-tools" // یا fas fa-hammer
+            },
+            "traffic_light": {
+                "translation": "چراغ راهنمایی",
+                "icon": "fas fa-traffic-light"
+            },
+            "mini_roundabout": {
+                "translation": "میدان کوچک",
+                "icon": "fas fa-road" // یا یک آیکون دایره‌ای با فلش
+            },
+            "ice_cream_store": {
+                "translation": "بستنی فروشی",
+                "icon": "fas fa-ice-cream"
+            },
+            "insurance": {
+                "translation": "بیمه",
+                "icon": "fas fa-shield-alt" // یا fas fa-file-invoice-dollar
+            },
+            "events_venue": {
+                "translation": "محل برگزاری رویدادها",
+                "icon": "fas fa-calendar-alt" // یا fas fa-theater-masks
+            },
+            "chemist_and_pharmacy": {
+                "translation": "داروخانه",
+                "icon": "fas fa-first-aid" // تکراری، منطقی است
+            },
+            "subway_line": {
+                "translation": "خط مترو",
+                "icon": "fas fa-subway" // یا fas fa-train
+            },
+            "under_construction": {
+                "translation": "در دست ساخت",
+                "icon": "fas fa-hard-hat" // یا fas fa-tools
+            },
+            "police": {
+                "translation": "پلیس/کلانتری",
+                "icon": "fas fa-police" // ممکن است نیاز به نسخه pro داشته باشد. جایگزین: fas fa-shield-alt
+            },
+            "government_office": {
+                "translation": "دفتر دولتی / دفتر پیشخوان دولت",
+                "icon": "fas fa-building" // یا fas fa-landmark
+            },
+            "kiosk": {
+                "translation": "کیوسک",
+                "icon": "fas fa-cash-register" // یا fas fa-store
+            },
+            "notary": {
+                "translation": "دفتر اسناد رسمی",
+                "icon": "fas fa-scroll" // یا fas fa-balance-scale
+            },
+            "commercial_landuse": {
+                "translation": "کاربری تجاری",
+                "icon": "fas fa-store" // یا fas fa-shopping-bag
+            },
+            "carwash": {
+                "translation": "کارواش",
+                "icon": "fas fa-car-wash" // ممکن است نیاز به نسخه pro داشته باشد. جایگزین: fas fa-car
+            },
+            "vehicle_inspection": {
+                "translation": "مرکز معاینه فنی خودرو",
+                "icon": "fas fa-car-alt" // یا fas fa-file-alt
+            },
+            "doctor": {
+                "translation": "مطب پزشک",
+                "icon": "fas fa-user-md"
+            },
+            "coffee_store": {
+                "translation": "کافی شاپ",
+                "icon": "fas fa-coffee" // تکراری، منطقی است
+            },
+            "company": {
+                "translation": "شرکت",
+                "icon": "fas fa-building" // یا fas fa-briefcase
+            },
+            "rest_area": {
+                "translation": "استراحتگاه",
+                "icon": "fas fa-bed" // یا fas fa-쉼گاه (اگر آیکون مناسبی باشد)
+            },
+            "telecommunication": {
+                "translation": "مخابرات",
+                "icon": "fas fa-phone-alt" // یا fas fa-tower-cell
+            },
+            "herbalist": {
+                "translation": "عطاری",
+                "icon": "fas fa-leaf" // یا fas fa-mortar-pestle
+            },
+            "photographer_craft": {
+                "translation": "عکاسی",
+                "icon": "fas fa-camera-retro"
+            },
+            "mobile_store": {
+                "translation": "فروشگاه موبایل",
+                "icon": "fas fa-mobile-alt"
+            },
+            "public_transportation": {
+                "translation": "حمل و نقل عمومی",
+                "icon": "fas fa-bus" // یا fas fa-tram, fas fa-train بسته به نوع
+            },
+            "department_store_and_mall": {
+                "translation": "مجتمع تجاری",
+                "icon": "fas fa-shopping-bag" // یا fas fa-store-alt
+            },
+            "university": {
+                "translation": "دانشگاه",
+                "icon": "fas fa-graduation-cap"
+            },
+            "laundry_and_drycleaning": {
+                "translation": "خشکشویی",
+                "icon": "fas fa-washer" // یا fas fa-dryer
+            },
+            "copyshop": {
+                "translation": "چاپ و تکثیر",
+                "icon": "fas fa-copy" // یا fas fa-print
+            },
+            "educational_institution": {
+                "translation": "مؤسسه آموزشی",
+                "icon": "fas fa-book-open" // یا fas fa-chalkboard-teacher
+            },
+            "stationery": {
+                "translation": "لوازم التحریر",
+                "icon": "fas fa-pencil-alt" // یا fas fa-sticky-note
+            },
+            "book_store": {
+                "translation": "کتاب فروشی",
+                "icon": "fas fa-book"
+            },
+            "tailor": {
+                "translation": "خیاطی",
+                "icon": "fas fa-cut" // یا fas fa-scissors
+            },
+            "watch_store": {
+                "translation": "ساعت فروشی",
+                "icon": "fas fa-clock" // یا fas fa-watch
+            },
+            "laboratory": {
+                "translation": "آزمایشگاه",
+                "icon": "fas fa-flask" // یا fas fa-microscope
+            },
+            "sewing_store": {
+                "translation": "پارچه فروشی",
+                "icon": "fas fa-cut" // تکراری، شاید fas fa-couch برای پارچه مبلی؟ یا fas fa-tshirt برای پارچه لباس؟
+            },
+            "cosmetics": {
+                "translation": "لوازم آرایشی",
+                "icon": "fas fa-lipstick" // یا fas fa-メイクアップ (اگر آیکون مناسبی باشد)
+            },
+            "clinic": {
+                "translation": "کلینیک", // ترجمه مناسب
+                "icon": "fas fa-clinic-medical" // یا fas fa-medkit
+            },
+            "travel_agent": {
+                "translation": "آژانس مسافرتی",
+                "icon": "fas fa-plane-departure" // یا fas fa-globe-americas
+            },
+            "bookbinder": {
+                "translation": "صحافی", // ترجمه دقیق‌تر برای bookbinder
+                "icon": "fas fa-book-open" // یا fas fa-file-alt
+            },
+            "firm": {
+                "translation": "شرکت", // یا بنگاه
+                "icon": "fas fa-building" // یا fas fa-briefcase
+            },
+            "hospice": {
+                "translation": "آسایشگاه", // ترجمه اصلی و رایج‌تر برای hospice
+                "icon": "fas fa-bed" // یا fas fa-heartbeat (اگر مربوط به مراقبت‌های پایان عمر باشد)
+            },
+            "florist": {
+                "translation": "گل فروشی",
+                "icon": "fas fa-flower" // یا fas fa-rose
+            },
+            "houseware_store": {
+                "translation": "فروشگاه لوازم خانگی",
+                "icon": "fas fa-couch" // یا fas fa-chair, fas fa-blender
+            },
+            "fruit_vegetable_store": {
+                "translation": "بازار میوه و تره‌بار",
+                "icon": "fas fa-apple-alt" // یا fas fa-carrot
+            },
+            "beauty_salon": {
+                "translation": "آرایشگاه",
+                "icon": "fas fa-cut" // یا fas fa-hairdresser (اگر آیکون مناسبی باشد)
+            },
+            "caterer": {
+                "translation": "کترینگ",
+                "icon": "fas fa-drumstick-bite" // یا fas fa-concierge-bell
+            },
+            "optician_store": {
+                "translation": "عینک‌فروشی",
+                "icon": "fas fa-glasses" // یا fas fa-eye
+            },
+            "curtain_store": {
+                "translation": "پرده فروشی",
+                "icon": "fas fa-curtain" // ممکن است نیاز به نسخه pro داشته باشد. جایگزین: fas fa-home
+            },
+            "nutrition_supplements": {
+                "translation": "فروشگاه مکمل‌های ورزشی/غذایی", // ترجمه دقیق‌تر
+                "icon": "fas fa-pills" // یا fas fa-bottle-water
+            },
+
+            "bag_shoe_store": {
+                "translation": "فروشگاه کیف و کفش",
+                "icon": "fas fa-shoe-prints" // یا fas fa-shopping-bag
+            }
+        }
+
+    </script>
+</body>
+
+</html>
