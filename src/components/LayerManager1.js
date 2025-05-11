@@ -256,16 +256,7 @@ export class LayerManager {
                     <span>مسیر خودرو</span>
                 </label>
             </div>
-            <div class="layer-view-options">
-                <label class="view-option">
-                    <input type="radio" name="view" value="single" checked>
-                    <span>نمایش یک لایه</span>
-                </label>
-                <label class="view-option">
-                    <input type="radio" name="view" value="multiple">
-                    <span>نمایش چندلایه</span>
-                </label>
-            </div>
+         
         `;
  
         // Create layers section title

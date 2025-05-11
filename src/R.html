@@ -5,36 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGandom - سیستم GIS فروشگاه‌های زنجیره‌ای گندم</title>
- 
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
 
-     
-    <link href="/src/components/bootstrap-4.3.1-dist/css/bootstrap.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="/src/components/jsPDF-master/dist/jspdf.umd.min.js"></script>
-   
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-
+    <!-- Core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="Leaflet/CSS/leaflet.css" rel="stylesheet">
     <link href="Leaflet/CSS/leaflet-ruler.css" rel="stylesheet">
     <link href="Leaflet/CSS/Control.Geocoder.css" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw-src.css" />
 
     <!-- Core JavaScript -->
-    <script src="/src/components/jquery-3.7.1.min.js"></script>
+    <script src="Leaflet/JS/jquery-3.7.0.min.js"></script>
     <script src="Leaflet/JS/leaflet.js"></script>
-
     <script src="Leaflet/JS/bootstrap.bundle.min.js"></script>
     <script src="Leaflet/JS/leaflet-ruler.js"></script>
     <script src="Leaflet/JS/leaflet.draw.js"></script>
     <script src="Leaflet/JS/Control.Geocoder.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <!-- Import maps for module resolution -->
     <script type="importmap">
@@ -47,10 +35,18 @@
     }
     </script>
 
-    <script type="module" src="./assets/js/main1.js"></script>
+    <script type="module" src="./assets/js/main.js"></script>
 </head>
 
 <body>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+        style="background-color: rgba(60, 53, 70, 0.5); z-index: 10000;">
+        <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+    </div>
+
     <!-- Login Form -->
     <div id="login-container"
         class="container-fluid position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
@@ -74,8 +70,6 @@
                     <div id="login-error" class="alert alert-danger py-2 px-3 mb-3 d-none" style="font-size: 0.95em;">
                     </div>
                     <div class="d-grid">
-
-
                         <button type="submit" class="btn"
                             style="background-color: #60119adf; color: white;">ورود</button>
                         <span style="margin-top: 8px;  font-size: 13px; color: #60119adf;"> تیم توسعه ICT گندم</span>
@@ -83,8 +77,6 @@
                             style="z-index: 9999; background-color: rgb(117, 50, 167); color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 0.8em;">
                             خروج <i class="fas fa-sign-out-alt"></i>
                         </button>
-
-
                     </div>
                 </form>
             </div>
@@ -101,18 +93,11 @@
             <div id="map">
             </div>
             <div id="sidebar">
-                <button class="toggle-layers">
-                    <i class="fas fa-layer-group">
-                    </i> انتخاب لایه
-                </button>
-                <div class="layer-container hidden">
-                    <div class="layer-list">
-
-                    </div>
-                </div>
+         
             </div>
         </div>
     </div>
+
     <!-- Base Map Toggle Button -->
     <button class="basemap-toggle">
         <i class="fas fa-layer-group"></i>نقشه پایه
@@ -141,60 +126,56 @@
     <script>
         // دکمه خروج
         $(document).on('click', '#logout-button', function () {
-            localStorage.removeItem('isLoggedIn');
-            location.reload(); // صفحه را مجدد بارگذاری می‌کنیم تا فرم لاگین ظاهر شود
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                localStorage.removeItem('isLoggedIn');
+                location.reload();
+            }
         });
 
+        // مدیریت فرم لاگین
         $(document).ready(function () {
-
-
+       
             if (localStorage.getItem('isLoggedIn') === 'true') {
                 $('#login-container').remove();  // فرم لاگین را حذف کن
                 $('#app').show();                // بخش اصلی را نمایش بده
                 return;
             }
-            // مدیریت فرم لاگین
+       
             $('#login-form').on('submit', function (e) {
                 e.preventDefault();
                 const username = $('#username').val();
                 const password = $('#password').val();
                 const $error = $('#login-error');
+                const $spinner = $('#loading-spinner');
+
                 $error.addClass('d-none').text('');
 
-                // اول اعتبارسنجی خالی نبودن فیلدها
                 if (!username || !password) {
                     $error.text('لطفاً نام کاربری و رمز عبور را وارد کنید').removeClass('d-none');
                     return;
                 }
 
+                $spinner.removeClass('d-none');
 
-
-                // ارسال درخواست به سرویس
                 $.ajax({
                     url: 'https://gis1.gandomcs.com/getdata.asmx/readexcel',
                     type: 'POST',
                     data: JSON.stringify({ sqlstr: username }),
                     contentType: 'application/json',
                     success: function (response) {
+                        $spinner.addClass('d-none');
                         if (response === 'error') {
                             $error.text('نام کاربری یا رمز عبور اشتباه است').removeClass('d-none');
                             return;
                         }
-                        // پردازش پاسخ
+
                         const dataString = response.d;
-                        // جدا کردن بخش‌ها با #
                         const sections = dataString.split('#');
                         let isValid = false;
 
                         for (let section of sections) {
                             if (!section) continue;
-                            console.log('بخش فعلی:', section);
-
-                            // جدا کردن فیلدها با !
                             const fields = section.split('!');
-                            console.log('فیلدها:', fields);
-
-                            // بررسی نام کاربری و وضعیت رمز عبور
                             if (fields[4] === username && fields[5] === 'True') {
                                 isValid = true;
                                 break;
@@ -202,8 +183,7 @@
                         }
 
                         if (isValid) {
-                            localStorage.setItem('isLoggedIn', 'true');  // ذخیره ورود موفق
-
+                            localStorage.setItem('isLoggedIn', 'true');
                             $('#login-container').fadeOut(200, function () { $(this).remove(); });
                             $('#app').show();
                         } else {
@@ -211,14 +191,14 @@
                         }
                     },
                     error: function () {
+                        $spinner.addClass('d-none');
                         $error.text('خطا در ارتباط با سرور').removeClass('d-none');
                     }
                 });
             });
         });
-
-
     </script>
 </body>
 
 </html>
+ 

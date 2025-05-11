@@ -77,6 +77,20 @@ body {
     pointer-events: auto !important;
 }
 
+.leaflet-control-layers {
+    overflow: hidden !important; /* از تکرار جلوگیری می‌کنه */
+    top: -15px;
+    right:  14px;
+}
+
+.leaflet-control-layers-list {
+    max-height:200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+
 .button {
 
     /* شما می‌توانید استایل‌های اضافی برای دکمه اضافه کنید */
@@ -480,33 +494,36 @@ input[type="checkbox"] {
 
 .trash-button {
     position: absolute;
-    top: 110px;
-    left: 15px;
-    width: 50px;
-    height: 50px;
-    background-color: rgba(255, 255, 255, 0);
-      border: 0px solid #ffffff;  
-    border-radius: 9px;
+    top: 105px; /* جای دلخواه شما */
+    left: 2px;
+    width: 44px;
+    height: 40px;
+
+    background-color: #ffffffd2; /* سفید با شفافیت ملایم */
+    border: 1px solid #ccc;
+    border-radius: 10px;
+
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
     z-index: 1000;
-    /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
-    /* transition: background-color 0.3s ease; */
 }
 
 .trash-button:hover {
-    width: 45px;
-    height: 48px;
-
-    box-shadow: 7px 7px 10px rgba(15, 62, 216, 0.481);
- 
+    transform: scale(1.1);
+    background-color: #ffebeb;
+    border: 1px solid #e02222;
+    box-shadow: 0 0 8px rgba(228, 47, 47, 0.6);
 }
 
 .trash-button img {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.2));
 }
 
 
@@ -519,8 +536,8 @@ input[type="checkbox"] {
     /* width: 40px; */
     padding: 0 !important;
     margin: 0 !important; 
-     left: 15px;   
-     top: 55px;    
+     left:  5px;   
+        
      
 }
 
