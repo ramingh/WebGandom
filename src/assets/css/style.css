@@ -78,13 +78,14 @@ body {
 }
 
 .leaflet-control-layers {
-    overflow: hidden !important; /* از تکرار جلوگیری می‌کنه */
+    overflow: hidden !important;
+    /* از تکرار جلوگیری می‌کنه */
     top: -15px;
-    right:  14px;
+    right: 14px;
 }
 
 .leaflet-control-layers-list {
-    max-height:200px;
+    max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -494,12 +495,14 @@ input[type="checkbox"] {
 
 .trash-button {
     position: absolute;
-    top: 105px; /* جای دلخواه شما */
+    top: 105px;
+    /* جای دلخواه شما */
     left: 2px;
     width: 44px;
     height: 40px;
 
-    background-color: #ffffffd2; /* سفید با شفافیت ملایم */
+    background-color: #ffffffd2;
+    /* سفید با شفافیت ملایم */
     border: 1px solid #ccc;
     border-radius: 10px;
 
@@ -523,7 +526,7 @@ input[type="checkbox"] {
 .trash-button img {
     width: 22px;
     height: 22px;
-    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.2));
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.2));
 }
 
 
@@ -535,10 +538,10 @@ input[type="checkbox"] {
     flex-direction: column;
     /* width: 40px; */
     padding: 0 !important;
-    margin: 0 !important; 
-     left:  5px;   
-        
-     
+    margin: 0 !important;
+    left: 5px;
+
+
 }
 
 .leaflet-draw-toolbar-button {
@@ -551,21 +554,21 @@ input[type="checkbox"] {
     cursor: pointer;
     background: white;
     padding: 0 !important;
-    margin:  0 !important;   
+    margin: 0 !important;
     background-size: contain !important;
 
 }
 
 .leaflet-draw-toolbar-button:hover {
     background-color: #99b5dccc;
-    font-size:25px; 
-     box-shadow: 4px 5px 8px 8px rgba(129, 153, 231, 0.323);
+    font-size: 25px;
+    box-shadow: 4px 5px 8px 8px rgba(129, 153, 231, 0.323);
 }
 
 .leaflet-draw-toolbar-button i {
     color: black;
-    font-size:18px; 
- 
+    font-size: 18px;
+
 }
 
 /* حذف هرگونه حاشیه اضافی */
@@ -609,7 +612,7 @@ a.leaflet-draw-draw-codeposti {
 
 .export-pdf-btn {
     background-color: #4CAF50;
-   color: white;
+    color: white;
     border: none;
     padding: 5px 10px;
     border-radius: 4px;
@@ -623,7 +626,7 @@ a.leaflet-draw-draw-codeposti {
     margin-left: auto;
     left: 22px;
     top: 22px;
-     margin-right: -55px;
+    margin-right: -55px;
 }
 
 .export-pdf-btn:hover {
@@ -634,17 +637,17 @@ a.leaflet-draw-draw-codeposti {
     font-size: 14px;
 }
 
- 
- 
-    /* اضافه کردن این استایل برای مخفی کردن پیام راهنمای ترسیم */
-    .leaflet-draw-tooltip {
-        display: none !important;
-    }
-    
-    /* یا اگر فقط متن را می‌خواهید مخفی کنید */
-    .leaflet-draw-tooltip-single {
-        display: none !important;
-    }
+
+
+/* اضافه کردن این استایل برای مخفی کردن پیام راهنمای ترسیم */
+.leaflet-draw-tooltip {
+    display: none !important;
+}
+
+/* یا اگر فقط متن را می‌خواهید مخفی کنید */
+.leaflet-draw-tooltip-single {
+    display: none !important;
+}
 
 /* استایل‌های جدول فروشگاه‌ها */
 .store-table {
@@ -673,7 +676,7 @@ a.leaflet-draw-draw-codeposti {
 /* استایل‌های پاپ‌آپ */
 .custom-popup .leaflet-popup-content-wrapper {
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .custom-popup .leaflet-popup-content {
@@ -684,4 +687,50 @@ a.leaflet-draw-draw-codeposti {
 .custom-popup .leaflet-popup-tip {
     background: white;
 }
- 
+
+.popup-table {
+    width: 100%;
+    border-collapse: collapse;
+    direction: rtl;
+    text-align: right;
+    font-size: 8px;
+}
+
+.popup-table th,
+.popup-table td {
+    padding: 2px;
+    border-bottom: 1px solid #eee;
+    line-height: 1;
+}
+
+.popup-table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #ddd;
+}
+
+.popup-table input[type="number"] {
+    width: 30px;
+    padding: 2px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-align: center;
+}
+
+.okc:hover {
+    transform: scale(1.1);
+    background-color: #ffebeb;
+    border: 1px solid #e02222;
+    box-shadow: 0 0 8px rgba(228, 47, 47, 0.6);
+}
+
+.okc {
+    border-radius: 5px;
+    box-shadow: 0 2px 2px rgba(132, 211, 41, 0.2);
+    padding: 2px;
+    background-color: #a6ec98a5;
+    border: 1px solid #625757;
+    height: 18px;
+    width: 80px;
+    margin-left:  25px;
+    margin-top:   5px;
+}

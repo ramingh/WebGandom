@@ -13,6 +13,8 @@ export class GandomMap1 {
      */
     constructor(containerId) {
         // تنظیمات اولیه نقشه
+        // ... existing constructor code ...
+        this.userMarker = null; // اضافه کردن متغیر برای ذخیره مارکر کاربر
         this.containerId = containerId;
         this.map = null;
         this.layers = new Map();
@@ -1522,24 +1524,26 @@ export class GandomMap1 {
         try {
             const coords = rectangle.getBounds().getCenter();
             const nearestStore = await this.findNearestStore([coords.lat, coords.lng]);
-            // console.log('DEBUG-4: Showing popup with data:', { population, households, area });
-
+            const density1 = area > 0 ? (population / area).toFixed(2) : 0;
             let storeInfo = '';
             if (nearestStore?.nearest) {
                 const distance = (nearestStore.nearest.distance / 1000).toFixed(2);
                 const status = this.extractStoreStatus(nearestStore.nearest.popup);
                 storeInfo = `
-                    <div style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div style="margin-top: -1px; border-top: 1px solid #eee; padding-top: 10px;">
                         <strong>نزدیک‌ترین فروشگاه گندم:</strong>
                         <div>وضعیت: <span style="color: ${status === 'باز' ? 'green' : 'red'}">${status}</span></div>
                         <div>فاصله: ${distance} کیلومتر</div>
+                        <div>کد فروشگاه: ${nearestStore.storeCode}</div>
                     </div>
                 `;
+
             }
+            // tarakomasli
 
             const popupContent = `
                 <div style="direction: rtl; text-align: right; font-family: Vazir;">
-                    <h6 style="color: #2c3e50; margin-bottom: 10px;">اطلاعات کلی منطقه</h6>
+                    <h6 style="color:rgba(94, 15, 15, 0.83); margin-bottom: 4px;">&nbsp;&nbsp; &nbsp;&nbsp; اطلاعات کلی منطقه  </h6>
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>جمعیت کل:</strong></td>
@@ -1553,7 +1557,12 @@ export class GandomMap1 {
                             <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong>مساحت کل:</strong></td>
                             <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(area)} هکتار مربع</td>
                         </tr>
-                    </table>
+                 
+                                         <tr>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;"><strong> تراکم جمعیت:</strong></td>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;">${this.formatNumber(density1)} نفر/هکتار  </td>
+                        </tr>
+                        </table>
                     ${storeInfo}
                 </div>`;
 
@@ -1563,7 +1572,19 @@ export class GandomMap1 {
                 closeButton: true,
                 closeOnClick: true
             }).openPopup();
-            console.log('DEBUG-5: popupContent');
+
+            // ... existing code ...
+            window.population = [
+                `تراکم جمعیت: ${this.formatNumber(density1)} نفر/هکتار`,
+                `تراکم خانوار: ${this.formatNumber(households / area)} خانوار/هکتار`,
+                `مساحت: ${this.formatNumber(area)} هکتار`,
+                `جمعیت کل: ${this.formatNumber(population)} نفر`,
+                `تعداد خانوار: ${this.formatNumber(households)} خانوار`
+            ];
+            // console.log( '===== ',  window.categoryStatistics);
+
+            // ... existing code ...
+            // console.log('DEBUG-5: popupContent');
         } catch (error) {
             console.error('Error in showPopulationInfo:', error);
         }
@@ -1950,21 +1971,161 @@ export class GandomMap1 {
      * @returns {Promise<Array>} آرایه‌ای از تمام اطلاعات جمع‌آوری شده
      */
     async get_alldata(longitude) {
-
+        window.categoryStatistics = [];
+        window.population = [];
         try {
             const point = new L.LatLng(longitude[0], longitude[1]);
 
-            const [businessData, densityData, nearestStore] = await Promise.all([
+            const [nearestStore, businessData, densityData] = await Promise.all([
+                this.findNearestStore(longitude),
                 this.collectBusinessData(point),
-                this.collectDensityData(point, longitude),
-                this.findNearestStore(longitude)
+                this.collectDensityData(point, longitude)
+
             ]);
-            // لاگ خطاها در محیط development
-            if (process.env.NODE_ENV === 'development') {
-                this.logErrors([businessData, densityData, nearestStore]);
+
+            // Add data to the markers
+            // this.markers.forEach(marker => {
+            //     marker.bindPopup(window.categoryStatistics);
+            // });
+
+            if (this.userMarker && (window.categoryStatistics || window.population)) {
+                const currentContent = this.userMarker.getPopup().getContent();
+
+                // استایل جمع‌وجور برای جدول فقط یکبار در ابتدای جدول
+                const compactStyle = `
+                    <style>
+                        td, th { line-height: 0!important;  font-size:10px !important; }
+                        input.value-input { width: 26px !important; padding: 1px !important; font-size: 9px !important; }
+                        h6 { margin: 2px 0 2px 0 !important; font-size: 12px !important; }
+                    </style>
+                `;
+
+                // جدول دسته‌بندی کسب‌وکارها
+                let categoryTable = '';
+                if (window.categoryStatistics && window.categoryStatistics.length > 0) {
+                    categoryTable = `
+                        <div style="margin-top: 5px; border-top: 1px solid #eee; padding-top: 2px;">
+                            <h6 style="color:rgb(20, 21, 110);; text-align: right;">دسته‌ بندی کسب و کارها</h6>
+                            <table style="width: 100%; border-collapse: collapse; direction: rtl;text-align:right;">
+                                ${compactStyle}
+                                <thead >
+                                    <tr style="background-color:rgba(164, 227, 142, 0.73); height:18px">
+                                        <th style="border-bottom: 1px solid #ddd;">عنوان</th>
+                                        <th style="border-bottom: 1px solid #ddd;">تعداد</th>
+                                        <th style="border-bottom: 1px solid #ddd;">&nbsp;&nbsp; ارزش  </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${window.categoryStatistics.map(item => `
+                                        <tr>
+                                            <td style="border-bottom: 0.5px solid #eee;">${item.persianName}</td>
+                                            <td style="border-bottom: 0.5px solid #eee; text-align: center;">${item.count}</td>
+                                            <td style="border-bottom: 0.5px solid #eee; text-align: center;">
+                                                <input type="number"
+                                                    class="value-input"
+                                                    data-category="${item.persianName}"
+                                                    min="1"
+                                                    max="100"
+                                                    style="border: 1px solid #ddd; border-radius: 2px; text-align: center;">
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // جدول اطلاعات جمعیتی (فقط سه ردیف مهم)
+                let populationTable = '';
+                if (window.population && window.population.length > 0) {
+                    // استخراج مقادیر مورد نیاز
+                    const popRow = window.population.find(x => x.includes('جمعیت کل')) || '';
+                    const famRow = window.population.find(x => x.includes('تعداد خانوار')) || '';
+                    const densRow = window.population.find(x => x.includes('تراکم جمعیت')) || '';
+
+                    // استخراج مقدار عددی
+                    const popValue = popRow.replace('جمعیت کل: ', '').replace(' نفر', '');
+                    const famValue = famRow.replace('تعداد خانوار: ', '').replace(' خانوار', '');
+                    const densValue = densRow.replace('تراکم جمعیت: ', '').replace(' نفر/هکتار', '');
+
+                    populationTable = `
+                      
+    <div style="margin-top: 5px; border-top: 1px solid #eee; padding-top: 2px;">
+        <h6 style="color: #2c3e50;text-align:right;">اطلاعات جمعیتی</h6>
+        <table style="width: 100%; border-collapse: collapse; direction: rtl; text-align: right;">
+            ${compactStyle}
+            <thead>
+                <tr style="background-color:rgb(234, 236, 176);height:18px">
+                    <th style="border-bottom: 1px solid #ddd;">عنوان</th>
+                    <th style="border-bottom: 1px solid #ddd;">مقدار</th>
+                    <th style="border-bottom: 1px solid #ddd;">ارزش</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border-bottom: 0.5px solid #eee;">جمعیت کل</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">${popValue}</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">
+                        <input type="number" class="value-input" data-category="جمعیت کل" min="1" max="100"
+                            style="border: 1px solid #ddd; border-radius: 2px; text-align: center;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: 0.5px solid #eee;">تعداد خانوار</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">${famValue}</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">
+                        <input type="number" class="value-input" data-category="تعداد خانوار" min="1" max="100"
+                            style="border: 1px solid #ddd; border-radius: 2px; text-align: center;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: 0.5px solid #eee;">تراکم جمعیت</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">${densValue}</td>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center;">
+                        <input type="number" class="value-input" data-category="تراکم جمعیت" min="1" max="100"
+                            style="border: 1px solid #ddd; border-radius: 2px; text-align: center;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: 0.5px solid #eee; text-align: center; width: 100px;">
+                        <button id="sum-values-btn" class="okc">
+                            جمع ارزش‌ها
+                        </button>
+                    </td>
+                    <td> ===> </td>
+                    <td> <span id="sum-values-result"
+                            style="margin-right: 6px; color: #2c3e50; font-weight: bold;"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>`;
+                }
+
+                const newContent = currentContent + categoryTable + populationTable;
+                this.userMarker.setPopupContent(newContent);
+
+
+                this.map.on('popupopen', function (e) {
+                    const inputs = document.querySelectorAll('.value-input[type="number"]');
+                    const sumBtn = document.getElementById('sum-values-btn');
+                    const sumResult = document.getElementById('sum-values-result');
+                    if (sumBtn) {
+                        sumBtn.onclick = function () {
+                            let sum = 0;
+                            inputs.forEach(input => {
+                                const val = parseFloat(input.value);
+                                if (!isNaN(val)) sum += val;
+                            });
+                            sumResult.textContent = sum;
+                        };
+                    }
+                });
             }
 
-            return await this.processAndFormatData({
+            console.log('window.categoryStatistics =', window.categoryStatistics, 'window.population = ', window.population);
+            return this.processAllData({
                 businesses: businessData.data,
                 density: densityData.data?.density,
                 district: densityData.data?.district,
@@ -2001,6 +2162,7 @@ export class GandomMap1 {
         try {
             this.cclearMap(this.map);
             const businessData = await this.allbisinespoint(point, 1000);
+
             return businessData || [];
         } catch (error) {
             console.error('خطا در دریافت اطلاعات کسب و کارها:', error);
@@ -2016,6 +2178,7 @@ export class GandomMap1 {
     async collectDensityData(point, coords) {
         try {
             const density = await this.drawPopulationDensity(point, this.map);
+
             if (!density) {
                 const district = await this.drawDistrict(coords[0], coords[1], this.map);
                 return { density: null, district };
@@ -2038,7 +2201,7 @@ export class GandomMap1 {
             let minDistAny = Infinity;
             let nearestOpen = null;
             let nearestAny = null;
-
+            let storeCode = null;
             this.gandompoint1.eachLayer(layer => {
                 if (layer.getLatLng) {
                     const latlng = layer.getLatLng();
@@ -2046,8 +2209,9 @@ export class GandomMap1 {
                     const popupContent = layer.getPopup()?.getContent() || '';
                     const status = this.extractStoreStatus(popupContent);
 
-                    // بررسی فروشگاه‌های باز
+                    // بررسی فروشگاه‌های باز        window.categoryStatistics = [];
                     if (status === 'باز' && dist < minDistOpen) {
+                        storeCode = this.extractStoreCode(popupContent);
                         minDistOpen = dist;
                         nearestOpen = {
                             location: latlng,
@@ -2076,7 +2240,9 @@ export class GandomMap1 {
                 this.displayNearestStore(nearest, coords);
             }
 
+            // console.log('اطلاعات فروشگاه:',  storeCode);
             return {
+                storeCode: storeCode,
                 nearest: nearest,
                 distanceKm: (minDistAny / 1000).toFixed(2)
             };
@@ -2098,6 +2264,17 @@ export class GandomMap1 {
     }
 
     /**
+     * استخراج کد فروشگاه از محتوای پاپ‌آپ
+     * @param {string} popupContent - محتوای HTML پاپ‌آپ
+     * @returns {string} کد فروشگاه
+     */
+    extractStoreCode(popupContent) {
+        const regex = /کد فروشگاه:\s*(\d+)/;
+        const match = popupContent.match(regex);
+        return match && match[1] ? match[1].trim() : '';
+    }
+
+    /**
      * نمایش نزدیک‌ترین فروشگاه روی نقشه
      * @param {Object} store - اطلاعات فروشگاه
      * @param {Array} userCoords - مختصات کاربر
@@ -2113,13 +2290,17 @@ export class GandomMap1 {
             .openPopup();
 
         this.markers = [marker];
-        this.map.setView([store.location.lat, store.location.lng], 16);
+        this.map.setView(userCoords, 16);
 
         // نمایش موقعیت کاربر
         const distanceKm = (store.distance / 1000).toFixed(2);
-        const userPopup = `<span style="color: red; font-size: 12px;"> میزان فاصله از فروشگاه گندم: ${distanceKm} کیلومتر</span>`;
-        console.log('MARKER_12: Creatin at:', userCoords, 'for category:', 'userPopup');
-        L.marker(userCoords).addTo(this.map).bindPopup(userPopup);
+        const userPopup = `<span style="color: red; font-size: 12px;">  فاصله از فروشگاه گندم: ${distanceKm} کیلومتر</span>`;
+
+        // console.log('MARKER_12: Creatin at:', userCoords, 'for category:', 'userPopup');
+
+        this.userMarker = L.marker(userCoords).addTo(this.map).bindPopup(userPopup);
+
+
     }
 
     async draw_loc(longitude, icon1, textRadius, map) {
@@ -2144,12 +2325,10 @@ export class GandomMap1 {
 
 
     // تابع بهینه‌سازی شده برای شمارش و نمایش مکان‌های نزدیک
-
     async count_other(longitude, latitude, textRadius, map, subcategory, radius) {
         try {
 
             const url = `https://map.ir/places/count?$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km`;
-
             const response = await $.ajax({
                 type: 'GET',
                 url: url,
@@ -2158,27 +2337,25 @@ export class GandomMap1 {
                     'content-type': 'application/json'
                 }
             });
-
             if (!response?.data?.count) {
+                console.log("داده‌ای برای این موقعیت یافت نشد.");
                 return [];
             }
-
             const totalCount = response.data.count;
             window.locationCounts = {};
             const batchSize = 20;
             let allLocations = [];
-
             for (let offset = 0; offset < totalCount; offset += batchSize) {
                 const locations = await this.fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius);
                 if (locations && locations.length > 0) {
                     allLocations = allLocations.concat(locations);
                 }
             }
-
             return allLocations;
-
         } catch (error) {
-            if (error.status === 401) {
+            if (error.status === 404) {
+                console.log("داده‌ای برای این موقعیت یافت نشد.");
+            } else if (error.status === 401) {
                 console.error('خطای اعتبارسنجی - لطفا API key را بررسی کنید');
             } else if (error.status === 500) {
                 console.error('خطای سرور - لطفاً بعداً تلاش کنید');
@@ -2188,6 +2365,7 @@ export class GandomMap1 {
             return [];
         }
     }
+
 
     async fetchLocationDetails(longitude, latitude, offset, map, subcategory, radius) {
         const url = `https://map.ir/places/list?$top=20&$skip=${offset}&$filter=lat eq ${latitude} and lon eq ${longitude} and subcategory eq ${subcategory} and buffer eq ${radius}km and sort eq true`;
@@ -2298,22 +2476,22 @@ export class GandomMap1 {
             .then(data => {
                 if (!data.results || data.results.length === 0) {
                     return;
-                }            
+                }
                 data.results.forEach(result => {
                     const attributes = result.attributes;
-                    const geometry = result.geometry;                 
+                    const geometry = result.geometry;
                     let name0 = attributes.Name;
                     let category0 = attributes.Category.trim();
                     if (category0 != 'سوپرمارکت') {
                         let txt = `${attributes.Category.trim()}<br/>${attributes.Name === '0' ? '' : attributes.Name}`;
-                    
-                      const icon1 = this.addAllMarker(
-                        category0,
-                        name0,
-                       undefined,
-                    );
 
-                         L.marker([geometry.y, geometry.x] , {icon:icon1}).addTo(this.map).bindPopup(txt);
+                        const icon1 = this.addAllMarker(
+                            category0,
+                            name0,
+                            undefined,
+                        );
+
+                        L.marker([geometry.y, geometry.x], { icon: icon1 }).addTo(this.map).bindPopup(txt);
                     }
                 });
             })
@@ -2425,18 +2603,26 @@ export class GandomMap1 {
             'university': 'دانشگاه'
         };
 
-        // مرتب‌سازی و نمایش اطلاعات کسب و کارها
-        Object.entries(window.locationCounts)
+        // ساخت آرایه از اطلاعات دسته‌بندی‌ها
+        const categoryStats = Object.entries(window.locationCounts)
             .sort(([keyA], [keyB]) => (persianNames[keyA] || keyA).localeCompare(persianNames[keyB] || keyB))
-            .forEach(([category, count]) => {
-                const persianName = persianNames[category] || category;
-                reportContent += `
-                    <tr>
-                        <td style="padding: 3px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
-                        <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
-                    </tr>`;
-            });
+            .map(([category, count]) => ({
+                persianName: persianNames[category] || category,
+                count: count
+            }));
 
+        // ذخیره آرایه در متغیر گلوبال برای استفاده بعدی
+        window.categoryStatistics = categoryStats;
+
+        // ساخت HTML از آرایه (اگر هنوز نیاز به نمایش فوری هست)
+        categoryStats.forEach(({ persianName, count }) => {
+            reportContent += `
+                <tr>
+                    <td style="padding: 3px; border-bottom: 1px solid #eee;"><strong>${persianName}:</strong></td>
+                    <td style="padding: 3px; border-bottom: 1px solid #eee;">${count} مورد</td>
+                </tr>`;
+        });
+        // console.log(categoryStatistics.length , ' ===reportContent');
         reportContent += '</table>';
 
         // اضافه کردن دکمه خروجی PDF
@@ -2537,7 +2723,7 @@ export class GandomMap1 {
             iconSize: [24, 24],
             iconAnchor: [52, 54]
         });
-        console.log('MARKER_00:   0000:',  'for category:',  textpop );
+        // console.log('MARKER_00:   0000:', 'for category:', textpop);
         L.marker([latitude, longitude], { icon })
             .addTo(map).bindPopup(textpop);
 
@@ -2615,7 +2801,11 @@ export class GandomMap1 {
         "کوثر": new L.FeatureGroup(),
         "وین مارکت": new L.FeatureGroup(),
         "مفید": new L.FeatureGroup(),
-        "سپه": new L.FeatureGroup()
+        "سپه": new L.FeatureGroup(),
+        "سورن": new L.FeatureGroup(),
+        "محسن": new L.FeatureGroup(),
+        "ویوان": new L.FeatureGroup(),
+        "شهر خرید": new L.FeatureGroup()
     };
 
     // مدیریت لایه‌های نقشه
@@ -2966,11 +3156,11 @@ export class GandomMap1 {
         }
 
         if (!coords || !coords[0] || !coords[1]) {
-            console.log(icon,'=== === O  K  O  K  ===:', category);
+            console.log(icon, '=== === O  K  O  K  ===:', category);
             return icon;
         }
 
-        console.log(title,'MARKER_012: :', icon, 'for category:', category);
+        console.log(title, 'MARKER_012: :', icon, 'for category:', category);
 
         let categoryid2 = ' <center>  <span style=" color: #CC33FF"> ' + category + ' </span>  <br />' + title + '<br />' + '</center>';
         const marker = L.marker(coords, { icon });
@@ -3086,12 +3276,16 @@ export class GandomMap1 {
                     });
                 }
             });
-
             await this.showPopulationInfo(rectangle, totalPopulation, totalHouseholds, totalArea);
-            return totalPopulation + ',' + totalHouseholds + ',' + totalArea;
+            const density = totalArea > 0 ? (totalPopulation / totalArea).toFixed(2) : 0;
+            // console.log(density, '=-=-=-', totalPopulation, '---', totalPopulation, '===', ' ===totalPopulation', totalArea);
+
+            return { population: totalPopulation, households: totalHouseholds, area: totalArea, tarakom: density };
+
+            // return totalPopulation + ',' + totalHouseholds + ',' + totalArea;
 
         } catch (error) {
-            console.error('Error in drawPopulationDensity:', error);
+            console.error('Error in    tionDensity:', error);
             return null;
         }
     }
@@ -3183,6 +3377,7 @@ export class GandomMap1 {
             status: this.extractStoreStatus(store.nearest.popup)
         };
     }
+
 
     /**
      * پردازش تمام داده‌ها

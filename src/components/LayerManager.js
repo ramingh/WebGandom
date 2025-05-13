@@ -112,9 +112,9 @@ export class LayerManager {
                         // می‌توانید اختیاری بررسی کنید که آیا اعداد در محدوده معقول مختصات هستند.  
                         // مثال: if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {  
                       
-                        const result =    this.map.get_alldata([lat, lon]); // فرض می‌کنیم find_market یک آرایه [lat, lon] می‌پذیرد.  
-                     
-                    //   console.log(result, 'result -------------ly');
+                        this.map.get_alldata([lat, lon]).then(result => {
+                            console.warn(result, 'result --');
+                        });
                         // } else {  
                         //    console.warn(`Invalid geographic coordinates: "${searchValue}". Values out of range.`);  
                         //    // پیام خطایی به کاربر نمایش دهید.  
@@ -420,19 +420,7 @@ export class LayerManager {
                     // فراخوانی متد count_other از NewMap
                     try {
 
-                        const result = await this.map.draw_loc(
-                            latlng, markerIcon,
-                            `
-                            <div style="direction: rtl; text-align: right;">
-                                <strong>${name}</strong><br>
-                                منطقه: ${mantag}<br>
-                                وضعیت: ${statos}<br>
-                                کد فروشگاه: ${storid}
-                            </div>
-                        `,
-                            // map instance
-                            this.map
-                        );
+                        const result = await this.get_alldata([latitude, longitude]);
                         console.log('نتایج test1:', result);
                     } catch (error) {
                         console.error('خطا در فراخوانی test1:', error);
