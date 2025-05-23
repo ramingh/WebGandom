@@ -39,8 +39,19 @@
 </head>
 
 <body>
+
+
+
+
+
+
+
+
+
+
     <!-- Loading Spinner -->
-    <div id="loading-spinner" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+    <div id="loading-spinner"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
         style="background-color: rgba(60, 53, 70, 0.5); z-index: 10000;">
         <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">در حال بارگذاری...</span>
@@ -73,7 +84,7 @@
                         <button type="submit" class="btn"
                             style="background-color: #60119adf; color: white;">ورود</button>
                         <span style="margin-top: 8px;  font-size: 13px; color: #60119adf;"> تیم توسعه ICT گندم</span>
-                        <button    type="button"  id="logout-button" class="btn btn-sm position-absolute top-0 end-0 m-13"
+                        <button type="button" id="logout-button" class="btn btn-sm position-absolute top-0 end-0 m-13"
                             style="z-index: 9999; background-color: rgb(117, 50, 167); color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 0.8em;">
                             خروج <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -93,13 +104,13 @@
             <div id="map">
             </div>
             <div id="sidebar">
-         
+
             </div>
         </div>
     </div>
 
     <!-- Base Map Toggle Button -->
-    <button  type="button" class="basemap-toggle">
+    <button type="button" class="basemap-toggle">
         <i class="fas fa-layer-group"></i>نقشه پایه
     </button>
 
@@ -119,7 +130,7 @@
         </label>
     </div>
 
-    <button  type="button" id="trash-button" class="trash-button">
+    <button type="button" id="trash-button" class="trash-button">
         <img src="/IMG/clear3.png" alt="حذف">
     </button>
 
@@ -134,13 +145,13 @@
 
         // مدیریت فرم لاگین
         $(document).ready(function () {
-       
+
             if (localStorage.getItem('isLoggedIn') === 'true') {
                 $('#login-container').remove();  // فرم لاگین را حذف کن
                 $('#app').show();                // بخش اصلی را نمایش بده
                 return;
             }
-       
+
             $('#login-form').on('submit', function (e) {
                 e.preventDefault();
                 const username = $('#username').val();
@@ -201,4 +212,3 @@
 </body>
 
 </html>
- 

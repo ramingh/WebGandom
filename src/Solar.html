@@ -1,0 +1,1466 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Solar System </title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/leaflet.css">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+        
+        -->
+    <!-- <script src="Leaflet/JS/bootstrap.bundle.min.js"></script> -->
+
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/markercluster.css">
+    <link rel="stylesheet" href="https://gis1.gandomcs.com/gis/Leaflet/CSS/MarkerCluster.Default.css">
+    <!-- JS -->
+    <script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.js"></script>
+
+    <script src="https://gis1.gandomcs.com/gis/Leaflet/JS/leaflet.markercluster.js"></script>
+
+
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #MapSection,
+        .container {
+            height: 100vh !important;
+            min-height: 100vh !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .popup-body p {
+            margin: 1px 0;
+            /* کاهش فاصله بین پاراگراف‌ها */
+            line-height: 1.5;
+            /* کاهش ارتفاع خطوط */
+            font-size: 10px;
+            /* کوچکتر کردن متن برای نظم بیشتر */
+            text-align: center;
+
+        }
+
+        .leaflet-popup {
+            background: #562d6f7c;
+            border: 2px solid #272d25;
+            border-radius: 10px;
+
+        }
+
+        .popup-header {
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .node-up {
+            color: green;
+            line-height: 0.4;
+        }
+
+        .node-down {
+            color: red;
+        }
+
+        form {
+            overflow: hidden;
+
+            margin-left: 10px;
+            margin-right: 0px;
+            background: rgba(60, 108, 10, 0.79);
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .closebtn {
+            color: rgb(230, 223, 14);
+            background-color: rgba(54, 23, 211, 0.756);
+            cursor: pointer;
+        }
+
+        .popup-footer {
+            text-align: center;
+            padding: 0 8px 8px 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 5px;
+        }
+
+        .update-button {
+            position: absolute;
+            top: 20px;
+            right: 230px;
+            /* کنار جدول وضعیت */
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .update-button:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .continue-btn {
+            background-color: inherit;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma;
+            font-size: 11px;
+            text-decoration: none;
+            display: inline-block;
+            margin: -5px 0 5px 0;
+            position: relative;
+            text-align: center;
+            width: 90%;
+            transition: all 0.3s ease;
+        }
+
+        .continue-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .continue-btn::after {
+            content: '←';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 14px;
+        }
+
+        /* استایل فرم وضعیت فروشگاه */
+        .store-status-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.881);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            width: 60%;
+            max-width: 400px;
+            z-index: 1000;
+            direction: rtl;
+            font-size: 12px;
+        }
+
+        .store-status-form h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .store-status-form h2 {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .store-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #ffd700;
+            margin-left: 8px;
+        }
+
+        .ping-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 12px;
+        }
+
+        .ping-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px;
+            border-radius: 3px;
+        }
+
+        .status-ok {
+            color: #00ff00;
+        }
+
+        .status-not-ok {
+            color: #ff0000;
+        }
+
+        /* اضافه کردن استایل جدول وضعیت */
+        .status-table {
+            position: fixed;
+            top: 40px;
+            right: 10px;
+            background: rgb(255, 255, 255);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            direction: rtl;
+            min-width: 150px;
+            font-size: 14px;
+            font-weight: bolder;
+
+        }
+
+        .status-table:hover {
+            background: rgb(255, 255, 255);
+        }
+
+        .status-table table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .status-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .status-table tr:first-child th {
+            border-bottom: 2px solid #ddd;
+        }
+
+        .status-1 {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: #006400;
+        }
+
+        .status-2 {
+            background-color: rgba(255, 0, 0, 0.589);
+            color: #8B0000;
+        }
+
+        .update-cell {
+            background-color: #339836c4 !important;
+            color: white !important;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none !important;
+            font-family: Vazir, Tahoma;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+
+        }
+
+        .update-cell:hover {
+            background-color: #6682e6ae !important;
+        }
+
+        .notification {
+            visibility: hidden;
+            position: fixed;
+            top: 180px;
+            right: 40px;
+            background-color: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: Vazir, Tahoma;
+            min-width: 300px;
+        }
+
+        .notification.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: white;
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .notification-message {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .notification-close {
+            cursor: pointer;
+            padding: 5px;
+            font-size: 18px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+        }
+
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .notification-progress-bar {
+            height: 100%;
+            width: 100%;
+            background-color: white;
+            transform-origin: left;
+            animation: progress 5s linear;
+        }
+
+        @keyframes progress {
+            from {
+                transform: scaleX(1);
+            }
+
+            to {
+                transform: scaleX(0);
+            }
+        }
+
+        /* اضافه کردن استایل فرم تنظیمات */
+        .settings-button {
+            position: fixed;
+            top: 10px;
+            right: 2px;
+            background-color: #4a90e2;
+            color: white;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 32px;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            /* ... سایر استایل‌ها ... */
+            line-height: 32px;
+
+        }
+
+        .settings-button:hover {
+            transform: rotate(30deg);
+            background-color: #357abd;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 12px 10px 10px 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+            z-index: 1002;
+            width: 220px;
+            direction: rtl;
+            border: 1px solid #e0e6ed;
+        }
+
+        .settings-modal h3 {
+
+            margin: 0 0 10px 0;
+            color: #222;
+            font-family: Vazir, Tahoma;
+            font-size: 12px;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 0px;
+            background: #ffffff88;
+        }
+
+        .settings-form .input-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .settings-form label {
+            font-size: 11px;
+            color: #444;
+            font-family: Vazir, Tahoma;
+            font-weight: 500;
+            min-width: 80px;
+            margin-bottom: 0;
+        }
+
+        .settings-form input {
+            padding: 3px 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 13px;
+            background: #abc7aba0;
+            width: 60px;
+            text-align: center;
+            transition: border 0.2s;
+            outline: none;
+            margin-bottom: 0;
+            box-sizing: border-box;
+        }
+
+        .settings-form input:focus {
+            border: 1px solid #4a90e2;
+            background: #f0f6ff;
+        }
+
+        .settings-form button {
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            padding: 6px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: Vazir, Tahoma;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 6px;
+            box-shadow: none;
+            transition: background 0.2s;
+        }
+
+        .settings-form button:hover {
+            background: #08e34ad0;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+
+        .inactive-stores-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .inactive-stores-link {
+            color: #f4ffb4;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .inactive-stores-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 250px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .inactive-stores-content.show {
+            display: block;
+        }
+
+        .inactive-store-item {
+            padding: 6px 8px;
+            font-size: 11px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            background-color: #fff3f3;
+        }
+
+        .inactive-store-item:hover {
+            background-color: #ffe6e6;
+        }
+
+        .search-container {
+            position: fixed;
+            top: -2px;
+            right: 40px;
+            background: rgb(255, 255, 255);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            direction: rtl;
+
+            font-size: 9px;
+
+        }
+
+        .search-input {
+            width: 100px;
+            background-color: #ffffffb4;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- اضافه کردن جدول وضعیت -->
+    <div class="status-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>وضعیت</th>
+                    <th>تعداد</th>
+                </tr>
+            </thead>
+            <tbody id="status-counts">
+                <!-- محتوا با JavaScript پر می‌شود -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="MapSection" class="container">
+    </div>
+    <span class="closebtn">&times;</span>
+
+
+    <script>
+        // تعریف متغیر global_status و refresh_interval در ابتدای اسکریپت
+        let global_status = parseInt(localStorage.getItem('globalStatus')) || 10; // مقدار پیش‌فرض 10
+        let refresh_interval = parseInt(localStorage.getItem('refreshInterval')) || 60; // مقدار پیش‌فرض 60 ثانیه
+        let refreshTimer = null;
+
+        const url_rest = 'https://gis.gandomcs.com/arcgis/rest/services/IR26/MapServer/8/query?where=%28Latitude+is+not+null%29+and+%28Longitude+is+not+null%29&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StoreCode%2CLongitude%2CLatitude%2CStoreName%2CGZone&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&returnTrueCurves=false&resultOffset=&resultRecordCount=&f=pjson';
+        // var url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';
+        let array2 = [];
+        let aray1 = [];
+        const url_path = '/IMG/';
+        // تعریف کانفیگ وضعیت فروشگاه‌ها
+        const STORE_STATUS_CONFIG = {
+            "باز": {
+                color: 'green',
+                icon:  'Gandom_'
+            },
+            "بسته": {
+                color: 'red',
+                icon:  'Gandomb_'
+            },
+            "در حال جمع آوری": {
+                color: 'blue',
+                icon: 'Gandomj_'
+            },
+            "در حال راه اندازی": {
+                color: '#AA00CC',
+                icon: 'Gandomd_'
+            }
+        };
+
+        // تابع ایجاد آیکون بر اساس وضعیت فروشگاه
+        function getStoreIcon(status) {
+            // تبدیل وضعیت به حالت استاندارد
+            let normalizedStatus = status;
+            if (status === "1" || status === 1) normalizedStatus = "باز";
+            if (status === "2" || status === 2) normalizedStatus = "بسته";
+            
+            // دریافت کانفیگ وضعیت
+            const config = STORE_STATUS_CONFIG[normalizedStatus] || STORE_STATUS_CONFIG["بسته"];
+            
+            // ایجاد و برگرداندن آیکون
+            return L.icon({
+                iconUrl: url_path + config.icon + '.png',
+                iconSize: [12, 12],
+                popupAnchor: [50, 0]
+            });
+        }
+
+        const state1_ = L.icon({
+            iconUrl: url_path + 'state1.png',
+            iconSize: [12, 12],
+            popupAnchor: [50, 0]
+        });
+        const state2_ = L.icon({
+            iconUrl: url_path + 'state2.png',
+            iconSize: [12, 12]
+        });
+
+        async function get_solar() {
+            try {
+                const url = 'https://gis1.gandomcs.com/gandom/getdata.asmx/All_solar';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': "application/xml" }
+                });
+
+                if (!response.ok) throw new Error('خطا در ارتباط با سرور سولار: ' + response.statusText);
+
+                const xmlString = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+                const result = xmlDoc.getElementsByTagName("string")[0]?.textContent;
+
+                if (!result) throw new Error('داده‌ای یافت نشد');
+
+                // نمایش مقادیر خام دریافت‌شده
+                // console.log("🚀 داده خام دریافتی:", result);
+
+                const resultArray = result.split("#").map(store => {
+                    const dataArray = store.split(',');
+                    return {
+                        NodeID: dataArray[0],
+                        City: dataArray[1],
+                        Department: dataArray[2],
+                        StoreCode: dataArray[3],
+                        IPAddress: dataArray[4],
+                        Caption: dataArray[5],
+                        Status: dataArray[6],  // مقدار Status
+                        StatusLED: dataArray[7],
+                        AvgResponseTime: dataArray[8],
+                        ResponseTime: dataArray[9],
+                        PercentLoss: dataArray[10]
+                    };
+                });
+
+                // نمایش تمام مقادیر قبل از فیلتر شدن
+                //    console.log("📌 تمام داده‌های قبل از فیلتر:", resultArray);
+
+                // شمارش تعداد هر وضعیت
+                const statusCounts = {
+                    status1: 0,
+                    status2: 0,
+                    status9: 0
+                };
+
+                const inactiveStores = [];
+
+                resultArray.forEach(item => {
+                    const statusNum = Number(item.Status);
+                    if (statusNum === 1) statusCounts.status1++;
+                    else if (statusNum === 2) {
+                        statusCounts.status2++;
+                        inactiveStores.push(item.Caption); // ذخیره Caption فروشگاه‌های غیرفعال
+                    }
+                    else if (statusNum === 9) statusCounts.status9++;
+                });
+           console.log(statusCounts.status2, ' == 2 ==', global_status);
+
+                if (statusCounts.status2 > global_status) {
+                    showNotification(`تعداد ${statusCounts.status2} فروشگاه غیرفعال از حد مجاز (${global_status}) بیشتر است!`);
+                    console.log('تعداد وضعیت 2 بیشتر از 10 است');
+                }
+            
+                array2 = resultArray.filter(item => {
+                    const statusNum = Number(item.Status);
+                    return statusNum !== 9; // فقط مقدار 9 را حذف کن
+                });
+
+                // نمایش مقادیر نهایی بعد از فیلتر شدن
+                console.log(statusCounts);
+
+                // به‌روزرسانی جدول وضعیت
+                const statusTable = document.getElementById('status-counts');
+                // در تابع get_solar، جایی که جدول را به‌روز می‌کنید
+                let tableHTML = `
+    <tr class="status-1">
+        <td>فروشگاه‌های فعال</td>
+        <td>${statusCounts.status1}</td>
+    </tr>
+    <tr class="status-2">
+        <td>فروشگاه‌های غیرفعال</td>
+        <td>
+            <div class="inactive-stores-dropdown">
+                <a class="inactive-stores-link" onclick="toggleInactiveStores(event)">
+                    ${statusCounts.status2} &nbsp;  (نمایش)
+                </a>
+                <div class="inactive-stores-content" id="inactiveStoresList">`;
+
+                // اضافه کردن فروشگاه‌های غیرفعال به لیست
+                inactiveStores.forEach(store => {
+                    tableHTML += `
+        <div class="inactive-store-item">${store}</div>`;
+                });
+
+                tableHTML += `
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" class="update-cell" onclick="clearMap(map)">به ‌روز رسانی</td>
+    </tr>`;
+
+                statusTable.innerHTML = tableHTML;
+            } catch (error) {
+                console.error('⚠ خطا در دریافت اطلاعات سولار:', error);
+            }
+        }
+
+        function toggleInactiveStores(event) {
+            event.stopPropagation(); // جلوگیری از انتشار رویداد کلیک
+            const dropdown = document.getElementById('inactiveStoresList');
+            dropdown.classList.toggle('show');
+
+            // بستن dropdown با کلیک خارج از آن
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!e.target.matches('.inactive-stores-link')) {
+                    dropdown.classList.remove('show');
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }
+
+        // بستن dropdown با کلید ESC
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                const dropdown = document.getElementById('inactiveStoresList');
+                if (dropdown) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        });
+        async function get_gandom() {
+            try {
+                const response = await fetch(url_rest);
+                if (!response.ok) throw new Error('پاسخ سرور نامعتبر است');
+                const json = await response.json();
+
+                if (json.features?.length > 0) {
+                    aray1 = json.features.map(result => ({
+                        StoreCode: result.attributes.StoreCode,
+                        StoreName: result.attributes.StoreName,
+                        GZone: result.attributes.GZone,
+                        Longitude: parseFloat(result.attributes.Longitude),
+                        Latitude: parseFloat(result.attributes.Latitude)
+                    })).filter(store => isFinite(store.Longitude) && isFinite(store.Latitude));
+                }
+            } catch (error) {
+                console.error('خطای Fetch:', error);
+            }
+        }
+
+
+        function linkData() {
+            const linkedData = aray1.map(store1 => {
+                const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
+                return matchingStore2 ? { ...store1, ...matchingStore2 } : null;
+            }).filter(item => item);
+
+            // تعریف گروه خوشه‌بندی
+            const openMarkers = L.markerClusterGroup({
+                iconCreateFunction: function (cluster) {
+                    return L.divIcon({
+                        html: `<div style="
+                        background: green;
+                        border-radius: 50%;
+                        width: 35px; height: 35px; 
+                        text-align: center; 
+                        color: white; 
+                        font-weight: bold;
+                        line-height: 35px;">
+                        ${cluster.getChildCount()}
+                    </div>`,
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(35, 35)
+                    });
+                }
+            });
+
+            const closedMarkers = L.markerClusterGroup({
+                iconCreateFunction: function (cluster) {
+                    return L.divIcon({
+                        html: `<div style="
+                        background: red;
+                        border-radius: 50%;
+                        width: 35px; height: 35px; 
+                        text-align: center; 
+                        color: white; 
+                        font-weight: bold;
+                        line-height: 35px;">
+                        ${cluster.getChildCount()}
+                    </div>`,
+                        className: 'custom-cluster-icon',
+                        iconSize: L.point(35, 35)
+                    });
+                }
+            });
+
+            linkedData.forEach(feature => {
+                if (isFinite(feature.Latitude) && isFinite(feature.Longitude)) {
+                    const iconbase = parseInt(feature.Status) === 1 ? state2_ : state1_;
+
+                    const popupContent = `
+                <div class="popup-container">
+                    <div class="popup-header" style="background-color: ${parseInt(feature.Status) === 1 ? 'green' : 'red'}; color: white;">
+                    کد : <b>${feature.StoreCode} <br /> ${feature.StoreName}</b>
+                    </div>
+                    <div class="popup-body">
+                        <p><b>Polling IP Address:</b> ${feature.IPAddress}</p>
+                        <p><b>منطقه:</b> ${feature.GZone}</p>
+                        <p><b>Avg Resp Time:</b> ${feature.AvgResponseTime} ms</p>
+                        <p><b>Packet Loss:</b> ${feature.PercentLoss}%</p>
+                        <p style="color: ${parseInt(feature.Status) === 1 ? 'green' : 'red'}; font-weight: bold;">
+                            وضعیت: ${parseInt(feature.Status) === 1 ? 'فعال' : 'غیرفعال'}
+                        </p>
+                    </div>
+                    <div class="popup-footer">
+                        <button onclick="checkStore(${feature.StoreCode})" class="continue-btn" style="background-color: ${parseInt(feature.Status) === 1 ? 'green' : 'red'}">مشاهده جزئیات</button>
+                    </div>
+                </div>
+            `;
+
+                    const marker = L.marker([feature.Latitude, feature.Longitude], { icon: iconbase })
+                        .bindPopup(popupContent);
+
+                    if (parseInt(feature.Status) === 1) {
+                        openMarkers.addLayer(marker);  // فروشگاه‌های باز
+                    } else {
+                        closedMarkers.addLayer(marker); // فروشگاه‌های بسته
+                    }
+                }
+            });
+
+            // ✅ ✅ ✅ **حذف لایه‌های قبلی و اضافه کردن مجدد آنها به نقشه**
+            map.eachLayer(layer => {
+                if (layer instanceof L.MarkerClusterGroup) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            map.addLayer(openMarkers);
+            map.addLayer(closedMarkers);
+        }
+
+        ///////////////////////////////////////////////////////////////////
+        async function clearMap(map) {
+            Object.keys(map._layers).forEach(key => {
+                const layer = map._layers[key];
+                if (layer && (layer._path || layer._icon)) {
+                    try { map.removeLayer(layer); } catch (e) { console.log("خطا در حذف لایه:", e); }
+                }
+            });
+
+            await get_solar();
+            linkData();
+        }
+
+        async function init() {
+            await get_gandom();
+            await get_solar();
+
+            // ✅ اطمینان از اجرای صحیح `linkData()`
+            setTimeout(() => {
+                linkData();
+            }, 1000);
+        }
+
+
+        init();
+
+        var map = L.map('MapSection').setView([32.287, 52.954], 5.5);
+        L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Gandom',
+            scrollWheelZoom: false
+        }).addTo(map);
+
+    </script>
+
+    <div id="store-status-form" class="store-status-form">
+        <h1>Stores Status Checking System</h1>
+        <h2>Design by GTK ICT Department</h2>
+        <h2>سیستم اطلاعات فروشگاه</h2>
+
+        <div class="store-info">
+            <div class="info-row">
+                <span class="info-label">نام فروشگاه:</span>
+                <span id="store-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">آخرین وضعیت:</span>
+                <span id="store-status"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">استان:</span>
+                <span id="store-province"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">شهر:</span>
+                <span id="store-city"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">منطقه گندم:</span>
+                <span id="wheat-zone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام کارشناس تجهیز:</span>
+                <span id="expert-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تلفن کارشناس تجهیز:</span>
+                <span id="expert-phone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ایمیل کارشناس تجهیز:</span>
+                <span id="expert-email"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام مدیر منطقه:</span>
+                <span id="manager-name"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تلفن مدیر منطقه:</span>
+                <span id="manager-phone"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ایمیل مدیر منطقه:</span>
+                <span id="manager-email"></span>
+            </div>
+        </div>
+
+        <h3>نتایج پینگ</h3>
+        <div id="ping-results" class="ping-results">
+            <!-- نتایج پینگ اینجا نمایش داده می‌شود -->
+        </div>
+    </div>
+
+    <div id="notification" class="notification">
+        <div class="notification-icon">⚠️</div>
+        <div class="notification-content">
+            <div class="notification-title">هشدار وضعیت فروشگاه‌ها</div>
+            <div class="notification-message"></div>
+        </div>
+        <div class="notification-close" onclick="closeNotification()">×</div>
+        <div class="notification-progress">
+            <div class="notification-progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // const url_path = 'https://portal.gandomcs.com/gandom/SiteAssets/IMG/';  
+
+        function linkData_old() {
+            const linkedData = [];
+
+            aray1.forEach(store1 => {
+                const matchingStore2 = array2.find(store2 => store2.StoreCode === store1.StoreCode);
+                if (matchingStore2) {
+                    linkedData.push({
+                        ...store1,
+                        ...matchingStore2
+                    });
+                }
+            });
+            // ----------------- - - - - - - - - - - - - - - - - - --------------------------------/////////
+
+
+            // تعریف گروه خوشه‌بندی  
+            const markers = L.markerClusterGroup();
+
+            linkedData.forEach(feature => {
+                const latitude = feature.Latitude;
+                const longitude = feature.Longitude;
+                const title = feature.Caption;
+                const status = parseInt(feature.Status);
+                const IP_Address = feature.IPAddress;
+                const avgResponseTime = feature.AvgResponseTime;
+                const loss = feature.PercentLoss;
+                const comments = feature.StoreCode;
+
+                const statusClass = status === 1 ? 'node-up' : 'node-down';
+                const statusText = status === 1 ? 'Node is Up.' : 'Node is Down.';
+
+                // ساخت محتوا برای popup  
+                const statusDiv = `<h2>${title}</h2><p class="${statusClass}">${statusText}</p>  
+                           <p><strong>IP Address:</strong> ${IP_Address}</p>  
+                           <p><strong>Avg Resp Time:</strong> ${avgResponseTime} ms</p>  
+                           <p><strong>Packet Loss:</strong>% ${loss}</p>  
+                           <p><strong>Code Market:</strong> ${comments}</p>`;
+
+                let iconbase = status === 1 ? state2_ : state1_;
+
+                console.log("خطا در حذف لایه:", `<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
+
+                if (latitude && longitude) {
+                    const marker = L.marker([latitude, longitude], { icon: iconbase })
+                        .bindPopup(`<h2>${statusDiv}</h2><p>Status: ${status === 1 ? 'Up' : 'Down'}</p>`);
+                    markers.addLayer(marker);
+                }
+            });
+
+            map.addLayer(markers);
+        };
+
+        // -------------------------------------------------------------------------------------------
+
+
+        function checkStore(storeCode) {
+            const url1 = "https://gis1.gandomcs.com/proxy.ashx?storeCode=" + encodeURIComponent(storeCode);
+
+
+            fetch(url1)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('نتیجه دریافت‌شده:', data);
+                    displayStoreStatus(data);
+                    document.getElementById('store-status-form').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('خطا در اتصال به API:', error);
+                });
+        }
+
+        function displayStoreStatus(data) {
+            document.getElementById('store-name').textContent = data.storeName;
+            document.getElementById('store-status').textContent = data.lastStatus;
+            document.getElementById('store-province').textContent = data.province;
+            document.getElementById('store-city').textContent = data.city;
+            document.getElementById('wheat-zone').textContent = data.wheatZone;
+
+            document.getElementById('expert-name').textContent = data.equipmentExpert.name;
+            document.getElementById('expert-phone').textContent = data.equipmentExpert.phone;
+            document.getElementById('expert-email').textContent = data.equipmentExpert.email;
+
+            document.getElementById('manager-name').textContent = data.regionManager.name;
+            document.getElementById('manager-phone').textContent = data.regionManager.phone;
+            document.getElementById('manager-email').textContent = data.regionManager.email;
+
+            // const pingResultsDiv = document.getElementById('ping-results');
+            // pingResultsDiv.innerHTML = '';
+
+            //     Object.entries(data.pingResults).forEach(([device, info]) => {
+            //         const statusClass = info.status === 'OK' ? 'status-ok' : 'status-not-ok';
+            //         const statusIcon = info.status === 'OK' ? '✓' : '✗';
+
+            //         const pingItem = document.createElement('div');
+            //         pingItem.className = 'ping-item';
+            //         console.log('===/==/====', device, info.address, info.status, statusIcon);
+            //         pingItem.innerHTML = `
+            //     ${device} (${info.address}): 
+            //     <span class="${statusClass}">${info.status} ${statusIcon}</span>
+            // `;
+            //         pingResultsDiv.appendChild(pingItem);
+            //     });
+
+            const pingOrder = [
+                "Server",
+                "Router",
+                "DVR",
+                "PC",
+                "Saman",
+                "Behpardakht",
+                "Parsian"
+            ];
+
+            const pingResultsDiv = document.getElementById('ping-results');
+            pingResultsDiv.innerHTML = '';
+
+            pingOrder.forEach(device => {
+                const info = data.pingResults[device];
+                if (info) {
+                    const statusClass = info.status === 'OK' ? 'status-ok' : 'status-not-ok';
+                    const statusIcon = info.status === 'OK' ? '✓' : '✗';
+
+                    const pingItem = document.createElement('div');
+                    pingItem.className = 'ping-item';
+                    pingItem.innerHTML = `
+            ${device} (${info.address}): 
+            <span class="${statusClass}">${info.status} ${statusIcon}</span>
+        `;
+                    pingResultsDiv.appendChild(pingItem);
+                }
+            });
+
+
+        }
+
+        // اضافه کردن event listener برای بستن فرم
+        document.addEventListener('keydown', function (event) {
+            console.log(event);
+            if (event.key === 'Escape') {
+                document.getElementById('store-status-form').style.display = 'none';
+            }
+        });
+
+        // اضافه کردن دکمه بستن به فرم
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = '×';
+        closeButton.style.cssText = `
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+`;
+        closeButton.onclick = function () {
+            document.getElementById('store-status-form').style.display = 'none';
+        };
+        document.getElementById('store-status-form').appendChild(closeButton);
+
+        // بستن فرم با کلیک خارج از آن
+        window.addEventListener('click', function (e) {
+            const modal = document.getElementById('store-status-form');
+            if (modal.style.display === 'block' && !modal.contains(e.target)) {
+                modal.style.display = 'none';
+            }
+        });
+
+        function showNotification(message, duration = 5000) {
+            const notification = document.getElementById('notification');
+            const messageElement = notification.querySelector('.notification-message');
+            messageElement.textContent = message;
+            notification.classList.add('show');
+            // پخش صدای هشدار
+            try {
+                const audio = document.getElementById('alarm-audio');
+                audio.currentTime = 0;
+                audio.play();
+            } catch (e) { /* اگر مرورگر اجازه نداد، خطا را نادیده بگیر */ }
+            // تنظیم مجدد انیمیشن progress bar
+            const progressBar = notification.querySelector('.notification-progress-bar');
+            progressBar.style.animation = 'none';
+            progressBar.offsetHeight; // trigger reflow
+            progressBar.style.animation = `progress ${duration}ms linear`;
+            setTimeout(() => {
+                closeNotification();
+            }, duration);
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+
+    </script>
+
+    <!-- اضافه کردن HTML فرم تنظیمات -->
+    <div class="settings-button" onclick="openSettings()">⚙️</div>
+
+    <div class="modal-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+
+    <div class="settings-modal" id="settingsModal">
+        <h3>تنظیمات هشدار</h3>
+        <form class="settings-form" onsubmit="saveSettings(event)">
+            <div class="input-row">
+                <label for="globalStatus">حد مجاز تعداد فروشگاه‌های غیرفعال:</label>
+                <input type="number" id="globalStatus" min="1" required>
+            </div>
+            <div class="input-row">
+                <label for="refreshInterval">بازه زمانی به‌روزرسانی خودکار (ثانیه):</label>
+                <input type="number" id="refreshInterval" min="5" required>
+            </div>
+            <button type="submit">ذخیره تنظیمات</button>
+        </form>
+    </div>
+
+    <!-- اضافه کردن اسکریپت‌های مدیریت تنظیمات -->
+    <script>
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+            document.getElementById('settingsOverlay').style.display = 'block';
+            document.getElementById('globalStatus').value = global_status;
+            document.getElementById('refreshInterval').value = refresh_interval;
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+            document.getElementById('settingsOverlay').style.display = 'none';
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            const newValue = parseInt(document.getElementById('globalStatus').value);
+            const newInterval = parseInt(document.getElementById('refreshInterval').value);
+            if (newValue > 0 && newInterval >= 5) {
+                if (newValue !== global_status || newInterval !== refresh_interval) {
+                    global_status = newValue;
+                    refresh_interval = newInterval;
+                    localStorage.setItem('globalStatus', newValue);
+                    localStorage.setItem('refreshInterval', newInterval);
+                    // showNotification('تنظیمات با موفقیت ذخیره شد', 5000);
+
+                } else {
+                    closeSettings();
+                    return;
+                }
+                get_solar().then(() => {
+                    closeSettings();
+                    setupAutoRefresh();
+                });
+
+                // closeSettings();
+                // clearMap(map);
+                // setupAutoRefresh();
+            }
+        }
+
+        // تابع راه‌اندازی تایمر به‌روزرسانی خودکار
+        function setupAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                clearMap(map);
+            }, refresh_interval * 1000);
+        }
+
+        // راه‌اندازی اولیه تایمر پس از بارگذاری صفحه
+        setupAutoRefresh();
+
+        // اضافه کردن کلید Escape برای بستن مودال
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeSettings();
+            }
+
+        });
+
+        // جلوگیری از بستن مودال با کلیک روی خود فرم
+        document.querySelector('.settings-modal').addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        
+        function initSearchBox() {
+            // Create search container
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'search-container';
+
+            // Create search input
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'search-input';
+            searchInput.placeholder = 'جستجو مختصات یا کد فروشگاه';
+
+            // Create search button
+            const searchButton = document.createElement('button');
+            searchButton.className = 'search-button';
+            searchButton.innerHTML = `
+            <i class="fas fa-search"></i>
+            <span>جستجو</span>
+        `;
+
+
+            // تابع مشترک که منطق جستجو را انجام می دهد  
+            const handleSearch = () => {
+                // فرض می‌کنیم searchInput یک عنصر ورودی معتبر است و map یک نمونه از نقشه شما است.  
+
+                const searchValue = searchInput.value.trim();
+
+                if (searchValue) {
+                    // 1. تلاش برای تشخیص ورودی به عنوان مختصات جغرافیایی (شامل کاما)  
+                    const coordinates = searchValue.split(',');
+
+                    if (coordinates.length === 2) {
+                        const latStr = coordinates[0].trim();
+                        const lonStr = coordinates[1].trim();
+
+                        // بررسی اینکه آیا هر دو بخش عدد (اعشاری یا صحیح) هستند  
+                        const lat = parseFloat(latStr);
+                        const lon = parseFloat(lonStr);
+
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            // می‌توانید اختیاری بررسی کنید که آیا اعداد در محدوده معقول مختصات هستند.  
+                            // مثال: if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {  
+
+                            this.map.get_alldata([lat, lon]).then(result => {
+                                console.warn(result, 'result --');
+                            });
+                            // } else {  
+                            //    console.warn(`Invalid geographic coordinates: "${searchValue}". Values out of range.`);  
+                            //    // پیام خطایی به کاربر نمایش دهید.  
+                            // }  
+                        } else {
+                            searchInput.value = "";
+                            console.warn(`Invalid coordinate format: "${searchValue}". Both values must be numbers.`);
+                            // پیام خطایی به کاربر نمایش دهید.  
+                        }
+
+                    } else {
+                        // 2. ورودی شامل کاما نیست، تلاش برای تشخیص عدد صحیح (integer)  
+                        const id = parseInt(searchValue, 10); // استفاده از parseInt برای اعداد صحیح و پایه 10  
+                        if (!isNaN(id) && id.toString() === searchValue) {
+                            // همچنین می‌توانید از Number.isInteger(Number(searchValue)) استفاده کنید  
+                            // اما روش بالا مطمئن‌تر است زیرا parseInt ممکن است بخش اعشاری را حذف کند.  
+                            // console.log(`Searching for integer ID: ${id}`);
+                            zoomToStore(id);
+                          
+                            // find_market(id); // فرض می‌کنیم   یک شناسه عددی می‌پذیرد.  
+                        } else {
+                            // 3. ورودی نه مختصات معتبر است و نه عدد صحیح معتبر، آن را به عنوان متن جستجو کنید (اگر لازم است)  
+                            searchInput.value = "";
+                            console.warn(`Input "${searchValue}" is neither valid coordinates nor a valid integer.`);
+                            // اگر می‌خواهید برای ورودی‌های دیگر به صورت متنی جستجو انجام دهید، خط زیر را فعال کنید:  
+                            // console.log('Searching for text:', searchValue);  
+                            // در غیر این صورت، فقط یک پیام خطا به کاربر نمایش دهید.  
+                        }
+                    }
+
+                } else {
+                    // ورودی خالی است، نقشه را به نمای اولیه بازگردانید  
+                    console.log("Search input is empty. Resetting map view.");
+                    map.setView([32.287, 52.954], 5.7);
+                    // فرض می‌کنیم clearMap یک متد معتبر برای پاک کردن لایه‌ها/نشانگرها از نقشه است.  
+                    if (typeof this.map.clearMap === 'function') {
+                        this.map.clearMap();
+                    } else {
+                        console.warn("map.clearMap() is not a function. Cannot clear map.");
+                        // شاید باید منطق پاک کردن نقشه را اینجا اضافه کنید.  
+                    }
+                }
+
+            };
+
+            // اضافه کردن event listener برای کلیک  
+            searchButton.addEventListener('click', handleSearch);
+            // اضافه کردن event listener برای فشردن Enter در فیلد ورودی  
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch(); // فراخوانی تابع مشترک  
+                }
+            });
+            // Append elements
+            searchContainer.appendChild(searchInput);
+            searchContainer.appendChild(searchButton);
+            document.body.appendChild(searchContainer);
+        }
+
+
+        // Call the function to initialize the toggle button
+        initSearchBox();
+    </script>
+
+    <!-- اضافه کردن تگ صوتی مخفی برای هشدار -->
+    <audio id="alarm-audio" src="https://gis1.gandomcs.com/img/Alarm1.wav" preload="auto"></audio>
+
+    <!-- تابع زوم روی فروشگاه با کد مشخص -->
+    <script>
+        async function zoomToStore(storeCode) {
+            try {
+                // جستجو در داده‌های موجود
+                const store = aray1.find(item => item.StoreCode === storeCode.toString());
+                const store1 = array2.find(item => item.StoreCode === storeCode.toString());
+              
+                console.log(store1, 'store1');
+                if (store) {
+                    const lat = parseFloat(store.Latitude);
+                    const lng = parseFloat(store.Longitude);
+                    console.log(lat, lng, 'lat, lng');
+                    if (isFinite(lat) && isFinite(lng)) {
+                        // زوم روی موقعیت فروشگاه
+                        map.setView([lat, lng], 15);
+                        let xx= STORE_STATUS_CONFIG["باز"];
+                        // ایجاد مارکر موقت برای نمایش موقعیت
+                        const marker = L.marker([lat, lng], {
+                            icon:xx
+                        }).addTo(map);
+                        
+                        // نمایش پاپ‌آپ با اطلاعات فروشگاه
+                        marker.bindPopup(`
+                            <div style="direction: rtl; text-align: right;">
+                                <strong>${store.Caption || store.StoreName}</strong><br>
+                                کد فروشگاه: ${store.StoreCode}<br>
+                                وضعیت: ${store.Status === "1" ? "فعال" : "غیرفعال"}<br>
+                                IP: ${store.IPAddress}<br>
+                                زمان پاسخ: ${store.AvgResponseTime} ms
+                            </div>
+                        `).openPopup();
+                        
+                        // حذف مارکر بعد از 5 ثانیه
+                        setTimeout(() => {
+                            map.removeLayer(marker);
+                        }, 5000);
+                        
+                        return true;
+                    }
+                }
+                
+                console.warn('فروشگاه با کد مورد نظر یافت نشد:', storeCode);
+                return false;
+                
+            } catch (error) {
+                console.error('خطا در زوم روی فروشگاه:', error);
+                return false;
+            }
+        }
+ 
+    </script>
+</body>
+
+</html>

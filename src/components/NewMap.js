@@ -2103,7 +2103,16 @@ export class GandomMap1 {
     </div>`;
                 }
 
+                currentContent += `
+                <div style="margin-top: 7px; text-align: center;">
+                    <button onclick="window.exportToPDF('${encodeURIComponent(reportContent)}')" class="export-btn" style="font-size: 11px;">
+                        <i class="fas fa-file-pdf"></i> خروجی PDF
+                    </button>
+                </div>
+            </div>`
+
                 const newContent = currentContent + categoryTable + populationTable;
+           
                 this.userMarker.setPopupContent(newContent);
 
 
